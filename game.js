@@ -325,14 +325,30 @@
       this.resize();
     }
 
-    // Escala los lienzos según el devicePixelRatio real de la pantalla
+    // Escala los lienzos según el devicePixelRatio real y ajusta dimensiones exactas
     resize() {
       this.dpr = window.devicePixelRatio || 1;
 
-      // 1. Tablero principal
-      const bRect = this.boardCanvas.getBoundingClientRect();
-      const bWidth = bRect.width || 300;
-      const bHeight = bRect.height || 600;
+      // 1. Tablero principal: dimensionado dinámico respecto al contenedor padre
+      const wrapper = this.boardCanvas.parentElement;
+      const wRect = wrapper ? wrapper.getBoundingClientRect() : { width: 300, height: 600 };
+      const availWidth = Math.max(60, wRect.width - 4);
+      const availHeight = Math.max(120, wRect.height - 4);
+
+      // Proporción fija 10:20 (1:2)
+      let bWidth = availHeight * 0.5;
+      let bHeight = availHeight;
+
+      if (bWidth > availWidth) {
+        bWidth = availWidth;
+        bHeight = availWidth * 2;
+      }
+
+      bWidth = Math.floor(bWidth);
+      bHeight = Math.floor(bHeight);
+
+      this.boardCanvas.style.width = `${bWidth}px`;
+      this.boardCanvas.style.height = `${bHeight}px`;
 
       this.boardCanvas.width = Math.round(bWidth * this.dpr);
       this.boardCanvas.height = Math.round(bHeight * this.dpr);
@@ -342,14 +358,14 @@
 
       // 2. Vista previa de la siguiente pieza
       const nRect = this.nextCanvas.getBoundingClientRect();
-      const nWidth = nRect.width || 80;
-      const nHeight = nRect.height || 80;
+      const nWidth = nRect.width || 46;
+      const nHeight = nRect.height || 46;
 
       this.nextCanvas.width = Math.round(nWidth * this.dpr);
       this.nextCanvas.height = Math.round(nHeight * this.dpr);
       this.nextCtx.resetTransform();
       this.nextCtx.scale(this.dpr, this.dpr);
-      this.nextCellSize = nWidth / 4;
+      this.nextCellSize = Math.min(nWidth, nHeight) / 4.2;
     }
 
     // Dibuja un bloque con estética arcade biselada y relieve de alta definición
@@ -618,6 +634,16 @@
       this.clearingRows = [];
       this.clearingTime = 0;
       this.clearingDuration = 140; // milisegundos de destello
+
+      // Detección de dispositivo táctil (móviles y tablets) vs ratón de escritorio
+      const isTouch = ('ontouchstart' in window) ||
+                      (navigator.maxTouchPoints > 0) ||
+                      window.matchMedia('(pointer: coarse)').matches;
+      if (isTouch) {
+        document.body.classList.add('touch-device');
+      } else {
+        document.body.classList.add('desktop-device');
+      }
 
       this.initEvents();
       this.initTouchControls();
@@ -934,10 +960,18 @@
     // ========================================================================
     initEvents() {
       // Evento de redimensionado de pantalla y orientación
-      window.addEventListener('resize', () => {
+      const handleResize = () => {
         this.renderer.resize();
         this.renderer.renderNextPiece(PIECES[this.nextPieceKey]);
-      });
+      };
+      window.addEventListener('resize', handleResize);
+      window.addEventListener('orientationchange', () => setTimeout(handleResize, 100));
+
+      if (window.ResizeObserver) {
+        const ro = new ResizeObserver(handleResize);
+        const stage = document.querySelector('.game-stage');
+        if (stage) ro.observe(stage);
+      }
 
       // Manejo de teclado con soporte para mayúsculas y minúsculas
       window.addEventListener('keydown', (e) => {

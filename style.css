@@ -1,5 +1,5 @@
 /* ==========================================================================
-   BLOQUES - ESTILOS ARCADE & RESPONSIVE (SIN DEPENDENCIAS)
+   BLOQUES - ESTILOS ARCADE & RESPONSIVE (MÓVIL, TABLET Y ESCRITORIO)
    ========================================================================== */
 
 :root {
@@ -25,11 +25,11 @@
   --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
   
-  --header-height: 48px;
-  --controls-height: 180px;
+  --header-height: 44px;
+  --controls-height: 160px;
 }
 
-/* Reset y bloqueo de gestos que causan scroll/zoom indeseado */
+/* Reset y bloqueo estricto de gestos que causan scroll o zoom indeseado */
 *, *::before, *::after {
   box-sizing: border-box;
   margin: 0;
@@ -48,8 +48,9 @@ html, body {
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
-  touch-action: none; /* Previene scroll y zoom táctil accidental */
+  touch-action: none;
   position: fixed;
+  inset: 0;
 }
 
 /* Fondo arcade sutil con cuadrícula espacial */
@@ -58,7 +59,7 @@ body::before {
   position: absolute;
   inset: 0;
   background: 
-    radial-gradient(circle at 50% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 70%),
+    radial-gradient(circle at 50% 15%, rgba(99, 102, 241, 0.15) 0%, transparent 70%),
     linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
   background-size: 100% 100%, 32px 32px, 32px 32px;
@@ -69,14 +70,16 @@ body::before {
 #app-root {
   position: relative;
   width: 100%;
-  max-width: 900px;
+  max-width: 920px;
   height: 100%;
+  height: 100dvh;
   margin: 0 auto;
   display: flex;
   flex-direction: column;
   z-index: 1;
   padding: 6px 10px;
-  gap: 8px;
+  gap: 6px;
+  overflow: hidden;
 }
 
 /* --------------------------------------------------------------------------
@@ -87,7 +90,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 8px;
+  padding: 0 4px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   flex-shrink: 0;
 }
@@ -109,7 +112,7 @@ body::before {
 }
 
 .brand-title {
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 900;
   letter-spacing: 0.18em;
   background: linear-gradient(90deg, #ffffff 40%, var(--neon-cyan) 100%);
@@ -143,138 +146,118 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   ÁREA DE JUEGO (TABLERO + PANEL)
+   ÁREA DE JUEGO (ADAPTABILIDAD VERTICAL Y HORIZONTAL)
    -------------------------------------------------------------------------- */
 .game-stage {
   flex: 1;
   min-height: 0;
+  min-width: 0;
   display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 14px;
-  position: relative;
-}
-
-.board-wrapper {
-  position: relative;
-  height: 100%;
-  display: flex;
+  flex-direction: column; /* Por defecto en móvil: HUD arriba, tablero al centro */
   align-items: center;
   justify-content: center;
+  gap: 6px;
+  position: relative;
+  width: 100%;
 }
 
-#board-canvas {
-  height: 100%;
-  max-height: 100%;
-  aspect-ratio: 10 / 20;
-  background: rgba(10, 13, 25, 0.95);
-  border-radius: 10px;
-  border: 2px solid rgba(99, 102, 241, 0.4);
-  box-shadow: 
-    0 0 25px rgba(0, 240, 255, 0.08),
-    inset 0 0 15px rgba(0, 0, 0, 0.7);
-  display: block;
-}
-
-/* Banner de anuncios flotantes (líneas dobles, triples, tetra) */
-.float-banner {
-  position: absolute;
-  top: 40%;
-  left: 50%;
-  transform: translate(-50%, -50%) scale(0.7);
-  opacity: 0;
-  pointer-events: none;
-  font-size: 1.4rem;
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  text-shadow: 0 0 12px currentColor;
-  transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.25s ease;
-  z-index: 10;
-  white-space: nowrap;
-}
-
-.float-banner.show {
-  opacity: 1;
-  transform: translate(-50%, -50%) scale(1.1);
-}
-
-/* Panel lateral (desktop & móvil en pantallas con espacio) */
+/* Panel de estadísticas y siguiente pieza */
 .side-panel {
   display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: 100%;
-  max-height: 100%;
-  justify-content: flex-start;
-  width: 140px;
+  flex-direction: row; /* Horizontal en móvil */
+  width: 100%;
+  max-width: 440px;
+  gap: 6px;
+  flex-shrink: 0;
+  height: 64px;
+  align-items: stretch;
 }
 
 .panel-box {
   background: var(--bg-card);
   border: 1px solid var(--bg-card-border);
-  border-radius: 10px;
-  padding: 8px 10px;
+  border-radius: 8px;
+  padding: 4px 8px;
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
 
 .panel-label {
-  font-size: 0.65rem;
+  font-size: 0.55rem;
   font-weight: 800;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.1em;
   color: var(--text-dim);
   text-transform: uppercase;
-  margin-bottom: 6px;
+  margin-bottom: 2px;
   text-align: center;
+}
+
+/* Caja de siguiente pieza */
+.preview-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  flex-shrink: 0;
+  padding: 3px 6px;
 }
 
 .next-canvas-wrapper {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 4px 0;
 }
 
 #next-canvas {
-  width: 80px;
-  height: 80px;
+  width: 46px;
+  height: 46px;
   background: rgba(6, 8, 16, 0.75);
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.08);
   display: block;
 }
 
+/* Cuadrícula de estadísticas */
 .stats-grid {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 4px;
+  padding: 4px 6px;
+  align-items: center;
 }
 
 .stat-item {
   display: flex;
   flex-direction: column;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-  padding-bottom: 3px;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 0 2px;
 }
 
 .stat-item:last-child {
-  border-bottom: none;
-  padding-bottom: 0;
+  border-right: none;
 }
 
 .stat-title {
-  font-size: 0.6rem;
+  font-size: 0.52rem;
   font-weight: 700;
   color: var(--text-dim);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
 }
 
 .stat-value {
   font-family: var(--font-mono);
-  font-size: 1.15rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: var(--text-main);
   letter-spacing: 0.02em;
+  white-space: nowrap;
 }
 
 #score-display {
@@ -285,8 +268,9 @@ body::before {
   color: var(--neon-gold);
 }
 
+/* Atajos de teclado para PC (oculto en móviles y tablets) */
 .desktop-help {
-  margin-top: auto;
+  display: none !important;
 }
 
 .keyboard-legend {
@@ -310,6 +294,53 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
+   TABLERO DE JUEGO (CANVAS RESPONSIVE)
+   -------------------------------------------------------------------------- */
+.board-wrapper {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+#board-canvas {
+  background: rgba(10, 13, 25, 0.95);
+  border-radius: 8px;
+  border: 2px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 
+    0 0 20px rgba(0, 240, 255, 0.08),
+    inset 0 0 15px rgba(0, 0, 0, 0.7);
+  display: block;
+  touch-action: none;
+}
+
+/* Banner de anuncios flotantes */
+.float-banner {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translate(-50%, -50%) scale(0.7);
+  opacity: 0;
+  pointer-events: none;
+  font-size: 1.3rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  text-shadow: 0 0 12px currentColor;
+  transition: transform 0.25s cubic-bezier(0.18, 0.89, 0.32, 1.28), opacity 0.25s ease;
+  z-index: 10;
+  white-space: nowrap;
+}
+
+.float-banner.show {
+  opacity: 1;
+  transform: translate(-50%, -50%) scale(1.1);
+}
+
+/* --------------------------------------------------------------------------
    MODALES Y OVERLAYS (PAUSA / GAME OVER)
    -------------------------------------------------------------------------- */
 .game-overlay {
@@ -321,7 +352,7 @@ body::before {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 8px;
   z-index: 20;
   padding: 16px;
   animation: fadeIn 0.2s ease-out;
@@ -343,7 +374,7 @@ body::before {
 }
 
 .overlay-card h2 {
-  font-size: 1.3rem;
+  font-size: 1.25rem;
   letter-spacing: 0.1em;
   margin-bottom: 6px;
 }
@@ -442,7 +473,7 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   CONTROLES TÁCTILES MÓVILES (BOTONES GRANDES Y ACCESIBLES)
+   CONTROLES TÁCTILES MÓVILES Y TABLETS
    -------------------------------------------------------------------------- */
 .touch-controls {
   height: var(--controls-height);
@@ -450,15 +481,18 @@ body::before {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 6px 12px 10px;
-  gap: 16px;
+  width: 100%;
+  max-width: 440px;
+  margin: 0 auto;
+  padding: 4px 6px 8px;
+  gap: 12px;
   touch-action: none;
 }
 
 .dpad-group, .action-group {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .dpad-group {
@@ -474,14 +508,14 @@ body::before {
   background: rgba(26, 32, 60, 0.9);
   border: 1.5px solid rgba(99, 102, 241, 0.35);
   color: var(--text-main);
-  border-radius: 16px;
+  border-radius: 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
-  transition: transform 0.06s ease, background 0.06s ease, border-color 0.06s ease;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  transition: transform 0.05s ease, background 0.05s ease, border-color 0.05s ease;
   user-select: none;
   -webkit-user-select: none;
   -webkit-touch-callout: none;
@@ -489,28 +523,27 @@ body::before {
 }
 
 .btn-subtext {
-  font-size: 0.55rem;
+  font-size: 0.52rem;
   font-weight: 800;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   margin-top: 1px;
 }
 
-/* Tamaños de botones */
 .move-btn {
+  width: 52px;
+  height: 52px;
+}
+
+.action-btn {
   width: 54px;
   height: 54px;
 }
 
-.action-btn {
-  width: 58px;
-  height: 58px;
-}
-
 .small-btn {
-  width: 46px;
-  height: 46px;
+  width: 44px;
+  height: 44px;
   border-radius: 12px;
-  opacity: 0.85;
+  opacity: 0.9;
 }
 
 .main-rotate-btn {
@@ -531,7 +564,7 @@ body::before {
   color: var(--neon-gold);
 }
 
-/* Estado presionado táctil */
+/* Estado presionado */
 .touch-btn:active, .touch-btn.is-pressed {
   transform: scale(0.90);
   background: rgba(45, 55, 95, 0.95);
@@ -546,134 +579,152 @@ body::before {
 }
 
 /* --------------------------------------------------------------------------
-   ADAPTACIÓN RESPONSIVE (MÓVIL VERTICAL VS ESCRITORIO)
+   ADAPTACIÓN PARA PANTALLAS COMPACTAS (ALTURA < 680px)
    -------------------------------------------------------------------------- */
-
-/* Pantallas móviles muy compactas en vertical (altura < 680px) */
-@media (max-height: 700px) and (orientation: portrait) {
+@media (max-height: 680px) {
   :root {
-    --header-height: 40px;
-    --controls-height: 155px;
+    --header-height: 38px;
+    --controls-height: 140px;
   }
   
   #app-root {
     padding: 2px 6px;
-    gap: 4px;
+    gap: 3px;
+  }
+  
+  .side-panel {
+    height: 54px;
+  }
+  
+  #next-canvas {
+    width: 38px;
+    height: 38px;
+  }
+  
+  .preview-box {
+    width: 60px;
   }
   
   .move-btn {
+    width: 46px;
+    height: 46px;
+  }
+  
+  .action-btn {
     width: 48px;
     height: 48px;
   }
   
-  .action-btn {
-    width: 52px;
-    height: 52px;
-  }
-  
   .small-btn {
-    width: 42px;
-    height: 42px;
-  }
-  
-  .side-panel {
-    width: 105px;
-    gap: 6px;
-  }
-  
-  #next-canvas {
-    width: 65px;
-    height: 65px;
+    width: 40px;
+    height: 40px;
   }
   
   .stat-value {
-    font-size: 1rem;
+    font-size: 0.85rem;
   }
 }
 
-/* En teléfonos en vertical estándar: el panel lateral se ajusta */
-@media (max-width: 540px) {
-  .desktop-help {
-    display: none;
-  }
-  
-  .game-stage {
-    gap: 10px;
-  }
-  
-  .side-panel {
-    width: 110px;
-  }
-  
-  #next-canvas {
-    width: 72px;
-    height: 72px;
-  }
-}
-
-/* Teléfonos muy estrechos (< 360px) */
-@media (max-width: 360px) {
-  .side-panel {
-    width: 90px;
-  }
-  
-  .move-btn {
-    width: 44px;
-    height: 44px;
-  }
-  
-  .action-btn {
-    width: 48px;
-    height: 48px;
-  }
-  
-  .small-btn {
-    display: none; /* Oculta rotación secundaria en pantallas ultra-angostas */
-  }
-}
-
-/* En escritorio con ratón y teclado grande (ocultar o minimizar botones táctiles si hay espacio) */
-@media (min-width: 768px) and (hover: hover) {
+/* --------------------------------------------------------------------------
+   PANTALLAS AMPLIAS / HORIZONTALES (TABLETS EN LANDSCAPE Y ESCRITORIO)
+   -------------------------------------------------------------------------- */
+@media (min-width: 720px) and (min-aspect-ratio: 1/1) {
   #app-root {
-    padding: 16px 20px;
-    gap: 16px;
-    max-width: 820px;
+    max-width: 860px;
+    padding: 12px 16px;
+    gap: 12px;
   }
-  
+
   .game-stage {
+    flex-direction: row; /* Lateral en horizontal */
+    gap: 20px;
+  }
+
+  .side-panel {
+    flex-direction: column;
+    width: 150px;
+    height: auto;
+    max-height: 100%;
+    gap: 10px;
+    justify-content: flex-start;
+  }
+
+  .preview-box {
+    width: 100%;
+    padding: 10px;
+  }
+
+  #next-canvas {
+    width: 80px;
+    height: 80px;
+  }
+
+  .stats-grid {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    padding: 10px;
+  }
+
+  .stat-item {
+    border-right: none;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    padding-bottom: 4px;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .stat-item:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+
+  .stat-value {
+    font-size: 1.25rem;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   DIFERENCIACIÓN ENTRE DISPOSITIVOS TÁCTILES Y RATÓN/TECLADO
+   -------------------------------------------------------------------------- */
+
+/* En dispositivos táctiles (teléfonos y tablets): NUNCA mostrar atajos de PC */
+body.touch-device .desktop-help,
+@media (pointer: coarse) {
+  .desktop-help {
+    display: none !important;
+  }
+}
+
+/* En tablets táctiles amplias: los controles táctiles son amplios y cómodos */
+body.touch-device .touch-controls {
+  display: flex !important;
+}
+
+@media (min-width: 600px) and (pointer: coarse) {
+  .touch-controls {
+    max-width: 580px;
+    padding: 8px 16px 14px;
     gap: 24px;
   }
   
-  .side-panel {
-    width: 180px;
-    gap: 14px;
+  .move-btn {
+    width: 60px;
+    height: 60px;
   }
   
-  #next-canvas {
-    width: 100px;
-    height: 100px;
+  .action-btn {
+    width: 62px;
+    height: 62px;
   }
-  
-  .stat-value {
-    font-size: 1.35rem;
-  }
-  
-  .desktop-help {
-    display: block;
-  }
-  
-  /* En escritorio con mouse, los controles táctiles son más compactos o sirven de respaldo */
-  .touch-controls {
-    --controls-height: 90px;
-    opacity: 0.85;
-    justify-content: center;
-    gap: 40px;
-  }
-  
-  .move-btn, .action-btn {
-    width: 50px;
-    height: 50px;
-  }
+}
+
+/* En ordenadores de escritorio reales (con ratón y teclado físico) */
+body.desktop-device .desktop-help {
+  display: block !important;
+}
+
+body.desktop-device .touch-controls {
+  display: none !important; /* Oculta botones táctiles en PC para dar espacio completo al tablero */
 }
 
 /* Animaciones */
