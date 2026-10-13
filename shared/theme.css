@@ -1,0 +1,88 @@
+/* ==========================================================================
+   SHARED THEME - VARIABLES Y ESTILOS BASE ARCADE
+   ========================================================================== */
+
+:root {
+  /* Fondo y superficies */
+  --bg-space: #070913;
+  --bg-card: rgba(18, 22, 42, 0.9);
+  --bg-card-border: rgba(99, 102, 241, 0.25);
+  
+  /* Textos */
+  --text-main: #f8fafc;
+  --text-dim: #94a3b8;
+  --text-accent: #38bdf8;
+  
+  /* Paleta neón arcade (sin marcas comerciales) */
+  --neon-cyan: #00f0ff;
+  --neon-green: #00e676;
+  --neon-gold: #ffd000;
+  --neon-purple: #b026ff;
+  --neon-coral: #ff3366;
+  --neon-blue: #2979ff;
+  --neon-orange: #ff9100;
+  
+  /* Tipografía */
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  
+  /* Safe area insets para notch y barras de navegación en móviles */
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
+}
+
+/* Reset general */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Bloqueo estricto de rebote, zoom y scroll no deseado */
+.arcade-lock {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  overflow: hidden;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: none;
+  position: fixed;
+  inset: 0;
+}
+
+/* Botones estándar de control arcade */
+.arcade-icon-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  text-decoration: none;
+  transition: transform 0.1s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.arcade-icon-btn:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: var(--neon-cyan);
+}
+
+/* Badges estilizados */
+.arcade-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 2px 7px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}

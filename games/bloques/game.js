@@ -109,20 +109,23 @@
   // ==========================================================================
   const Storage = {
     getHighScore() {
+      if (window.ArcadeStorage) {
+        return window.ArcadeStorage.getHighScore('bloques');
+      }
       try {
         const val = localStorage.getItem(STORAGE_KEY);
         return val ? parseInt(val, 10) || 0 : 0;
       } catch (err) {
-        console.warn('Almacenamiento local no disponible:', err);
         return 0;
       }
     },
     setHighScore(score) {
+      if (window.ArcadeStorage) {
+        window.ArcadeStorage.setHighScore('bloques', score);
+      }
       try {
         localStorage.setItem(STORAGE_KEY, String(score));
-      } catch (err) {
-        console.warn('No se pudo guardar el récord en localStorage:', err);
-      }
+      } catch (err) {}
     }
   };
 
@@ -713,6 +716,7 @@
       if (this.board.isValid(this.currentPiece.matrix, newX, this.currentPiece.y)) {
         this.currentPiece.x = newX;
         this.resetLockIfMoved();
+        if (window.ArcadeAudio) window.ArcadeAudio.playMove();
         return true;
       }
       return false;
@@ -743,6 +747,7 @@
       }
       this.score += droppedCells * 2; // 2 puntos por celda en caída rápida
       triggerHaptic(25);
+      if (window.ArcadeAudio) window.ArcadeAudio.playDrop();
       this.lockCurrentPiece();
     }
 
@@ -766,6 +771,7 @@
           this.currentPiece.y = testY;
           this.resetLockIfMoved();
           triggerHaptic(10);
+          if (window.ArcadeAudio) window.ArcadeAudio.playRotate();
           return;
         }
       }
@@ -793,6 +799,7 @@
         this.clearingRows = fullRows;
         this.clearingTime = 0;
         triggerHaptic(40);
+        if (window.ArcadeAudio) window.ArcadeAudio.playClear();
         this.showBanner(BANNER_TEXTS[fullRows.length]);
       } else {
         this.spawnNextPiece();
@@ -858,6 +865,7 @@
     triggerGameOver() {
       this.state = GameState.GAMEOVER;
       triggerHaptic(70);
+      if (window.ArcadeAudio) window.ArcadeAudio.playGameOver();
 
       const isNewRecord = this.score > 0 && this.score >= this.highScore;
       if (isNewRecord) {
@@ -1026,6 +1034,27 @@
             break;
         }
       });
+
+      // Botón de sonido
+      const soundBtn = document.getElementById('btn-sound-toggle');
+      if (soundBtn && window.ArcadeAudio) {
+        const iconOn = document.getElementById('icon-sound-on');
+        const iconOff = document.getElementById('icon-sound-off');
+        const updateSoundIcon = () => {
+          if (window.ArcadeAudio.isMuted) {
+            iconOn.classList.add('hidden');
+            iconOff.classList.remove('hidden');
+          } else {
+            iconOn.classList.remove('hidden');
+            iconOff.classList.add('hidden');
+          }
+        };
+        updateSoundIcon();
+        soundBtn.addEventListener('click', () => {
+          window.ArcadeAudio.toggleMute();
+          updateSoundIcon();
+        });
+      }
 
       // Botones superiores de la interfaz
       document.getElementById('btn-pause-header').addEventListener('click', () => this.togglePause());

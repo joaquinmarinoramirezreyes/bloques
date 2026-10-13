@@ -1,0 +1,20 @@
+[
+  {
+    "id": "bloques",
+    "name": "Bloques",
+    "folder": "games/bloques",
+    "description": "El puzzle arcade de piezas que caen. Encaja líneas completas, gestiona la rotación y bate el récord.",
+    "color": "#00f0ff",
+    "badge": "PUZZLE",
+    "icon": "bloques"
+  },
+  {
+    "id": "snake",
+    "name": "Serpiente",
+    "folder": "games/snake",
+    "description": "Dirige la víbora neón en la cuadrícula, devora orbes de energía y esquiva las paredes y tu propia cola.",
+    "color": "#00e676",
+    "badge": "CLÁSICO",
+    "icon": "snake"
+  }
+]
