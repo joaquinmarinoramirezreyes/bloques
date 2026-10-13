@@ -24,6 +24,15 @@
       color: "#00e676",
       badge: "CLÁSICO",
       icon: "snake"
+    },
+    {
+      id: "rompemuros",
+      name: "Rompe Muros",
+      folder: "games/rompemuros",
+      description: "El clásico demoledor de ladrillos. Rebota la pelota, recoge power-ups y destruye los muros neón.",
+      color: "#ff3366",
+      badge: "ARCADE",
+      icon: "rompemuros"
     }
   ];
 
@@ -33,6 +42,13 @@
       return `
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
           <path d="M7 2a2 2 0 0 0-2 2v2a2 2 0 0 0 2 2h4a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H7a3 3 0 0 0-3 3v2a3 3 0 0 0 3 3h4a3 3 0 0 0 3-3v-2a1 1 0 0 1 1-1h4a1 1 0 0 0 1-1v-2a1 1 0 0 0-1-1h-4a3 3 0 0 0-3 3v2a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1v-2a1 1 0 0 1 1-1h4a3 3 0 0 0 3-3V9a3 3 0 0 0-3-3H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v2h2V4a2 2 0 0 0-2-2H7z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'rompemuros') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M3 4h8v3H3V4zm10 0h8v3h-8V4zM3 9h5v3H3V9zm7 0h8v3h-8V9zm10 0h1v3h-1V9zm-15 5h8v3H5v-3zm10 0h8v3h-8v-3zM7 20h10v2H7v-2zm5-4.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
         </svg>
       `;
     }

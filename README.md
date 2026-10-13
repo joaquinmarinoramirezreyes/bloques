@@ -24,10 +24,14 @@ Sin frameworks, sin librerías externas, sin CDN, sin paso de build y con capaci
     │   ├── index.html  # Interfaz, HUD, modal de pausa/game over
     │   ├── style.css   # Estilos del tablero y controles táctiles
     │   └── game.js     # Lógica: 7-bag, wall kicks, ghost piece, lock delay
-    └── snake/          # Nuevo juego de Serpiente neón
-        ├── index.html  # Lienzo, controles táctiles D-pad y swipe
-        ├── style.css   # Estética arcade verde neón
-        └── game.js     # Lógica: cuadrícula adaptativa, velocidad creciente, swipe
+    ├── snake/          # Juego de Serpiente neón
+    │   ├── index.html  # Lienzo, controles táctiles D-pad y swipe
+    │   ├── style.css   # Estética arcade verde neón
+    │   └── game.js     # Lógica: cuadrícula adaptativa, velocidad creciente, swipe
+    └── rompemuros/     # Nuevo juego Rompe Muros
+        ├── index.html  # Tablero 3:4, indicador de saque, HUD de vidas y power-ups
+        ├── style.css   # Estilos neón coral y área táctil completa con una mano
+        └── game.js     # Lógica: física por subpasos, ángulos dinámicos, power-ups y niveles
 ```
 
 ---
@@ -44,10 +48,19 @@ Sin frameworks, sin librerías externas, sin CDN, sin paso de build y con capaci
 
 ### 2. Serpiente (`/games/snake/`)
 - Cuadrícula adaptable con diseño neón.
+- Movimiento continuo e interpolado a 60/120 FPS con curvas redondeadas.
+- Cola de giros de entrada (buffer) para no perder pulsaciones rápidas consecutivas.
 - Control dual: gestos táctiles de deslizamiento (**swipe**) en pantalla y cruz direccional (**D-pad**).
 - Soporte para teclado de PC (Flechas y `WASD`).
-- Aumento gradual de velocidad por orbe de energía consumido.
-- Animación de rastro brillante y detección precisa de colisiones contra bordes y cuerpo.
+- Aumento gradual de velocidad por orbe de energía consumido, partículas y vibración de pantalla.
+
+### 3. Rompe Muros (`/games/rompemuros/`)
+- Fiel al estilo clásico de demoledores de ladrillos con física por subpasos anti-tunneling.
+- Ángulo de rebote dependiente del punto de impacto en la paleta.
+- Ladrillos de 1, 2 y 3 impactos con daño visual progresivo y degradados neón.
+- Power-ups que caen aleatoriamente: **Paleta Ancha**, **Pelota Lenta** y **Multibola**.
+- Niveles declarativos definidos en matriz de datos.
+- Control con una sola mano en móvil (la paleta sigue el dedo en cualquier zona de la pantalla con suavizado lerp) y ratón/teclado en PC.
 
 ---
 
@@ -97,6 +110,14 @@ El menú principal renderizará automáticamente la tarjeta con su color de acen
 | Cambiar dirección | Flechas `↑` `↓` `←` `→` / `W` `A` `S` `D` | Deslizar dedo (Swipe) o botones D-pad |
 | Pausa | Tecla `P` / `Escape` | Botón de pausa en barra superior |
 | Reiniciar | Tecla `R` / `Espacio` | Botón de reinicio o pantalla Game Over |
+
+### Rompe Muros
+| Acción | Teclado (Escritorio) | Móvil (Táctil) |
+| :--- | :--- | :--- |
+| Mover paleta | Flechas `←` `→` / `A` `D` / Ratón | Deslizar o arrastrar en cualquier parte |
+| Lanzar pelota | Barra `Espacio` / Clic | Tocar cualquier parte de la pantalla |
+| Pausa | Tecla `P` / `Escape` | Botón de pausa en barra superior |
+| Reiniciar | Tecla `R` | Botón de reinicio o pantalla Game Over |
 
 ---
 

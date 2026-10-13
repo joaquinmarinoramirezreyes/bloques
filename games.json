@@ -16,5 +16,14 @@
     "color": "#00e676",
     "badge": "CLÁSICO",
     "icon": "snake"
+  },
+  {
+    "id": "rompemuros",
+    "name": "Rompe Muros",
+    "folder": "games/rompemuros",
+    "description": "El clásico demoledor de ladrillos. Rebota la pelota, recoge power-ups y destruye los muros neón.",
+    "color": "#ff3366",
+    "badge": "ARCADE",
+    "icon": "rompemuros"
   }
 ]

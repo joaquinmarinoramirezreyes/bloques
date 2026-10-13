@@ -1,0 +1,490 @@
+/* ==========================================================================
+   ROMPE MUROS - ESTILOS ARCADE & RESPONSIVE
+   ========================================================================== */
+
+html, body {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  background-color: var(--bg-space, #070913);
+  color: var(--text-main, #f8fafc);
+  font-family: var(--font-family);
+  color-scheme: dark;
+}
+
+#app-root {
+  position: relative;
+  width: 100%;
+  max-width: 960px;
+  height: 100%;
+  height: 100dvh;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  z-index: 1;
+  padding: 8px 10px;
+  padding-top: max(8px, var(--safe-top));
+  padding-bottom: max(8px, var(--safe-bottom));
+  gap: 8px;
+  overflow: hidden;
+}
+
+/* --------------------------------------------------------------------------
+   1. ENCABEZADO
+   -------------------------------------------------------------------------- */
+.hud-header {
+  height: var(--header-height, 44px);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  flex-shrink: 0;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.back-button {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: var(--text-main);
+  text-decoration: none;
+}
+
+.back-button:hover, .back-button:active {
+  border-color: var(--neon-coral, #ff3366);
+  color: var(--neon-coral, #ff3366);
+}
+
+.badge-coral {
+  background: linear-gradient(135deg, #ff3366, #ff9100);
+  color: #05060c;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  padding: 2px 7px;
+  border-radius: 4px;
+}
+
+.brand-coral {
+  background: linear-gradient(90deg, #ffffff 30%, #ff3366 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin: 0;
+}
+
+.hud-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon-button {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.08s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.icon-button:active {
+  transform: scale(0.92);
+  background: rgba(255, 255, 255, 0.18);
+  border-color: #ff3366;
+}
+
+/* --------------------------------------------------------------------------
+   2. ESCENARIO DE JUEGO (CANVAS + HUD)
+   -------------------------------------------------------------------------- */
+.game-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  justify-content: center;
+}
+
+.board-wrapper {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+#breakout-canvas {
+  background: rgba(8, 11, 22, 0.96);
+  border-radius: 12px;
+  border: 2px solid rgba(255, 51, 102, 0.35);
+  box-shadow: 
+    0 10px 30px rgba(0, 0, 0, 0.6),
+    0 0 20px rgba(255, 51, 102, 0.12),
+    inset 0 0 20px rgba(0, 0, 0, 0.4);
+  display: block;
+  touch-action: none;
+}
+
+/* Indicador de lanzamiento */
+.launch-hint {
+  position: absolute;
+  bottom: 22%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(7, 9, 19, 0.88);
+  border: 1px solid rgba(255, 51, 102, 0.5);
+  box-shadow: 0 0 16px rgba(255, 51, 102, 0.3);
+  color: #ff3366;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 8px 16px;
+  border-radius: 20px;
+  pointer-events: none;
+  animation: pulseHint 1.2s infinite alternate ease-in-out;
+  white-space: nowrap;
+  z-index: 5;
+}
+
+.launch-hint.hidden {
+  display: none;
+}
+
+@keyframes pulseHint {
+  from { transform: translateX(-50%) scale(0.96); opacity: 0.75; }
+  to { transform: translateX(-50%) scale(1.04); opacity: 1; }
+}
+
+/* Notificación de Power-Up Activo */
+.powerup-badge {
+  position: absolute;
+  top: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(14, 18, 36, 0.92);
+  border: 1.5px solid #ffd000;
+  box-shadow: 0 0 14px rgba(255, 208, 0, 0.4);
+  color: #f8fafc;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  padding: 5px 12px;
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+  z-index: 6;
+  transition: all 0.2s ease;
+}
+
+.powerup-badge.hidden {
+  display: none;
+}
+
+.powerup-icon {
+  font-size: 0.9rem;
+}
+
+.powerup-timer {
+  color: #ffd000;
+  font-family: var(--font-mono);
+  font-weight: 900;
+}
+
+/* --------------------------------------------------------------------------
+   3. PANEL HUD LATERAL
+   -------------------------------------------------------------------------- */
+.side-panel {
+  width: 140px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.panel-box {
+  background: var(--bg-card, rgba(18, 22, 42, 0.9));
+  border: 1px solid var(--bg-card-border, rgba(99, 102, 241, 0.25));
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+.stats-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+}
+
+.stat-title {
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  color: var(--text-dim, #94a3b8);
+}
+
+.stat-value {
+  font-family: var(--font-mono);
+  font-size: 1.15rem;
+  font-weight: 900;
+}
+
+.val-coral { color: #ff3366; }
+.val-gold { color: #ffd000; }
+.val-cyan { color: #00f0ff; }
+.val-lives {
+  color: #ff3366;
+  letter-spacing: 2px;
+  font-size: 1rem;
+}
+
+.desktop-help {
+  display: block;
+}
+
+.panel-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+.keyboard-legend {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.7rem;
+  color: var(--text-dim);
+}
+
+kbd {
+  background: rgba(255, 255, 255, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 3px;
+  padding: 1px 5px;
+  font-family: var(--font-mono);
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   4. MODALES OVERLAY (PAUSA / GAME OVER / NIVEL)
+   -------------------------------------------------------------------------- */
+.game-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(5, 7, 15, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+  animation: fadeIn 0.15s ease-out;
+}
+
+.game-overlay.hidden {
+  display: none;
+}
+
+.overlay-card {
+  background: rgba(18, 22, 42, 0.98);
+  border: 1.5px solid rgba(255, 51, 102, 0.4);
+  border-radius: 14px;
+  padding: 20px 24px;
+  text-align: center;
+  max-width: 290px;
+  width: 90%;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(255, 51, 102, 0.2);
+}
+
+.overlay-card h2 {
+  font-size: 1.4rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  margin-bottom: 4px;
+}
+
+.level-title {
+  color: #00f0ff;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+}
+
+.danger-title {
+  color: #ff3366;
+  text-shadow: 0 0 12px rgba(255, 51, 102, 0.5);
+}
+
+.overlay-card p {
+  color: var(--text-dim);
+  font-size: 0.85rem;
+  margin-bottom: 14px;
+}
+
+.stats-summary {
+  background: rgba(8, 10, 20, 0.8);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-dim);
+  font-size: 0.85rem;
+}
+
+.stat-row strong {
+  font-family: var(--font-mono);
+  color: #ffffff;
+}
+
+.stat-row.highlight strong {
+  color: #ffd000;
+}
+
+.badge-new-record {
+  background: linear-gradient(90deg, #ff9100, #ffd000);
+  color: #0b0d17;
+  font-size: 0.7rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  padding: 4px 8px;
+  border-radius: 4px;
+  margin-bottom: 14px;
+  animation: pulseRecord 1s infinite alternate;
+}
+
+.badge-new-record.hidden {
+  display: none;
+}
+
+.overlay-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.btn-primary, .btn-secondary {
+  width: 100%;
+  padding: 11px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+  border: none;
+  text-decoration: none;
+  display: inline-block;
+  text-align: center;
+  transition: transform 0.08s ease, filter 0.15s ease;
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, #ff3366, #ff9100);
+  color: #050814;
+  box-shadow: 0 4px 14px rgba(255, 51, 102, 0.35);
+}
+
+.btn-primary:active {
+  transform: scale(0.96);
+  filter: brightness(1.2);
+}
+
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.btn-secondary:active {
+  transform: scale(0.96);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+/* --------------------------------------------------------------------------
+   5. RESPONSIVE (MÓVIL EN VERTICAL)
+   -------------------------------------------------------------------------- */
+@media (max-width: 640px) {
+  #app-root {
+    padding: 4px 6px;
+    gap: 4px;
+  }
+
+  .game-stage {
+    flex-direction: column;
+    gap: 6px;
+  }
+
+  .side-panel {
+    width: 100%;
+    flex-direction: row;
+    gap: 4px;
+  }
+
+  .panel-box {
+    padding: 4px 8px;
+    border-radius: 6px;
+  }
+
+  .stats-grid {
+    flex-direction: row;
+    justify-content: space-around;
+    width: 100%;
+  }
+
+  .stat-item {
+    align-items: center;
+  }
+
+  .stat-title {
+    font-size: 0.55rem;
+  }
+
+  .stat-value {
+    font-size: 0.95rem;
+  }
+
+  .desktop-help {
+    display: none !important;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes pulseRecord {
+  from { transform: scale(0.98); }
+  to { transform: scale(1.04); }
+}
