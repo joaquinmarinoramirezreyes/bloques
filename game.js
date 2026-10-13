@@ -335,13 +335,13 @@
       const availWidth = Math.max(60, wRect.width - 4);
       const availHeight = Math.max(120, wRect.height - 4);
 
-      // Proporción fija 10:20 (1:2)
-      let bWidth = availHeight * 0.5;
-      let bHeight = availHeight;
+      // Proporción fija 10:20 (1:2) que cabe estrictamente dentro del contenedor disponible
+      let bWidth = availWidth;
+      let bHeight = bWidth * 2;
 
-      if (bWidth > availWidth) {
-        bWidth = availWidth;
-        bHeight = availWidth * 2;
+      if (bHeight > availHeight) {
+        bHeight = availHeight;
+        bWidth = bHeight * 0.5;
       }
 
       bWidth = Math.floor(bWidth);
