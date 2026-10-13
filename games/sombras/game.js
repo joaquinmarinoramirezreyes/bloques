@@ -379,7 +379,7 @@
         sentinelPositions.push({ x: Math.floor(W / 2), y: Math.floor(H / 2) });
       }
 
-      // Posición del Cazador: cuadrante alejado en una intersección o pasillo abierto (>= 2 vecinos abiertos, nunca callejón ciego)
+      // Posición del Cazador: cuadrante alejado en una intersección amplia o pasillo abierto (>= 2 vecinos abiertos, nunca callejón ciego)
       // y sin bloquear llaves ni salida
       const hunterCandidates = allFloors.filter(c => {
         if (c.d < 10) return false;
@@ -387,17 +387,22 @@
         if (keys.some(k => Math.hypot(k.x - c.x, k.y - c.y) < 2)) return false;
         return MazeGenerator.countOpenNeighbors(grid, W, H, c.x, c.y) >= 2;
       });
+      // Preferir intersecciones amplias (>= 3 vecinos abiertos) si están disponibles
+      const wideHunterCandidates = hunterCandidates.filter(c => MazeGenerator.countOpenNeighbors(grid, W, H, c.x, c.y) >= 3);
+      const chosenPool = wideHunterCandidates.length > 0 ? wideHunterCandidates : hunterCandidates;
+
       // Tomamos una celda del tercio más profundo para garantizar distancia respecto al spawn
-      const hunterCell = hunterCandidates.length > 0
-        ? hunterCandidates[Math.floor(hunterCandidates.length * 0.4)]
+      const hunterCell = chosenPool.length > 0
+        ? chosenPool[Math.floor(chosenPool.length * 0.4)]
         : (waypoints[waypoints.length - 1] || { x: exitCell.x, y: exitCell.y });
 
       // Waypoints dedicados para el Cazador (circuitos por distintos cuadrantes del laberinto)
       const hunterWaypoints = [];
-      if (hunterCandidates.length >= 3) {
-        const step = Math.max(1, Math.floor(hunterCandidates.length / 4));
-        for (let i = 0; i < 4 && i * step < hunterCandidates.length; i++) {
-          hunterWaypoints.push(hunterCandidates[i * step]);
+      const wpPool = wideHunterCandidates.length >= 3 ? wideHunterCandidates : hunterCandidates;
+      if (wpPool.length >= 3) {
+        const step = Math.max(1, Math.floor(wpPool.length / 4));
+        for (let i = 0; i < 4 && i * step < wpPool.length; i++) {
+          hunterWaypoints.push(wpPool[i * step]);
         }
       } else {
         hunterWaypoints.push(...waypoints);
