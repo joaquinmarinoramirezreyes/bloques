@@ -59,6 +59,16 @@
       this.cellSize = 20;
       this.dpr = window.devicePixelRatio || 1;
 
+      // Detección de dispositivo táctil vs ratón de escritorio
+      const isTouch = ('ontouchstart' in window) ||
+                      (navigator.maxTouchPoints > 0) ||
+                      window.matchMedia('(pointer: coarse)').matches;
+      if (isTouch) {
+        document.body.classList.add('touch-device');
+      } else {
+        document.body.classList.add('desktop-device');
+      }
+
       this.initEvents();
       this.initTouchControls();
       this.initSwipeGestures();

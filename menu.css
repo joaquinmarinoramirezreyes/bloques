@@ -2,6 +2,11 @@
    MENU ARCADE - ESTILOS DEL HUB PRINCIPAL
    ========================================================================== */
 
+html {
+  background-color: var(--bg-space);
+  color-scheme: dark;
+}
+
 body {
   background-color: var(--bg-space);
   color: var(--text-main);

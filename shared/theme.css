@@ -41,6 +41,24 @@
   -webkit-tap-highlight-color: transparent;
 }
 
+/* Base de página oscura retro-arcade */
+html {
+  background-color: var(--bg-space);
+  color-scheme: dark;
+}
+
+body {
+  background-color: var(--bg-space);
+  background: radial-gradient(circle at 50% 12%, #111736 0%, #070913 70%, #04050a 100%);
+  color: var(--text-main);
+  font-family: var(--font-family);
+  min-height: 100vh;
+  min-height: 100dvh;
+  margin: 0;
+  padding: 0;
+  color-scheme: dark;
+}
+
 /* Bloqueo estricto de rebote, zoom y scroll no deseado */
 .arcade-lock {
   width: 100%;
@@ -53,6 +71,25 @@
   touch-action: none;
   position: fixed;
   inset: 0;
+  background-color: #070913 !important;
+  background: radial-gradient(circle at 50% 12%, #111736 0%, #070913 70%, #04050a 100%) !important;
+  color: #f8fafc;
+}
+
+/* Efecto de cuadrícula y nebulosa arcade sutil */
+body::before,
+.arcade-lock::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: 
+    radial-gradient(circle at 50% 10%, rgba(99, 102, 241, 0.14) 0%, transparent 60%),
+    radial-gradient(circle at 85% 85%, rgba(0, 240, 255, 0.07) 0%, transparent 50%),
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 28px 28px, 28px 28px;
+  pointer-events: none;
+  z-index: 0;
 }
 
 /* Botones estándar de control arcade */

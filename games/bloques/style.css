@@ -2,6 +2,16 @@
    BLOQUES - ESTILOS ARCADE & RESPONSIVE
    ========================================================================== */
 
+html, body {
+  width: 100%;
+  height: 100%;
+  height: 100dvh;
+  background-color: var(--bg-space, #070913);
+  color: var(--text-main, #f8fafc);
+  font-family: var(--font-family);
+  color-scheme: dark;
+}
+
 #app-root {
   position: relative;
   width: 100%;
