@@ -43,5 +43,14 @@
     "color": "#a855f7",
     "badge": "SIGILO",
     "icon": "sombras"
+  },
+  {
+    "id": "derrape",
+    "name": "Derrape",
+    "folder": "games/derrape",
+    "description": "Carreras cenitales arcade con físicas de derrape, rivales inteligentes y circuitos de alta velocidad.",
+    "color": "#f97316",
+    "badge": "CARRERAS",
+    "icon": "derrape"
   }
 ]

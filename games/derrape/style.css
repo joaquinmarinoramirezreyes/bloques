@@ -1,0 +1,1007 @@
+/* ==========================================================================
+   DERRAPE - Estilos Arcade de Carreras (Mobile-First)
+   ========================================================================== */
+
+:root {
+  --race-orange: #f97316;
+  --race-amber: #f59e0b;
+  --race-glow: rgba(249, 115, 22, 0.45);
+  --race-nitro: #06b6d4;
+  --race-nitro-glow: rgba(6, 182, 212, 0.5);
+  --race-bg: #09090b;
+  --card-bg: rgba(18, 18, 24, 0.92);
+  --border-color: rgba(249, 115, 22, 0.25);
+  --text-primary: #f8fafc;
+  --text-muted: #94a3b8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--race-bg);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  touch-action: none;
+}
+
+.game-layout {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+  background: radial-gradient(circle at 50% 20%, #1c130d 0%, #09090b 80%);
+}
+
+/* ==========================================================================
+   Header Arcade
+   ========================================================================== */
+.game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 54px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--border-color);
+  background: rgba(12, 12, 16, 0.85);
+  backdrop-filter: blur(8px);
+  z-index: 40;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.2s ease;
+}
+
+.nav-btn:active {
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--race-orange);
+  transform: scale(0.96);
+}
+
+.header-titles {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.game-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  background: linear-gradient(135deg, #fff 0%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 16px var(--race-glow);
+}
+
+.game-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(249, 115, 22, 0.15);
+  color: var(--race-orange);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  letter-spacing: 0.05em;
+}
+
+.header-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-primary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 1rem;
+  transition: all 0.2s ease;
+}
+
+.icon-btn:active {
+  background: rgba(249, 115, 22, 0.2);
+  border-color: var(--race-orange);
+  transform: scale(0.94);
+}
+
+/* ==========================================================================
+   Contenedor Principal de la Pista (Canvas)
+   ========================================================================== */
+.board-wrapper {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  height: calc(100% - 54px);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #0d120d;
+}
+
+#game-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* ==========================================================================
+   HUD en Vivo (Overlay)
+   ========================================================================== */
+.hud-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 12px 16px;
+  z-index: 20;
+}
+
+.hud-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.lap-box, .time-box, .best-box, .pos-box {
+  background: rgba(12, 12, 18, 0.75);
+  border: 1px solid rgba(249, 115, 22, 0.3);
+  padding: 6px 10px;
+  border-radius: 8px;
+  backdrop-filter: blur(6px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 60px;
+}
+
+.hud-label {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+}
+
+.hud-val {
+  font-size: 1rem;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.05em;
+}
+
+.pos-highlight {
+  color: var(--race-orange);
+  text-shadow: 0 0 10px var(--race-glow);
+}
+
+/* Cuenta atrás */
+.countdown-overlay {
+  position: absolute;
+  top: 38%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+  z-index: 35;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.countdown-number {
+  font-size: 5.5rem;
+  font-weight: 900;
+  color: #fff;
+  text-shadow: 0 0 30px var(--race-orange), 0 0 60px #ea580c;
+  animation: countdown-pop 0.9s cubic-bezier(0.18, 0.89, 0.32, 1.28) forwards;
+}
+
+@keyframes countdown-pop {
+  0% { transform: scale(0.3); opacity: 0; }
+  40% { transform: scale(1.15); opacity: 1; }
+  80% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.9; }
+}
+
+/* Banner de Aviso de Vuelta */
+.lap-banner {
+  position: absolute;
+  top: 16%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 15, 22, 0.92);
+  border: 1px solid var(--race-orange);
+  border-radius: 12px;
+  padding: 10px 24px;
+  text-align: center;
+  box-shadow: 0 0 20px var(--race-glow);
+  pointer-events: none;
+  z-index: 30;
+  animation: banner-slide 2.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.lap-banner-title {
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: var(--race-orange);
+  letter-spacing: 0.08em;
+}
+
+.lap-banner-sub {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #f8fafc;
+  margin-top: 2px;
+}
+
+@keyframes banner-slide {
+  0% { transform: translate(-50%, -20px) scale(0.9); opacity: 0; }
+  15% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  80% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -15px) scale(0.95); opacity: 0; }
+}
+
+/* Alerta de derrape activa */
+.drift-alert {
+  align-self: center;
+  margin-top: 10px;
+  background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.4), transparent);
+  padding: 4px 24px;
+  border-radius: 20px;
+  animation: pulse-drift 0.3s infinite alternate;
+}
+
+.drift-text {
+  font-size: 1.1rem;
+  font-weight: 900;
+  letter-spacing: 0.15em;
+  color: #fff;
+  text-shadow: 0 0 12px var(--race-orange), 0 0 24px #ea580c;
+}
+
+@keyframes pulse-drift {
+  from { transform: scale(0.96); opacity: 0.85; }
+  to { transform: scale(1.05); opacity: 1; }
+}
+
+/* HUD Inferior: Velocímetro y Nitro */
+.hud-bottom {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  padding-bottom: 74px; /* Espacio para que no lo tapen los botones táctiles */
+}
+
+.speedo-container {
+  background: rgba(12, 12, 18, 0.8);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  padding: 8px 14px;
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+  width: 140px;
+}
+
+.speed-number {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+#speed-value {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.02em;
+}
+
+.speed-unit {
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: var(--race-orange);
+}
+
+.speed-bar-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.speed-bar-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #f59e0b, #f97316, #ef4444);
+  border-radius: 3px;
+  transition: width 0.05s linear;
+}
+
+.nitro-container {
+  background: rgba(12, 12, 18, 0.8);
+  border: 1px solid rgba(6, 182, 212, 0.35);
+  padding: 8px 14px;
+  border-radius: 10px;
+  backdrop-filter: blur(8px);
+  width: 120px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.nitro-label {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--race-nitro);
+  letter-spacing: 0.1em;
+}
+
+.nitro-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 3px;
+  margin-top: 4px;
+  overflow: hidden;
+}
+
+.nitro-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #06b6d4, #38bdf8);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--race-nitro-glow);
+  transition: width 0.08s linear;
+}
+
+/* ==========================================================================
+   Controles Táctiles (Mobile First)
+   ========================================================================== */
+.touch-controls {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 10;
+  pointer-events: none;
+}
+
+/* Zonas de dirección izquierda y derecha */
+.touch-steer-zone {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 50%;
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease, background-color 0.15s ease;
+}
+
+.touch-steer-zone.left {
+  left: 0;
+}
+
+.touch-steer-zone.right {
+  right: 0;
+}
+
+.touch-steer-zone.active {
+  opacity: 1;
+  background: rgba(249, 115, 22, 0.06);
+}
+
+.touch-hint {
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  color: rgba(249, 115, 22, 0.4);
+  pointer-events: none;
+  opacity: 0.4;
+}
+
+/* Barra inferior de botones táctiles (Freno y Nitro) */
+.touch-action-bar {
+  position: absolute;
+  bottom: 12px;
+  left: 12px;
+  right: 12px;
+  display: flex;
+  justify-content: space-between;
+  pointer-events: none;
+  z-index: 30;
+}
+
+.touch-action-btn {
+  pointer-events: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 72px;
+  height: 64px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  background: rgba(18, 18, 24, 0.85);
+  backdrop-filter: blur(8px);
+  cursor: pointer;
+  transition: transform 0.1s ease, background 0.1s ease, border-color 0.1s ease;
+}
+
+.touch-action-btn .btn-icon {
+  font-size: 1.3rem;
+}
+
+.touch-action-btn .btn-lbl {
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  margin-top: 2px;
+}
+
+.drift-btn {
+  border-color: rgba(249, 115, 22, 0.4);
+  color: var(--race-orange);
+}
+
+.drift-btn:active, .drift-btn.active {
+  background: rgba(249, 115, 22, 0.3);
+  border-color: var(--race-orange);
+  transform: scale(0.92);
+  box-shadow: 0 0 16px var(--race-glow);
+}
+
+.nitro-btn {
+  border-color: rgba(6, 182, 212, 0.4);
+  color: var(--race-nitro);
+}
+
+.nitro-btn:active, .nitro-btn.active {
+  background: rgba(6, 182, 212, 0.3);
+  border-color: var(--race-nitro);
+  transform: scale(0.92);
+  box-shadow: 0 0 16px var(--race-nitro-glow);
+}
+
+/* ==========================================================================
+   Modales (Inicio y Pausa)
+   ========================================================================== */
+.overlay-modal {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(8, 8, 12, 0.86);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  transition: opacity 0.25s ease;
+}
+
+.overlay-modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+  display: none !important;
+}
+
+.modal-card {
+  width: 100%;
+  max-width: 420px;
+  margin: auto; /* Centrado perfecto vertical y horizontal con soporte para scroll */
+  max-height: calc(100% - 20px);
+  overflow-y: auto;
+  background: var(--card-bg);
+  border: 1px solid var(--border-color);
+  border-radius: 18px;
+  padding: 22px 20px;
+  text-align: center;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6), 0 0 24px var(--race-glow);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+}
+
+.modal-card::-webkit-scrollbar,
+.overlay-modal::-webkit-scrollbar {
+  width: 5px;
+}
+
+.modal-card::-webkit-scrollbar-track,
+.overlay-modal::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.modal-card::-webkit-scrollbar-thumb,
+.overlay-modal::-webkit-scrollbar-thumb {
+  background: rgba(249, 115, 22, 0.35);
+  border-radius: 4px;
+}
+
+.car-badge-icon {
+  font-size: 2.2rem;
+  margin-bottom: 4px;
+  filter: drop-shadow(0 0 10px var(--race-glow));
+}
+
+.modal-title {
+  font-size: 1.75rem;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+  background: linear-gradient(135deg, #fff 0%, #f97316 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 4px;
+  text-align: center;
+}
+
+.modal-subtitle {
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.35;
+}
+
+.instructions-box {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 16px auto;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.instruction-row {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 0.76rem;
+  line-height: 1.3;
+  color: #cbd5e1;
+  text-align: center;
+}
+
+.inst-icon {
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.inst-text {
+  text-align: center;
+}
+
+/* Estadísticas del Modal de Resultados */
+.results-stats {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 12px auto;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.result-label {
+  color: var(--text-muted);
+  font-weight: 600;
+}
+
+.result-val {
+  font-size: 1.05rem;
+  font-weight: 900;
+  color: #fff;
+  font-variant-numeric: tabular-nums;
+}
+
+.best-highlight {
+  color: #38bdf8;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+}
+
+/* Tabla de Posiciones Finales de Carrera (Fase 3) */
+.standings-card {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 12px auto;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.standings-header {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin-bottom: 3px;
+}
+
+.standing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  padding: 4px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.standing-row.is-player {
+  background: rgba(249, 115, 22, 0.16);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  font-weight: 800;
+}
+
+.standing-rank {
+  font-weight: 900;
+  min-width: 24px;
+  color: #fff;
+}
+
+.standing-driver {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  margin: 0 8px;
+  text-align: left;
+}
+
+.driver-color-pill {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.standing-time {
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+  color: #cbd5e1;
+}
+
+.laps-breakdown-card {
+  width: 100%;
+  max-width: 380px;
+  margin: 0 auto 16px auto;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lap-breakdown-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  color: #cbd5e1;
+}
+
+.lap-breakdown-row.is-best {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.modal-actions {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: center;
+}
+
+.arcade-btn-primary {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 13px 18px;
+  font-size: 0.95rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  color: #000;
+  background: linear-gradient(135deg, #fb923c, #f97316);
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  box-shadow: 0 4px 14px var(--race-glow);
+  transition: transform 0.15s ease, filter 0.15s ease;
+  text-align: center;
+  display: block;
+}
+
+.arcade-btn-primary:active {
+  transform: scale(0.97);
+  filter: brightness(0.9);
+}
+
+.arcade-btn-secondary {
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 11px 16px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+  text-align: center;
+  display: block;
+}
+
+.arcade-btn-secondary:active {
+  background: rgba(249, 115, 22, 0.15);
+  border-color: var(--race-orange);
+}
+
+.arcade-btn-danger {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  margin: 0 auto;
+  padding: 11px 16px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #f87171;
+  text-decoration: none;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+}
+
+.arcade-btn-danger:active {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ==========================================================================
+   Selector de Pistas y Circuitos (Fase 4)
+   ========================================================================== */
+.circuit-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.circuit-name-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--race-orange);
+  background: rgba(249, 115, 22, 0.12);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  padding: 2px 7px;
+  border-radius: 6px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.track-selector-section {
+  width: 100%;
+  max-width: 380px;
+  margin: 6px auto 14px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.track-selector-title {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 0.12em;
+  color: #94a3b8;
+  text-align: center;
+  width: 100%;
+}
+
+.track-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.track-card {
+  background: rgba(15, 23, 42, 0.82);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 12px;
+  padding: 10px 8px;
+  cursor: pointer;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  transition: all 0.18s ease;
+  user-select: none;
+  box-sizing: border-box;
+}
+
+.track-card:hover {
+  background: rgba(30, 41, 59, 0.95);
+  border-color: rgba(249, 115, 22, 0.5);
+  transform: translateY(-1px);
+}
+
+.track-card.active {
+  background: rgba(249, 115, 22, 0.18);
+  border-color: var(--race-orange);
+  box-shadow: 0 0 16px rgba(249, 115, 22, 0.35);
+}
+
+.track-card-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  width: 100%;
+}
+
+.track-card-name {
+  font-size: 0.78rem;
+  font-weight: 900;
+  color: #ffffff;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.track-diff-pill {
+  font-size: 0.58rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  display: inline-block;
+  margin: 0 auto;
+}
+
+.diff-easy {
+  background: rgba(34, 197, 94, 0.2);
+  color: #4ade80;
+  border: 1px solid rgba(34, 197, 94, 0.4);
+}
+
+.diff-medium {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.diff-hard {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.4);
+}
+
+.diff-expert {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.track-card-best {
+  font-size: 0.66rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.track-card.active .track-card-best {
+  color: #fed7aa;
+}
+
+@media (max-width: 340px) {
+  .track-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ==========================================================================
+   Ajustes para Pantallas Grandes / Desktop
+   ========================================================================== */
+@media (min-width: 768px) {
+  .touch-controls {
+    display: none; /* En escritorio se usan flechas o WASD */
+  }
+
+  .hud-bottom {
+    padding-bottom: 16px;
+  }
+}

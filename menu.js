@@ -51,6 +51,15 @@
       color: "#a855f7",
       badge: "SIGILO",
       icon: "sombras"
+    },
+    {
+      id: "derrape",
+      name: "Derrape",
+      folder: "games/derrape",
+      description: "Carreras cenitales arcade con físicas de derrape, rivales inteligentes y circuitos de alta velocidad.",
+      color: "#f97316",
+      badge: "CARRERAS",
+      icon: "derrape"
     }
   ];
 
@@ -81,6 +90,13 @@
       return `
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
           <path d="M12 4a9 9 0 0 0-9 9c0 4.97 4.03 9 9 9s9-4.03 9-9a9 9 0 0 0-9-9zm0 2c3.87 0 7 3.13 7 7 0 1.93-.78 3.68-2.05 4.95L12 13V6zm-1 8.41l3.54 3.54A6.96 6.96 0 0 1 12 19c-3.87 0-7-3.13-7-7 0-2.4 1.2-4.52 3.03-5.78L11 14.41z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'derrape') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M6 3c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v2h1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1v4h1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1v1c0 1.1-.9 2-2 2h-1v-2H9v2H8c-1.1 0-2-.9-2-2v-1H5a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h1v-4H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1V3zm3 4h6V5H9v2zm0 8h6V9H9v6z"/>
         </svg>
       `;
     }
