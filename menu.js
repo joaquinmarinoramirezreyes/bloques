@@ -33,6 +33,15 @@
       color: "#ff3366",
       badge: "ARCADE",
       icon: "rompemuros"
+    },
+    {
+      id: "defensaorbital",
+      name: "Defensa Orbital",
+      folder: "games/defensaorbital",
+      description: "Shooter vertical arcade. Defiende la órbita de invasiones alienígenas con fuego automático y reflejos rápidos.",
+      color: "#38bdf8",
+      badge: "SHOOTER",
+      icon: "defensaorbital"
     }
   ];
 
@@ -49,6 +58,13 @@
       return `
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
           <path d="M3 4h8v3H3V4zm10 0h8v3h-8V4zM3 9h5v3H3V9zm7 0h8v3h-8V9zm10 0h1v3h-1V9zm-15 5h8v3H5v-3zm10 0h8v3h-8v-3zM7 20h10v2H7v-2zm5-4.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'defensaorbital') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M12 2L9 8h6l-3-6zm-1 8H4l3 7h3l1-7zm2 0l1 7h3l3-7h-7zm-2 9l-1 3h4l-1-3h-2z"/>
         </svg>
       `;
     }

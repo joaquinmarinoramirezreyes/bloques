@@ -25,5 +25,14 @@
     "color": "#ff3366",
     "badge": "ARCADE",
     "icon": "rompemuros"
+  },
+  {
+    "id": "defensaorbital",
+    "name": "Defensa Orbital",
+    "folder": "games/defensaorbital",
+    "description": "Shooter vertical arcade. Defiende la órbita de invasiones alienígenas con fuego automático y reflejos rápidos.",
+    "color": "#38bdf8",
+    "badge": "SHOOTER",
+    "icon": "defensaorbital"
   }
 ]

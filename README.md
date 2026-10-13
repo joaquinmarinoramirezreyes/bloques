@@ -28,10 +28,14 @@ Sin frameworks, sin librerías externas, sin CDN, sin paso de build y con capaci
     │   ├── index.html  # Lienzo, controles táctiles D-pad y swipe
     │   ├── style.css   # Estética arcade verde neón
     │   └── game.js     # Lógica: cuadrícula adaptativa, velocidad creciente, swipe
-    └── rompemuros/     # Nuevo juego Rompe Muros
-        ├── index.html  # Tablero 3:4, indicador de saque, HUD de vidas y power-ups
-        ├── style.css   # Estilos neón coral y área táctil completa con una mano
-        └── game.js     # Lógica: física por subpasos, ángulos dinámicos, power-ups y niveles
+    ├── rompemuros/     # Juego Rompe Muros
+    │   ├── index.html  # Tablero 3:4, indicador de saque, HUD de vidas y power-ups
+    │   ├── style.css   # Estilos neón coral y área táctil completa con una mano
+    │   └── game.js     # Lógica: física por subpasos, ángulos dinámicos, power-ups y niveles
+    └── defensaorbital/ # Nuevo juego Defensa Orbital (Fase 1)
+        ├── index.html  # Interfaz, HUD espacial y canvas 3:4
+        ├── style.css   # Estilos espaciales neón cyan y controles táctiles con offset
+        └── game.js     # Lógica: nave con disparo continuo, parallax y colisiones
 ```
 
 ---
@@ -58,6 +62,15 @@ Sin frameworks, sin librerías externas, sin CDN, sin paso de build y con capaci
 - Fiel al estilo clásico de demoledores de ladrillos con física por subpasos anti-tunneling.
 - Ángulo de rebote dependiente del punto de impacto en la paleta.
 - Ladrillos de 1, 2 y 3 impactos con daño visual progresivo y degradados neón.
+- Power-ups que caen aleatoriamente: **Paleta Ancha**, **Pelota Lenta** y **Multibola**.
+- Niveles declarativos definidos en matriz de datos.
+- Control con una sola mano en móvil (la paleta sigue el dedo en cualquier zona de la pantalla con suavizado lerp) y ratón/teclado en PC.
+
+### 4. Defensa Orbital (`/games/defensaorbital/`)
+- Shooter vertical arcade de defensa planetaria por oleadas.
+- Nave con disparo automático constante y control táctil con offset vertical ergonómico para no tapar la nave.
+- Fondo de estrellas con parallax de 3 capas.
+- Object pooling total en proyectiles, enemigos y partículas.
 - Power-ups que caen aleatoriamente: **Paleta Ancha**, **Pelota Lenta** y **Multibola**.
 - Niveles declarativos definidos en matriz de datos.
 - Control con una sola mano en móvil (la paleta sigue el dedo en cualquier zona de la pantalla con suavizado lerp) y ratón/teclado en PC.
