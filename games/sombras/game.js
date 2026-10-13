@@ -198,14 +198,45 @@
       return { grid, W, H, startX, startY };
     }
 
+    static findNearestFloor(grid, W, H, startX, startY) {
+      if (startX >= 0 && startX < W && startY >= 0 && startY < H && grid[startY][startX] === 0) {
+        return { x: startX, y: startY };
+      }
+      for (let r = 1; r <= 3; r++) {
+        for (let dy = -r; dy <= r; dy++) {
+          for (let dx = -r; dx <= r; dx++) {
+            const nx = startX + dx;
+            const ny = startY + dy;
+            if (nx >= 0 && nx < W && ny >= 0 && ny < H && grid[ny][nx] === 0) {
+              return { x: nx, y: ny };
+            }
+          }
+        }
+      }
+      return null;
+    }
+
     static findPathBFS(grid, W, H, startCell, goalCell) {
-      if (startCell.x === goalCell.x && startCell.y === goalCell.y) return [];
-      if (grid[startCell.y][startCell.x] === 1 || grid[goalCell.y][goalCell.x] === 1) return null;
+      if (!startCell || !goalCell) return null;
+
+      let start = startCell;
+      if (start.x < 0 || start.x >= W || start.y < 0 || start.y >= H || grid[start.y][start.x] === 1) {
+        start = MazeGenerator.findNearestFloor(grid, W, H, startCell.x, startCell.y);
+        if (!start) return null;
+      }
+
+      let goal = goalCell;
+      if (goal.x < 0 || goal.x >= W || goal.y < 0 || goal.y >= H || grid[goal.y][goal.x] === 1) {
+        goal = MazeGenerator.findNearestFloor(grid, W, H, goalCell.x, goalCell.y);
+        if (!goal) return null;
+      }
+
+      if (start.x === goal.x && start.y === goal.y) return [];
 
       const visited = Array.from({ length: H }, () => new Int16Array(W).fill(-1));
       const parent = Array.from({ length: H }, () => new Array(W).fill(null));
-      const queue = [{ x: startCell.x, y: startCell.y }];
-      visited[startCell.y][startCell.x] = 0;
+      const queue = [{ x: start.x, y: start.y }];
+      visited[start.y][start.x] = 0;
 
       const dirs = [{ dx: 0, dy: -1 }, { dx: 0, dy: 1 }, { dx: -1, dy: 0 }, { dx: 1, dy: 0 }];
       let head = 0;
@@ -213,7 +244,7 @@
 
       while (head < queue.length) {
         const cur = queue[head++];
-        if (cur.x === goalCell.x && cur.y === goalCell.y) {
+        if (cur.x === goal.x && cur.y === goal.y) {
           found = true;
           break;
         }
@@ -233,8 +264,8 @@
       if (!found) return null;
 
       const path = [];
-      let curr = goalCell;
-      while (curr && !(curr.x === startCell.x && curr.y === startCell.y)) {
+      let curr = goal;
+      while (curr && !(curr.x === start.x && curr.y === start.y)) {
         path.unshift({ x: curr.x, y: curr.y });
         curr = parent[curr.y][curr.x];
       }
@@ -482,11 +513,11 @@
       }
 
       if (this.state === 'CHASING') {
-        this.updateChase(dt, px, py, maze, S);
+        this.updateChase(dt, px, py, maze, S, canSeePlayer, game);
       } else if (this.state === 'INVESTIGATING') {
         this.updateInvestigate(dt, maze, S, game);
       } else {
-        this.updatePatrol(dt, maze, S);
+        this.updatePatrol(dt, maze, S, game);
       }
 
       if (distToPlayer < this.radius + player.radius && !player.isInvulnerable) {
@@ -494,7 +525,11 @@
       }
     }
 
-    updateChase(dt, px, py, maze, S) {
+    updateChase(dt, px, py, maze, S, canSeePlayer, game) {
+      if (!this.path || this.pathIndex >= this.path.length) {
+        this.recalcTimer = 0;
+      }
+
       this.recalcTimer -= dt;
       if (this.recalcTimer <= 0) {
         this.recalcTimer = CONFIG.AI_RECALC_INTERVAL;
@@ -504,17 +539,20 @@
         this.pathIndex = 0;
       }
 
-      let targetX = px;
-      let targetY = py;
+      let targetX = this.x;
+      let targetY = this.y;
       if (this.path && this.pathIndex < this.path.length) {
         const nextCell = this.path[this.pathIndex];
         const cellCenterX = (nextCell.x + 0.5) * S;
         const cellCenterY = (nextCell.y + 0.5) * S;
-        if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 6) this.pathIndex++;
+        if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 8) this.pathIndex++;
         targetX = cellCenterX;
         targetY = cellCenterY;
+      } else if (canSeePlayer) {
+        targetX = px;
+        targetY = py;
       }
-      this.moveTowards(targetX, targetY, CONFIG.PATROLLER_SPEED_CHASE, dt);
+      this.moveTowards(targetX, targetY, CONFIG.PATROLLER_SPEED_CHASE, dt, game);
     }
 
     updateInvestigate(dt, maze, S, game) {
@@ -526,8 +564,8 @@
         const nextCell = this.path[this.pathIndex];
         const cellCenterX = (nextCell.x + 0.5) * S;
         const cellCenterY = (nextCell.y + 0.5) * S;
-        if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 6) this.pathIndex++;
-        this.moveTowards(cellCenterX, cellCenterY, CONFIG.PATROLLER_SPEED_PATROL * 1.1, dt);
+        if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 8) this.pathIndex++;
+        this.moveTowards(cellCenterX, cellCenterY, CONFIG.PATROLLER_SPEED_PATROL * 1.1, dt, game);
       } else {
         this.investigateTimer -= dt;
         this.investigateTurnAngle += dt * 3.5;
@@ -540,7 +578,7 @@
       }
     }
 
-    updatePatrol(dt, maze, S) {
+    updatePatrol(dt, maze, S, game) {
       if (this.waypoints.length === 0) return;
       const currentWp = this.waypoints[this.currentWaypointIndex];
       const wpCenterX = (currentWp.x + 0.5) * S;
@@ -562,8 +600,8 @@
         const nextCell = this.path[this.pathIndex];
         const cellCenterX = (nextCell.x + 0.5) * S;
         const cellCenterY = (nextCell.y + 0.5) * S;
-        if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 6) this.pathIndex++;
-        this.moveTowards(cellCenterX, cellCenterY, CONFIG.PATROLLER_SPEED_PATROL, dt);
+        if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 8) this.pathIndex++;
+        this.moveTowards(cellCenterX, cellCenterY, CONFIG.PATROLLER_SPEED_PATROL, dt, game);
       }
     }
 
@@ -584,21 +622,44 @@
       this.pathIndex = 0;
     }
 
-    moveTowards(targetX, targetY, speed, dt) {
+    moveTowards(targetX, targetY, speed, dt, game) {
       const dx = targetX - this.x;
       const dy = targetY - this.y;
       const dist = Math.hypot(dx, dy);
-      if (dist < 1) return;
+      if (dist < 1.5) return;
 
       this.targetAngle = Math.atan2(dy, dx);
       let diff = this.targetAngle - this.angle;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      this.angle += diff * Math.min(1.0, 10.0 * dt);
+      this.angle += diff * Math.min(1.0, 11.0 * dt);
 
       const moveStep = Math.min(dist, speed * dt);
-      this.x += Math.cos(this.angle) * moveStep;
-      this.y += Math.sin(this.angle) * moveStep;
+      const moveX = (dx / dist) * moveStep;
+      const moveY = (dy / dist) * moveStep;
+
+      if (game && game.checkWallCollision) {
+        const nextX = this.x + moveX;
+        if (!game.checkWallCollision(nextX, this.y, this.radius)) {
+          this.x = nextX;
+        }
+        const nextY = this.y + moveY;
+        if (!game.checkWallCollision(this.x, nextY, this.radius)) {
+          this.y = nextY;
+        }
+
+        if (game.checkWallCollision(this.x, this.y, this.radius)) {
+          const S = CONFIG.CELL_SIZE;
+          const nearest = MazeGenerator.findNearestFloor(game.maze.grid, game.maze.W, game.maze.H, Math.floor(this.x / S), Math.floor(this.y / S));
+          if (nearest) {
+            this.x += ((nearest.x + 0.5) * S - this.x) * 0.25;
+            this.y += ((nearest.y + 0.5) * S - this.y) * 0.25;
+          }
+        }
+      } else {
+        this.x += moveX;
+        this.y += moveY;
+      }
     }
 
     render(ctx) {
@@ -796,7 +857,8 @@
 
     onHeardNoise(noiseX, noiseY, maze, S) {
       if (this.state === 'CHASING' || this.stunTimer > 0) return;
-      this.state = 'CHASING';
+      this.state = 'INVESTIGATING';
+      this.investigateTimer = CONFIG.AI_INVESTIGATE_TIME;
       this.lastKnownPlayerPos = { x: noiseX, y: noiseY };
       const curCell = { x: Math.floor(this.x / S), y: Math.floor(this.y / S) };
       const targetCell = { x: Math.floor(noiseX / S), y: Math.floor(noiseY / S) };
@@ -850,6 +912,10 @@
       }
 
       if (this.state === 'CHASING') {
+        if (!this.path || this.pathIndex >= this.path.length) {
+          this.recalcTimer = 0;
+        }
+
         this.recalcTimer -= dt;
         if (this.recalcTimer <= 0) {
           this.recalcTimer = CONFIG.AI_RECALC_INTERVAL;
@@ -859,17 +925,20 @@
           this.pathIndex = 0;
         }
 
-        let targetX = px;
-        let targetY = py;
+        let targetX = this.x;
+        let targetY = this.y;
         if (this.path && this.pathIndex < this.path.length) {
           const nextCell = this.path[this.pathIndex];
           const cellCenterX = (nextCell.x + 0.5) * S;
           const cellCenterY = (nextCell.y + 0.5) * S;
-          if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 6) this.pathIndex++;
+          if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 8) this.pathIndex++;
           targetX = cellCenterX;
           targetY = cellCenterY;
+        } else if (canSeePlayer) {
+          targetX = px;
+          targetY = py;
         }
-        this.moveTowards(targetX, targetY, CONFIG.HUNTER_SPEED, dt);
+        this.moveTowards(targetX, targetY, CONFIG.HUNTER_SPEED, dt, game);
 
       } else if (this.state === 'INVESTIGATING') {
         const targetX = this.lastKnownPlayerPos.x;
@@ -880,8 +949,8 @@
           const nextCell = this.path[this.pathIndex];
           const cellCenterX = (nextCell.x + 0.5) * S;
           const cellCenterY = (nextCell.y + 0.5) * S;
-          if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 6) this.pathIndex++;
-          this.moveTowards(cellCenterX, cellCenterY, CONFIG.HUNTER_SPEED * 0.9, dt);
+          if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 8) this.pathIndex++;
+          this.moveTowards(cellCenterX, cellCenterY, CONFIG.HUNTER_SPEED * 0.9, dt, game);
         } else {
           this.investigateTimer -= dt;
           this.investigateTurnAngle += dt * 3.5;
@@ -905,8 +974,8 @@
           const nextCell = this.path[this.pathIndex];
           const cellCenterX = (nextCell.x + 0.5) * S;
           const cellCenterY = (nextCell.y + 0.5) * S;
-          if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 6) this.pathIndex++;
-          this.moveTowards(cellCenterX, cellCenterY, CONFIG.HUNTER_SPEED * 0.75, dt);
+          if (Math.hypot(cellCenterX - this.x, cellCenterY - this.y) < 8) this.pathIndex++;
+          this.moveTowards(cellCenterX, cellCenterY, CONFIG.HUNTER_SPEED * 0.75, dt, game);
         }
       }
 
@@ -915,21 +984,44 @@
       }
     }
 
-    moveTowards(targetX, targetY, speed, dt) {
+    moveTowards(targetX, targetY, speed, dt, game) {
       const dx = targetX - this.x;
       const dy = targetY - this.y;
       const dist = Math.hypot(dx, dy);
-      if (dist < 2.5) return;
+      if (dist < 1.5) return;
 
       this.targetAngle = Math.atan2(dy, dx);
       let diff = this.targetAngle - this.angle;
       while (diff > Math.PI) diff -= Math.PI * 2;
       while (diff < -Math.PI) diff += Math.PI * 2;
-      this.angle += diff * Math.min(1.0, 10.0 * dt);
+      this.angle += diff * Math.min(1.0, 11.0 * dt);
 
       const moveStep = Math.min(dist, speed * dt);
-      this.x += Math.cos(this.angle) * moveStep;
-      this.y += Math.sin(this.angle) * moveStep;
+      const moveX = (dx / dist) * moveStep;
+      const moveY = (dy / dist) * moveStep;
+
+      if (game && game.checkWallCollision) {
+        const nextX = this.x + moveX;
+        if (!game.checkWallCollision(nextX, this.y, this.radius)) {
+          this.x = nextX;
+        }
+        const nextY = this.y + moveY;
+        if (!game.checkWallCollision(this.x, nextY, this.radius)) {
+          this.y = nextY;
+        }
+
+        if (game.checkWallCollision(this.x, this.y, this.radius)) {
+          const S = CONFIG.CELL_SIZE;
+          const nearest = MazeGenerator.findNearestFloor(game.maze.grid, game.maze.W, game.maze.H, Math.floor(this.x / S), Math.floor(this.y / S));
+          if (nearest) {
+            this.x += ((nearest.x + 0.5) * S - this.x) * 0.25;
+            this.y += ((nearest.y + 0.5) * S - this.y) * 0.25;
+          }
+        }
+      } else {
+        this.x += moveX;
+        this.y += moveY;
+      }
     }
 
     render(ctx) {
