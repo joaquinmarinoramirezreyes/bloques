@@ -42,6 +42,15 @@
       color: "#38bdf8",
       badge: "SHOOTER",
       icon: "defensaorbital"
+    },
+    {
+      id: "sombras",
+      name: "Sombras",
+      folder: "games/sombras",
+      description: "Sigilo y escape en laberintos procedurales. Explora en la oscuridad con tu linterna y evita a los guardianes.",
+      color: "#a855f7",
+      badge: "SIGILO",
+      icon: "sombras"
     }
   ];
 
@@ -65,6 +74,13 @@
       return `
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
           <path d="M12 2L9 8h6l-3-6zm-1 8H4l3 7h3l1-7zm2 0l1 7h3l3-7h-7zm-2 9l-1 3h4l-1-3h-2z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'sombras') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M12 4a9 9 0 0 0-9 9c0 4.97 4.03 9 9 9s9-4.03 9-9a9 9 0 0 0-9-9zm0 2c3.87 0 7 3.13 7 7 0 1.93-.78 3.68-2.05 4.95L12 13V6zm-1 8.41l3.54 3.54A6.96 6.96 0 0 1 12 19c-3.87 0-7-3.13-7-7 0-2.4 1.2-4.52 3.03-5.78L11 14.41z"/>
         </svg>
       `;
     }

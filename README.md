@@ -32,10 +32,14 @@ Sin frameworks, sin librerías externas, sin CDN, sin paso de build y con capaci
     │   ├── index.html  # Tablero 3:4, indicador de saque, HUD de vidas y power-ups
     │   ├── style.css   # Estilos neón coral y área táctil completa con una mano
     │   └── game.js     # Lógica: física por subpasos, ángulos dinámicos, power-ups y niveles
-    └── defensaorbital/ # Nuevo juego Defensa Orbital (Fase 1)
-        ├── index.html  # Interfaz, HUD espacial y canvas 3:4
-        ├── style.css   # Estilos espaciales neón cyan y controles táctiles con offset
-        └── game.js     # Lógica: nave con disparo continuo, parallax y colisiones
+    ├── defensaorbital/ # Juego Defensa Orbital
+    │   ├── index.html  # Interfaz, HUD espacial y canvas 3:4
+    │   ├── style.css   # Estilos espaciales neón cyan y controles táctiles con offset
+    │   └── game.js     # Lógica: nave con disparo continuo, parallax y colisiones
+    └── sombras/        # Juego Sombras (Sigilo y laberintos procedimentales)
+        ├── index.html  # Interfaz cenital, joystick flotante, visor HUD y selector de trajes
+        ├── style.css   # Estilos oscuros neón púrpura y linterna dinámica
+        └── game.js     # Lógica: laberintos con ciclos, niebla de guerra, IA de guardianes y skins
 ```
 
 ---
@@ -71,9 +75,20 @@ Sin frameworks, sin librerías externas, sin CDN, sin paso de build y con capaci
 - Nave con disparo automático constante y control táctil con offset vertical ergonómico para no tapar la nave.
 - Fondo de estrellas con parallax de 3 capas.
 - Object pooling total en proyectiles, enemigos y partículas.
-- Power-ups que caen aleatoriamente: **Paleta Ancha**, **Pelota Lenta** y **Multibola**.
-- Niveles declarativos definidos en matriz de datos.
-- Control con una sola mano en móvil (la paleta sigue el dedo en cualquier zona de la pantalla con suavizado lerp) y ratón/teclado en PC.
+- 4 tipos de enemigos con IA distintiva (Zigzag, Kamikaze, Tirador, Blindado) y jefe de sector.
+- Power-ups espaciales: Disparo doble/triple, Escudo de fuerza y Bomba limpiadora.
+
+### 5. Sombras (`/games/sombras/`)
+- Juego de sigilo y escape en laberintos procedurales generados por backtracking con ciclos (rutas alternativas).
+- Linterna dinámica cenital con sombras suaves y niebla de guerra pre-renderizada en canvas.
+- 3 llaves distribuidas estratégicamente para desbloquear la salida del sector.
+- 3 tipos de enemigos con IA avanzada:
+  1. **Patrullero:** Dron de ruta que investiga ruidos acústicos y persigue en línea de visión directa.
+  2. **Cazador:** Meca-sabueso con IA de rastreo que patrulla por cuadrantes sin bloquear pasillos y se repliega al capturar.
+  3. **Cámara Centinela:** Cono de visión rotatorio en intersecciones amplias con punto ciego 100% transitable.
+- Habilidades tácticas: **Sprint** con recarga de resistencia, **Distractor sónico** lanzable con rebote en muros y **Escudo de plasma** de un solo uso.
+- 4 trajes cyber-agente seleccionables en vivo con LED táctico (`INFILTRADOR`, `CIBER-FANTASMA`, `SOMBRA CARMESÍ`, `ESPECTRO ORO`).
+- Control móvil con joystick virtual flotante o teclado de escritorio.
 
 ---
 
@@ -129,6 +144,16 @@ El menú principal renderizará automáticamente la tarjeta con su color de acen
 | :--- | :--- | :--- |
 | Mover paleta | Flechas `←` `→` / `A` `D` / Ratón | Deslizar o arrastrar en cualquier parte |
 | Lanzar pelota | Barra `Espacio` / Clic | Tocar cualquier parte de la pantalla |
+| Pausa | Tecla `P` / `Escape` | Botón de pausa en barra superior |
+| Reiniciar | Tecla `R` | Botón de reinicio o pantalla Game Over |
+
+### Sombras
+| Acción | Teclado (Escritorio) | Móvil (Táctil) |
+| :--- | :--- | :--- |
+| Moverse | Flechas `↑` `↓` `←` `→` / `W` `A` `S` `D` | Joystick virtual flotante en pantalla |
+| Sprint | Mantener `Shift` | Botón táctil `⚡ SPRINT` |
+| Lanzar distractor | Barra `Espacio` | Botón táctil `🎯 DISTRAER` |
+| Cambiar traje (Skin) | Tecla `C` | Botón `🎨` en barra superior |
 | Pausa | Tecla `P` / `Escape` | Botón de pausa en barra superior |
 | Reiniciar | Tecla `R` | Botón de reinicio o pantalla Game Over |
 

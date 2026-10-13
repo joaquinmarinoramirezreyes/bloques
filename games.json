@@ -34,5 +34,14 @@
     "color": "#38bdf8",
     "badge": "SHOOTER",
     "icon": "defensaorbital"
+  },
+  {
+    "id": "sombras",
+    "name": "Sombras",
+    "folder": "games/sombras",
+    "description": "Sigilo y escape en laberintos procedurales. Explora en la oscuridad con tu linterna y evita a los guardianes.",
+    "color": "#a855f7",
+    "badge": "SIGILO",
+    "icon": "sombras"
   }
 ]
