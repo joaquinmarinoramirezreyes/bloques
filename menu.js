@@ -106,6 +106,36 @@
       badge: "RUNNER",
       icon: "corredor",
       eras: ["00"]
+    },
+    {
+      id: "gotas",
+      name: "Gotas",
+      folder: "games/gotas",
+      description: "Puzzle de parejas de gotas de gel 3D que caen. Conecta 4 o más, desata cascadas con multiplicador y usa la gota arcoíris.",
+      color: "#00e676",
+      badge: "PUZZLE",
+      icon: "gotas",
+      eras: ["90"]
+    },
+    {
+      id: "cristales",
+      name: "Cristales",
+      folder: "games/cristales",
+      description: "Combina 3 o más gemas prismáticas vectoriales 3D. Piezas de línea, bombas de color, 15 niveles con hielo y modo infinito.",
+      color: "#00d2ff",
+      badge: "MATCH-3",
+      icon: "cristales",
+      eras: ["00"]
+    },
+    {
+      id: "lanzaburbujas",
+      name: "Lanzaburbujas",
+      folder: "games/lanzaburbujas",
+      description: "Shooter de burbujas en rejilla hexagonal con línea guía de rebote, caída de burbujas flotantes, techo dinámico y 15 niveles.",
+      color: "#00e5ff",
+      badge: "SHOOTER",
+      icon: "lanzaburbujas",
+      eras: ["00"]
     }
   ];
 
@@ -219,6 +249,29 @@
       return `
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
           <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'gotas') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'cristales') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M16 2l5 5-9 15L3 7l5-5h8zm-1.2 2H9.2L5.4 6.8 12 18.3l6.6-11.5L14.8 4z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'lanzaburbujas') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <circle cx="7" cy="8" r="4"/>
+          <circle cx="16" cy="7" r="5"/>
+          <circle cx="12" cy="17" r="4.5"/>
         </svg>
       `;
     }

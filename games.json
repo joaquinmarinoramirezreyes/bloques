@@ -98,5 +98,35 @@
     "badge": "RUNNER",
     "icon": "corredor",
     "eras": ["00"]
+  },
+  {
+    "id": "gotas",
+    "name": "Gotas",
+    "folder": "games/gotas",
+    "description": "Puzzle de parejas de gotas de gel 3D que caen. Conecta 4 o más, desata cascadas con multiplicador y usa la gota arcoíris.",
+    "color": "#00e676",
+    "badge": "PUZZLE",
+    "icon": "gotas",
+    "eras": ["90"]
+  },
+  {
+    "id": "cristales",
+    "name": "Cristales",
+    "folder": "games/cristales",
+    "description": "Combina 3 o más gemas prismáticas vectoriales 3D. Piezas de línea, bombas de color, 15 niveles con hielo y modo infinito.",
+    "color": "#00d2ff",
+    "badge": "MATCH-3",
+    "icon": "cristales",
+    "eras": ["00"]
+  },
+  {
+    "id": "lanzaburbujas",
+    "name": "Lanzaburbujas",
+    "folder": "games/lanzaburbujas",
+    "description": "Shooter de burbujas en rejilla hexagonal con línea guía de rebote, caída de burbujas flotantes, techo dinámico y 15 niveles.",
+    "color": "#00e5ff",
+    "badge": "SHOOTER",
+    "icon": "lanzaburbujas",
+    "eras": ["00"]
   }
 ]
