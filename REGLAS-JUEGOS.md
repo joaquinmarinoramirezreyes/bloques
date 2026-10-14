@@ -87,3 +87,43 @@ Este documento contiene las reglas comunes obligatorias para todos los juegos de
 - **Transparencia en el Reporte de Pruebas**:
   - Reportar claramente qué pruebas fueron comprobadas **EJECUTANDO** código o scripts de simulación.
   - Reportar honestamente qué aspectos solo fueron comprobados por **INSPECCIÓN** de código o diseño.
+
+---
+
+## 11. Estándar de Calidad
+
+Este estándar establece el nivel de acabado audiovisual, respuesta física y retención que debe exhibir cada juego del catálogo. Se aplica en cada juego indicado, preservando siempre intactas sus reglas y mecánicas de juego originales (salvo indicación expresa).
+
+### 11.1 Sensación de Impacto ("Juice")
+- **Feedback audiovisual inmediato**: Toda acción importante (golpe, destrucción, rebote, salto, captura) debe tener respuesta visual y sonora contundente: animación de entrada y salida, deformación elástica (*squash and stretch*), destellos breves (*hit flash*), explosión de partículas vectoriales, vibración de pantalla (*screen shake*) proporcional a la magnitud del evento, micro-pausa en golpes grandes (*hitstop* de 40 a 90 ms) y números o textos flotantes animados para puntos y combos.
+- **Escalado de combos y rachas**: A mayor racha o combo, más partículas, tono sonoro creciente en frecuencia (*pitch shift* ascendente) y avisos flotantes destacados ("¡Combo x4!", "¡Imparable!").
+- **Transiciones fluidas**: Cambios entre pantallas (menú, juego, pausa, resultados) mediante transiciones suaves (fundidos o deslizamientos de 150 a 250 ms), evitando cortes secos.
+
+### 11.2 Estética Visual y Fidelidad Vectorial
+- **Arte vectorial enriquecido**: Ilustración procedural con paletas temáticas coherentes, degradados radiales/lineales, brillos de neón, luces dinámicas y sombras proyectadas por código. Cero gráficos planos monocromáticos o formas sin volumen ni detalle.
+- **Fondos animados sutiles**: Capas de parallax multicapa, estelas de polvo cósmico, orbes flotantes o gradientes que "respiran" suavemente sin interferir ni distraer de la zona jugable.
+- **Tipografía y HUD de alto contraste**: Jerarquía visual limpia, legibilidad inmediata en pantallas móviles pequeñas y animación de conteo o escala en cambios de puntuación.
+- **Identidad visual diferenciada**: Cada juego debe poseer su propio lenguaje visual único, distinguiéndose de los demás títulos del arcade y de cualquier marca existente.
+
+### 11.3 Síntesis de Audio y Paisaje Sonoro
+- **Efectos procedurales variados**: Múltiples variantes de tono y modulación por tipo de evento (pitch aleatorio leve de ±5-10%) para evitar fatiga auditiva o repetición monótona.
+- **Música generativa ambiental**: Pista musical procedural en bucle sintetizada en tiempo real mediante Web Audio API, con control de volumen independiente para efectos de sonido (SFX) y música de fondo (BGM).
+
+### 11.4 Progresión, Retención y Accesibilidad
+- **Pantalla de inicio enriquecida**: Presentación con logotipo vectorial animado, selector de opciones y tutorial interactivo breve la primera vez que se juega (persistiendo en `ArcadeStorage` que ya fue completado).
+- **Misiones u objetivos diarios**: 2 o 3 misiones simples diarias guardadas localmente (ej. "Consigue 1,000 pts", "Realiza un combo x3").
+- **Estadísticas completas del jugador**: Registro persistente de partidas jugadas, tiempo total de juego, mejor racha y puntuación récord.
+- **Sistema de Logros (mínimo 8 por juego)**: Logros variados con banner emergente animado (*toast*) al desbloquearse en tiempo real.
+- **Pantalla de resultados detallada**: Desglose pormenorizado de puntos, comparación con el récord histórico y animación especial al batir una nueva mejor marca.
+- **Panel de Opciones y Accesibilidad**: Ajustes independientes de volumen SFX y música, toggle de vibración háptica (`navigator.vibrate`) y modo de accesibilidad (modo alto contraste o paleta adaptada a daltonismo).
+
+### 11.5 Rendimiento y Optimización Extrema (No Negociable)
+- **Overlay de Diagnóstico (`?debug=1`)**: Modo de depuración que muestra en pantalla FPS en tiempo real, tiempo de frame (ms) y recuento de partículas activas.
+- **Ajuste automático de calidad**: El juego debe mantener 60 FPS estables. Si los FPS descienden de 55 sostenidos en dispositivos de gama media, se activa automáticamente un perfil de bajo consumo que reduce la cantidad de partículas y desactiva sombras pesadas.
+- **Cero basura para el recolector (Garbage Collector)**: Object pooling estricto para partículas, proyectiles, textos flotantes y arrays temporales. Prohibido instanciar objetos o cadenas dentro del ciclo de actualización/renderizado por frame.
+
+### 11.6 Reglas del Proceso y Documentación
+- **NUNCA hacer commit ni push** sin autorización expresa del usuario.
+- **Transparencia en el reporte**: Informar con precisión qué aspectos fueron probados **EJECUTANDO** código y qué aspectos fueron revisados por **INSPECCIÓN**.
+- **Bitácora de cambios**: Mantener y actualizar un archivo `NOTAS.md` en la carpeta de cada juego donde se apliquen mejoras, detallando cada cambio introducido.
+

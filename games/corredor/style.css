@@ -1,13 +1,15 @@
-/* games/corredor/style.css - Estilo Arcade 00 (Cyber Glass & Reflex) */
+/* games/corredor/style.css - Estilo Arcade 00 (Cyber Glass, Velocity & Biomes) */
 :root {
   --y2k-bg: #090e1c;
-  --y2k-glass: rgba(22, 33, 62, 0.75);
+  --y2k-glass: rgba(22, 33, 62, 0.78);
   --y2k-glass-border: rgba(255, 255, 255, 0.22);
   --y2k-cyan: #00f0ff;
   --y2k-purple: #b388ff;
   --y2k-gold: #ffcc00;
   --y2k-blue: #0088ff;
   --y2k-glow: rgba(0, 240, 255, 0.35);
+  --y2k-ruby: #ff0055;
+  --y2k-emerald: #00e676;
 }
 
 * {
@@ -52,7 +54,7 @@ body.arcade-lock {
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px;
-  background: rgba(9, 14, 28, 0.85);
+  background: rgba(9, 14, 28, 0.88);
   border-bottom: 1px solid var(--y2k-glass-border);
   backdrop-filter: blur(10px);
   z-index: 20;
@@ -122,7 +124,9 @@ body.arcade-lock {
   border-radius: 12px;
   color: #fff;
   cursor: pointer;
+  font-size: 17px;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  transition: transform 0.1s;
 }
 
 .icon-button:active {
@@ -139,7 +143,7 @@ body.arcade-lock {
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px;
-  background: linear-gradient(180deg, rgba(15, 24, 48, 0.9), rgba(9, 14, 28, 0.8));
+  background: linear-gradient(180deg, rgba(15, 24, 48, 0.92), rgba(9, 14, 28, 0.85));
   border-bottom: 1px solid rgba(0, 240, 255, 0.2);
   z-index: 15;
   flex-shrink: 0;
@@ -251,13 +255,42 @@ body.arcade-lock {
   background: linear-gradient(90deg, #00e676, #00f0ff) !important;
 }
 
-/* Banner de Sector */
+/* Barra de Misión Activa en Carrera */
+.hud-mission-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(9, 14, 28, 0.88);
+  border-bottom: 1px solid rgba(255, 204, 0, 0.3);
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffdd44;
+  letter-spacing: 0.5px;
+  z-index: 14;
+  flex-shrink: 0;
+}
+
+.hud-mission-bar.hidden {
+  display: none !important;
+}
+
+.mission-icon {
+  font-size: 12px;
+}
+
+.mission-text {
+  text-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+}
+
+/* Banner de Sector / Bioma */
 .sector-banner {
   position: absolute;
-  top: 25%;
+  top: 22%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(9, 14, 28, 0.92);
+  background: rgba(9, 14, 28, 0.94);
   border: 2px solid var(--y2k-cyan);
   border-radius: 14px;
   padding: 12px 24px;
@@ -265,10 +298,10 @@ body.arcade-lock {
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  box-shadow: 0 0 35px rgba(0, 240, 255, 0.45);
+  box-shadow: 0 0 35px rgba(0, 240, 255, 0.5);
   z-index: 25;
   pointer-events: none;
-  animation: bannerFade 1.6s ease-out forwards;
+  animation: bannerFade 1.8s ease-out forwards;
 }
 
 .sector-banner.hidden {
@@ -288,6 +321,49 @@ body.arcade-lock {
   font-weight: 800;
   color: #fff;
   letter-spacing: 1.5px;
+}
+
+/* Banner de Eventos Aleatorios */
+.event-banner {
+  position: absolute;
+  top: 14%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(135deg, rgba(255, 0, 127, 0.9), rgba(15, 24, 48, 0.95));
+  border: 2px solid #ffcc00;
+  border-radius: 14px;
+  padding: 10px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  box-shadow: 0 0 30px rgba(255, 204, 0, 0.6);
+  z-index: 26;
+  pointer-events: none;
+  animation: bannerFade 2.2s ease-out forwards;
+}
+
+.event-banner.hidden {
+  display: none !important;
+}
+
+.event-icon {
+  font-size: 22px;
+}
+
+.event-title {
+  font-size: 16px;
+  font-weight: 900;
+  color: #ffcc00;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 8px rgba(255, 204, 0, 0.8);
+}
+
+.event-desc {
+  font-size: 11px;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: 0.8px;
 }
 
 @keyframes bannerFade {
@@ -344,7 +420,7 @@ body.arcade-lock {
   background: var(--y2k-glass);
   border: 1px solid var(--y2k-glass-border);
   border-radius: 20px;
-  padding: 24px 20px;
+  padding: 22px 18px;
   text-align: center;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px var(--y2k-glow);
   backdrop-filter: blur(14px);
@@ -360,10 +436,10 @@ body.arcade-lock {
 
 .glass-orb {
   font-size: 32px;
-  width: 60px;
-  height: 60px;
-  line-height: 56px;
-  margin: 0 auto 12px;
+  width: 58px;
+  height: 58px;
+  line-height: 54px;
+  margin: 0 auto 10px;
   border-radius: 50%;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(0, 240, 255, 0.15));
   border: 1px solid rgba(255, 255, 255, 0.4);
@@ -381,18 +457,64 @@ body.arcade-lock {
 .card-subtitle {
   font-size: 11px;
   color: #a0b8da;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+}
+
+/* Preview Chip del Personaje */
+.character-preview-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--y2k-glass-border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+}
+
+.skin-avatar {
+  font-size: 22px;
+}
+
+.skin-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+  flex: 1;
+  margin-left: 10px;
+}
+
+.skin-name {
+  font-size: 12px;
+  font-weight: 900;
+  color: var(--y2k-cyan);
+}
+
+.skin-aura {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.btn-micro {
+  padding: 4px 10px;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 8px;
+  background: rgba(0, 240, 255, 0.2);
+  border: 1px solid var(--y2k-cyan);
+  color: #fff;
+  cursor: pointer;
 }
 
 .instructions-card {
   background: rgba(0, 0, 0, 0.35);
   border-radius: 12px;
-  padding: 12px;
-  margin-bottom: 18px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
   text-align: left;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 6px;
 }
 
 .inst-row {
@@ -431,6 +553,18 @@ body.arcade-lock {
   transform: scale(0.97);
 }
 
+.card-footer-buttons {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.btn-half {
+  flex: 1;
+  min-height: 40px;
+  font-size: 12px;
+}
+
 .record-indicator {
   font-size: 11px;
   color: #7b93b8;
@@ -441,7 +575,7 @@ body.arcade-lock {
   color: var(--y2k-gold);
 }
 
-/* Overlays */
+/* Overlays Generales */
 .game-overlay {
   position: absolute;
   inset: 0;
@@ -451,6 +585,7 @@ body.arcade-lock {
   align-items: center;
   justify-content: center;
   z-index: 35;
+  transition: opacity 0.2s;
 }
 
 .game-overlay.hidden {
@@ -458,20 +593,22 @@ body.arcade-lock {
 }
 
 .glass-panel {
-  width: 88%;
-  max-width: 360px;
+  width: 90%;
+  max-width: 380px;
+  max-height: 90%;
+  overflow-y: auto;
   background: var(--y2k-glass);
   border: 1px solid var(--y2k-glass-border);
   border-radius: 20px;
-  padding: 24px 20px;
+  padding: 20px 18px;
   text-align: center;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
 }
 
-.glass-panel h2 {
-  font-size: 22px;
+.glass-panel h2, .glass-panel h3 {
+  font-size: 20px;
   font-weight: 900;
-  letter-spacing: 2px;
+  letter-spacing: 1.5px;
   color: var(--y2k-cyan);
   margin-bottom: 6px;
 }
@@ -479,7 +616,16 @@ body.arcade-lock {
 .glass-panel p {
   font-size: 12px;
   color: #9ab4d6;
-  margin-bottom: 18px;
+  margin-bottom: 14px;
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--y2k-glass-border);
+  padding-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .result-stats {
@@ -487,14 +633,14 @@ body.arcade-lock {
   justify-content: space-around;
   background: rgba(0, 0, 0, 0.35);
   border-radius: 12px;
-  padding: 14px 10px;
-  margin-bottom: 16px;
+  padding: 12px 8px;
+  margin-bottom: 14px;
 }
 
 .stat-col {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
 }
 
 .stat-lbl {
@@ -507,7 +653,7 @@ body.arcade-lock {
 
 .stat-big {
   font-family: 'Courier New', Courier, monospace;
-  font-size: 22px;
+  font-size: 20px;
   font-weight: 900;
   color: #fff;
 }
@@ -515,20 +661,20 @@ body.arcade-lock {
 .record-meta {
   font-size: 12px;
   color: var(--y2k-gold);
-  margin-bottom: 20px;
+  margin-bottom: 16px;
 }
 
 .overlay-actions {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 .btn-primary, .btn-secondary {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 46px;
+  min-height: 44px;
   width: 100%;
   border-radius: 12px;
   font-family: inherit;
@@ -537,6 +683,7 @@ body.arcade-lock {
   letter-spacing: 1px;
   cursor: pointer;
   text-decoration: none;
+  transition: transform 0.1s;
 }
 
 .btn-primary {
@@ -554,4 +701,212 @@ body.arcade-lock {
 
 .btn-primary:active, .btn-secondary:active {
   transform: scale(0.97);
+}
+
+/* Tienda de Mejoras */
+.shop-wallet {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 14px;
+  font-weight: 900;
+  color: var(--y2k-gold);
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 204, 0, 0.3);
+}
+
+.shop-tabs {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.shop-tab {
+  flex: 1;
+  padding: 8px 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--y2k-glass-border);
+  border-radius: 8px;
+  color: #94a3b8;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.shop-tab.active {
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--y2k-cyan);
+  color: #fff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.shop-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.shop-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--y2k-glass-border);
+  border-radius: 12px;
+  padding: 8px 12px;
+  text-align: left;
+}
+
+.shop-card-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shop-card-icon {
+  font-size: 20px;
+}
+
+.shop-card-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.shop-card-desc {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.shop-btn {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 800;
+  border-radius: 8px;
+  cursor: pointer;
+  border: none;
+}
+
+.shop-btn.btn-buy {
+  background: linear-gradient(180deg, #ffcc00, #ff8800);
+  color: #000;
+}
+
+.shop-btn.btn-equip {
+  background: rgba(0, 240, 255, 0.2);
+  border: 1px solid var(--y2k-cyan);
+  color: #fff;
+}
+
+.shop-btn.btn-equipped {
+  background: rgba(0, 230, 118, 0.25);
+  border: 1px solid #00e676;
+  color: #00e676;
+  cursor: default;
+}
+
+/* Logros y Misiones */
+.ach-list, .missions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 250px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.ach-item, .mission-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--y2k-glass-border);
+  border-radius: 12px;
+  padding: 8px 12px;
+}
+
+.ach-item.unlocked {
+  border-color: var(--y2k-gold);
+  background: rgba(255, 204, 0, 0.08);
+}
+
+.ach-icon {
+  font-size: 20px;
+}
+
+.ach-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.ach-desc {
+  font-size: 10px;
+  color: #94a3b8;
+}
+
+.ach-status {
+  margin-left: auto;
+  font-size: 10px;
+  font-weight: 800;
+  color: #7b93b8;
+}
+
+.ach-item.unlocked .ach-status {
+  color: var(--y2k-gold);
+}
+
+/* Opciones & Accesibilidad */
+.options-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.opt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--y2k-glass-border);
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.opt-row input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--y2k-cyan);
+  cursor: pointer;
+}
+
+/* Modo Alto Contraste */
+body.high-contrast {
+  background: #000 !important;
+}
+
+body.high-contrast .hud-header,
+body.high-contrast .runner-hud,
+body.high-contrast .hud-mission-bar {
+  background: #000 !important;
+  border-color: #fff !important;
+}
+
+body.high-contrast .hud-val,
+body.high-contrast .brand-title {
+  color: #ffff00 !important;
+  -webkit-text-fill-color: #ffff00 !important;
+}
+
+body.high-contrast .btn-primary {
+  background: #ffff00 !important;
+  color: #000 !important;
+  font-weight: 900 !important;
 }

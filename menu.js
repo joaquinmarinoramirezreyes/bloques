@@ -136,6 +136,26 @@
       badge: "SHOOTER",
       icon: "lanzaburbujas",
       eras: ["00"]
+    },
+    {
+      id: "lumen",
+      name: "Lumen",
+      folder: "games/lumen",
+      description: "Laberinto de luz y persecución en la oscuridad. Enciende faroles, evade criaturas geométricas y usa chispas temporales.",
+      color: "#ffd700",
+      badge: "LABERINTO",
+      icon: "lumen",
+      eras: ["80"]
+    },
+    {
+      id: "cargas",
+      name: "Cargas",
+      folder: "games/cargas",
+      description: "Laberinto táctico con cargas de resonancia en rombo. Empuja núcleos, desata combos en cadena y derrota jefes con ataques telegrafiados.",
+      color: "#f59e0b",
+      badge: "ACCIÓN",
+      icon: "cargas",
+      eras: ["90"]
     }
   ];
 
@@ -272,6 +292,20 @@
           <circle cx="7" cy="8" r="4"/>
           <circle cx="16" cy="7" r="5"/>
           <circle cx="12" cy="17" r="4.5"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'lumen') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M12 2a1 1 0 0 1 1 1v1.07A7.002 7.002 0 0 1 19 11v5a2 2 0 0 1-2 2h-1v2a2 2 0 0 1-2 2h-4a2 2 0 0 1-2-2v-2H7a2 2 0 0 1-2-2v-5a7.002 7.002 0 0 1 6-6.93V3a1 1 0 0 1 1-1zm0 4a5 5 0 0 0-5 5v5h10v-5a5 5 0 0 0-5-5zm-2 14h4v-2h-4v2z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'cargas') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M12 2l4 4-2 2 4 4-4 4 2 2-4 4-4-4 2-2-4-4 4-4-2-2 4-4zm0 5l-2.5 2.5 2.5 2.5 2.5-2.5L12 7zm0 5l-2.5 2.5 2.5 2.5 2.5-2.5L12 12z"/>
         </svg>
       `;
     }

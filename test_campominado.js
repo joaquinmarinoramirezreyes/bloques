@@ -114,4 +114,20 @@ console.log('✓ Flood fill iterativo verificado: expansión en cadena limpia si
 }
 console.log('✓ Condición de victoria verificada correctamente');
 
-console.log('--- TODOS LOS TESTS DE CAMPO MINADO PASARON EXITOSAMENTE (5/5) ---');
+// 6. Solucionador Lógico Determinista y Detección Guess-Free
+{
+  const grid = MineSweeperLogic.createEmptyGrid(4, 4);
+  grid[0][0].isMine = true; // 1 sola mina en esquina
+  MineSweeperLogic.calculateNeighborCounts(grid, 4, 4);
+
+  const res = MineSweeperLogic.solveLogically(grid, 4, 4, 3, 3);
+  assert.strictEqual(res.isGuessFree, true, 'El tablero debe ser deterministamente deducible sin adivinanza');
+
+  const hint = MineSweeperLogic.findSafeHint(grid, 4, 4);
+  assert.notStrictEqual(hint, null, 'Debe encontrar una pista segura');
+  assert.strictEqual(grid[hint.r][hint.c].isMine, false, 'La casilla de pista nunca debe ser una mina');
+}
+console.log('✓ Solucionador lógico determinista (Guess-Free) y pistas seguras verificadas');
+
+console.log('--- TODOS LOS TESTS DE CAMPO MINADO PASARON EXITOSAMENTE (6/6) ---');
+

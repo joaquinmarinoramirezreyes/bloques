@@ -7,15 +7,15 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="Campo Minado - Duelo táctico de detección de minas con casillas en relieve 3D, primer toque seguro y flood-fill iterativo.">
+  <meta name="description" content="Campo Minado - Estética de sonar y laboratorio, revelado en ola, campaña de 20 tableros, pistas seguras y sin adivinanza forzada.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231a1c2e'/%3E%3Ccircle cx='16' cy='16' r='8' fill='%23ff3366'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23ffcc00'/%3E%3C/svg%3E">
-  <title>Campo Minado - Arcade 90</title>
+  <title>Campo Minado - Laboratorio Sonar 90s</title>
   <link rel="stylesheet" href="../../shared/theme.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="arcade-lock">
   <div id="app-root">
-    <!-- Encabezado superior con botón Volver al Menú -->
+    <!-- Encabezado superior con botón Volver y Controles -->
     <header class="hud-header">
       <div class="brand">
         <a href="../../index.html" class="icon-button back-button" aria-label="Volver al Menú Principal" title="Menú Principal">
@@ -23,10 +23,19 @@
             <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
           </svg>
         </a>
-        <span class="brand-badge badge-90s">ARCADE 90</span>
+        <span class="brand-badge badge-90s">SONAR 90</span>
         <h1 class="brand-title">CAMPO MINADO</h1>
       </div>
       <div class="hud-actions">
+        <button id="btn-tutorial-header" class="icon-button" aria-label="Tutorial" title="Tutorial">
+          ❓
+        </button>
+        <button id="btn-achievements-header" class="icon-button" aria-label="Logros" title="Logros (8)">
+          🏆
+        </button>
+        <button id="btn-options-header" class="icon-button" aria-label="Ajustes" title="Ajustes">
+          ⚙️
+        </button>
         <button id="btn-sound-toggle" class="icon-button" aria-label="Silenciar / Activar sonido" title="Sonido">
           <svg id="icon-sound-on" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -35,39 +44,54 @@
             <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
           </svg>
         </button>
-        <button id="btn-restart-header" class="icon-button" aria-label="Reiniciar tablero" title="Reiniciar (R)">
-          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-            <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
-          </svg>
-        </button>
       </div>
     </header>
 
-    <!-- Selector de Tamaño / Dificultad -->
-    <div class="size-bar">
+    <!-- Barra de Selección de Modos: Clásico, Contrarreloj, Campaña -->
+    <div class="mode-bar">
+      <button type="button" class="btn-mode-tab active" data-game-mode="CLASSIC">CLÁSICO</button>
+      <button type="button" class="btn-mode-tab" data-game-mode="TIMED">CONTRARRELOJ</button>
+      <button type="button" class="btn-mode-tab" data-game-mode="CAMPAIGN">CAMPAÑA (20)</button>
+    </div>
+
+    <!-- Selector de Tamaño (para Clásico y Contrarreloj) -->
+    <div id="size-bar" class="size-bar">
       <button type="button" class="btn-size active" data-size="EASY">9x9 (10)</button>
       <button type="button" class="btn-size" data-size="MEDIUM">12x16 (30)</button>
       <button type="button" class="btn-size" data-size="HARD">16x24 (70)</button>
     </div>
 
-    <!-- Panel de Estado (Minas, Cara de Emoción, Cronómetro) -->
+    <!-- Selector de Niveles de Campaña -->
+    <div id="campaign-bar" class="campaign-bar hidden">
+      <div class="campaign-title">
+        <span id="camp-lvl-name">SECTOR 1: Calibración Alfa</span>
+        <button id="btn-open-camp-selector" class="btn-camp-selector">MAPA 20</button>
+      </div>
+    </div>
+
+    <!-- Panel de Estado (Minas, Cara Sonar, Cronómetro, Escaneo Pista) -->
     <div class="status-panel">
       <div class="counter-box">
         <span class="counter-label">MINAS</span>
         <span id="mine-counter" class="counter-val">010</span>
       </div>
 
-      <button id="btn-face" class="face-button" aria-label="Reiniciar juego">
+      <button id="btn-face" class="face-button" aria-label="Reiniciar juego" title="Reiniciar">
         <span id="face-icon" class="face-emoji">😎</span>
       </button>
 
+      <button id="btn-hint" class="hint-button" aria-label="Escanear casilla segura (Pista)" title="Escanear Pista Segura">
+        <span class="hint-icon">📡</span>
+        <span id="hint-text" class="hint-label">PISTA: 1</span>
+      </button>
+
       <div class="counter-box">
-        <span class="counter-label">TIEMPO</span>
+        <span class="counter-label" id="time-label">TIEMPO</span>
         <span id="time-counter" class="counter-val">000</span>
       </div>
     </div>
 
-    <!-- Escenario de Juego (Canvas con cuadrícula 3D) -->
+    <!-- Escenario de Juego (Canvas con cuadrícula Sonar 3D) -->
     <main class="game-stage">
       <div class="board-wrapper" id="board-container">
         <canvas id="mine-canvas" width="480" height="640" aria-label="Cuadrícula de Campo Minado"></canvas>
@@ -85,6 +109,71 @@
       </div>
     </footer>
 
+    <!-- Modal Selector de Campaña (20 Niveles) -->
+    <div id="modal-campaign" class="game-overlay hidden">
+      <div class="overlay-card wide-card">
+        <h2>CAMPAÑA DE LABORATORIO</h2>
+        <p>20 sectores tácticos con reglas especiales</p>
+        <div class="campaign-grid" id="campaign-grid"></div>
+        <button id="btn-close-campaign" class="btn-primary">CERRAR</button>
+      </div>
+    </div>
+
+    <!-- Modal de Tutorial Interactivo -->
+    <div id="modal-tutorial" class="game-overlay hidden">
+      <div class="overlay-card">
+        <h2>TUTORIAL DE ARTIFICIERO</h2>
+        <div class="tutorial-step" id="tutorial-content">
+          <div class="tut-icon">🔍</div>
+          <h3 id="tut-title">La regla de los números</h3>
+          <p id="tut-desc">Cada número indica cuántas minas hay en las 8 casillas que lo rodean.</p>
+        </div>
+        <div class="tutorial-dots" id="tutorial-dots">
+          <span class="dot active"></span>
+          <span class="dot"></span>
+          <span class="dot"></span>
+        </div>
+        <div class="tutorial-actions">
+          <button id="btn-tut-prev" class="btn-secondary">Anterior</button>
+          <button id="btn-tut-next" class="btn-primary">Siguiente</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Logros (8 Logros) -->
+    <div id="modal-achievements" class="game-overlay hidden">
+      <div class="overlay-card wide-card">
+        <h2>LOGROS DE ARTIFICIERO</h2>
+        <p>8 desafíos de lógica y velocidad</p>
+        <div class="achievements-list" id="achievements-list"></div>
+        <button id="btn-close-achievements" class="btn-primary">CERRAR</button>
+      </div>
+    </div>
+
+    <!-- Modal de Opciones y Accesibilidad -->
+    <div id="modal-options" class="game-overlay hidden">
+      <div class="overlay-card">
+        <h2>AJUSTES DE SONAR</h2>
+        <div class="option-row">
+          <label for="slider-sfx">Efectos (SFX): <span id="val-sfx">100%</span></label>
+          <input type="range" id="slider-sfx" min="0" max="100" value="100">
+        </div>
+        <div class="option-row">
+          <label for="slider-bgm">Música Sonar (BGM): <span id="val-bgm">70%</span></label>
+          <input type="range" id="slider-bgm" min="0" max="100" value="70">
+        </div>
+        <div class="option-row-toggle">
+          <span>Vibración Háptica:</span>
+          <button type="button" id="toggle-vibration" class="btn-toggle-small active">ACTIVADA</button>
+        </div>
+        <div class="option-row-toggle">
+          <span>Alto Contraste / Daltonismo:</span>
+          <button type="button" id="toggle-contrast" class="btn-toggle-small">DESACTIVADO</button>
+        </div>
+        <button id="btn-close-options" class="btn-primary">GUARDAR</button>
+      </div>
+    </div>
+
     <!-- Overlay de Victoria / Derrota -->
     <div id="overlay-result" class="game-overlay hidden">
       <div class="overlay-card">
@@ -100,10 +189,11 @@
             <span id="stat-best-time" class="stat-num">38s</span>
           </div>
         </div>
-        <div class="overlay-actions">
-          <button id="btn-play-again" class="btn-primary">Jugar de Nuevo</button>
-          <a href="../../index.html" class="btn-secondary">Menú Principal</a>
+        <div id="camp-next-box" class="camp-next-box hidden">
+          <button id="btn-next-camp" class="btn-primary">SIGUIENTE SECTOR</button>
         </div>
+        <button id="btn-play-again" class="btn-primary">Jugar de Nuevo</button>
+        <a href="../../index.html" class="btn-secondary">Menú Principal</a>
       </div>
     </div>
   </div>
@@ -111,6 +201,7 @@
   <script src="../../shared/canvas.js"></script>
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
+  <script src="../../shared/juice.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

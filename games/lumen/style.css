@@ -1,0 +1,533 @@
+/*
+ * games/lumen/style.css
+ * Estética de los 80s: Neón oscuro, resplandor fosfórico, scanlines leves y tipografía monoespaciada.
+ */
+
+:root {
+  --bg-dark: #050811;
+  --neon-cyan: #00f0ff;
+  --neon-gold: #ffaa00;
+  --neon-amber: #ff6600;
+  --neon-magenta: #ff007f;
+  --neon-border: rgba(0, 240, 255, 0.4);
+  --neon-glow: rgba(0, 240, 255, 0.25);
+
+  --text-primary: #e6ffff;
+  --text-muted: #648899;
+
+  --font-family: "Courier New", Courier, monospace, -apple-system, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--bg-dark);
+  background: radial-gradient(circle at 50% 20%, #0c1424 0%, #050811 80%, #010206 100%);
+  font-family: var(--font-family);
+  color: var(--text-primary);
+  touch-action: none;
+}
+
+#game-container {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  max-width: 440px;
+  margin: 0 auto;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.15);
+}
+
+/* Efecto de líneas de escaneo 80s sutil */
+#game-container::after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+  background-size: 100% 4px;
+  z-index: 20;
+  pointer-events: none;
+  opacity: 0.6;
+}
+
+/* =========================================
+   HEADER SUPERIOR RETRO 80s
+   ========================================= */
+#game-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: env(safe-area-inset-top, 8px) 10px 4px 10px;
+  background: rgba(5, 12, 22, 0.85);
+  border-bottom: 1px solid var(--neon-border);
+  box-shadow: 0 2px 10px rgba(0, 240, 255, 0.15);
+  z-index: 30;
+  min-height: 48px;
+}
+
+.hud-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.hud-label {
+  font-size: 9px;
+  letter-spacing: 1.2px;
+  font-weight: 700;
+  color: var(--text-muted);
+}
+
+.hud-val {
+  font-size: 16px;
+  font-weight: 800;
+  color: #fff;
+  text-shadow: 0 0 6px var(--neon-cyan);
+}
+
+.hud-val.highlight {
+  color: var(--neon-gold);
+  text-shadow: 0 0 8px rgba(255, 170, 0, 0.8);
+}
+
+.lives-icons {
+  font-size: 12px;
+  letter-spacing: 1px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+/* =========================================
+   BOTONES NEÓN
+   ========================================= */
+.neon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid var(--neon-border);
+  color: var(--neon-cyan);
+  cursor: pointer;
+  box-shadow: 0 0 6px var(--neon-glow);
+  transition: all 0.12s ease;
+  min-height: 44px;
+  min-width: 44px;
+  border-radius: 8px;
+}
+
+.neon-btn:active {
+  transform: scale(0.95);
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+}
+
+.btn-icon {
+  width: 40px;
+  height: 40px;
+}
+
+.glow-btn {
+  background: linear-gradient(180deg, rgba(0, 240, 255, 0.3) 0%, rgba(0, 100, 180, 0.5) 100%);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+  font-weight: 800;
+  color: #fff;
+}
+
+.btn-large {
+  padding: 12px 20px;
+  font-size: 14px;
+  width: 100%;
+}
+
+/* =========================================
+   SUB-BARRA: HABILIDADES Y NIVEL
+   ========================================= */
+#sub-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 10px;
+  background: rgba(2, 6, 14, 0.85);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.15);
+  font-size: 11px;
+  min-height: 34px;
+  z-index: 30;
+}
+
+.level-indicator {
+  font-weight: 700;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 4px var(--neon-cyan);
+}
+
+.abilities-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ability-slot {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.ability-label {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.sparks-pills {
+  display: flex;
+  gap: 4px;
+}
+
+.spark-pip {
+  font-size: 12px;
+  opacity: 0.3;
+  transition: opacity 0.2s;
+}
+
+.spark-pip.ready {
+  opacity: 1;
+  filter: drop-shadow(0 0 4px var(--neon-gold));
+}
+
+.flash-pip {
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #777;
+}
+
+.flash-pip.ready {
+  color: #ffea00;
+  border-color: #ffea00;
+  box-shadow: 0 0 6px rgba(255, 234, 0, 0.5);
+}
+
+/* =========================================
+   CANVAS DE LABERINTO (RESPONSIVE)
+   ========================================= */
+#canvas-container {
+  flex: 1;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  padding: 2px;
+}
+
+#game-canvas {
+  display: block;
+  touch-action: none;
+  border: 1px solid rgba(0, 240, 255, 0.3);
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 240, 255, 0.1);
+  background: #020408;
+}
+
+/* =========================================
+   CONTROLES TÁCTILES INFERIORES
+   ========================================= */
+#touch-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 16px env(safe-area-inset-bottom, 10px) 16px;
+  background: rgba(3, 8, 16, 0.95);
+  border-top: 1px solid var(--neon-border);
+  min-height: 120px;
+  z-index: 30;
+}
+
+/* D-PAD Virtual Táctil */
+.dpad-container {
+  display: grid;
+  grid-template-columns: repeat(3, 44px);
+  grid-template-rows: repeat(3, 44px);
+  gap: 2px;
+  width: 136px;
+  height: 136px;
+  align-items: center;
+  justify-content: center;
+}
+
+.dpad-btn {
+  width: 44px;
+  height: 44px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid rgba(0, 240, 255, 0.35);
+  border-radius: 6px;
+  color: var(--neon-cyan);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  touch-action: none;
+  box-shadow: 0 0 4px rgba(0, 240, 255, 0.15);
+  transition: all 0.1s;
+}
+
+.dpad-btn:active, .dpad-btn.active {
+  background: rgba(0, 240, 255, 0.35);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+  transform: scale(0.92);
+}
+
+.dpad-up    { grid-column: 2; grid-row: 1; }
+.dpad-left  { grid-column: 1; grid-row: 2; }
+.dpad-center{ grid-column: 2; grid-row: 2; background: rgba(0, 240, 255, 0.03); border: none; cursor: default; }
+.dpad-right { grid-column: 3; grid-row: 2; }
+.dpad-down  { grid-column: 2; grid-row: 3; }
+
+/* Botones de Acción */
+.action-buttons-container {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.action-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  border: 2px solid;
+  cursor: pointer;
+  touch-action: none;
+  transition: all 0.12s;
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.action-btn:active {
+  transform: scale(0.92);
+}
+
+.btn-spark {
+  border-color: var(--neon-gold);
+  color: var(--neon-gold);
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.4);
+}
+
+.btn-spark:active {
+  background: rgba(255, 170, 0, 0.3);
+}
+
+.btn-flash {
+  border-color: #ff3366;
+  color: #ff3366;
+  box-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
+}
+
+.btn-flash:active {
+  background: rgba(255, 51, 102, 0.3);
+}
+
+.btn-glyph {
+  font-size: 20px;
+  line-height: 1;
+}
+
+.btn-subtext {
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+}
+
+/* =========================================
+   MODALES Y SELECTOR DE NIVELES
+   ========================================= */
+.neon-modal {
+  position: absolute;
+  top: 0; left: 0; width: 100%; height: 100%;
+  background: rgba(2, 5, 12, 0.88);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  z-index: 50;
+  transition: opacity 0.25s ease;
+}
+
+.neon-modal.hidden {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.neon-panel {
+  width: 100%;
+  max-width: 360px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: #080d1a;
+  border: 2px solid var(--neon-cyan);
+  border-radius: 12px;
+  padding: 20px 16px;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.3), inset 0 0 15px rgba(0, 240, 255, 0.1);
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lantern-logo-wrapper {
+  margin: 0 auto;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 170, 0, 0.4) 0%, transparent 70%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+}
+
+.lantern-glow-icon {
+  font-size: 30px;
+}
+
+.neon-title {
+  font-size: 24px;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.neon-subtitle {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.levels-header {
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--neon-gold);
+}
+
+.levels-grid-container {
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 4px 2px;
+}
+
+.levels-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.level-badge {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 240, 255, 0.05);
+  border: 1px solid rgba(0, 240, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  min-height: 48px;
+  color: #fff;
+  transition: all 0.15s;
+}
+
+.level-badge.unlocked {
+  background: rgba(0, 240, 255, 0.12);
+  border-color: var(--neon-cyan);
+}
+
+.level-badge.current {
+  border-color: var(--neon-gold);
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.6);
+}
+
+.level-badge.locked {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.level-num {
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.level-stars {
+  font-size: 9px;
+  color: var(--neon-gold);
+}
+
+/* Modal Resultados */
+.result-badge {
+  font-size: 40px;
+  margin: 0 auto;
+}
+
+.result-subtitle {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.result-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(0, 20, 35, 0.5);
+  padding: 10px 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 240, 255, 0.15);
+}
+
+.stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+}
+
+.stat-row strong {
+  color: var(--neon-cyan);
+}
+
+.modal-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.hidden {
+  display: none !important;
+}

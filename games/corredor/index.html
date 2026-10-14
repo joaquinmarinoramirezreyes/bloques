@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="Corredor - Runner arcade 00 con física de salto variable, obstáculos procedurales verificables, power-ups y estética ciber-vidrio.">
+  <meta name="description" content="Corredor - Runner arcade 00 de alta velocidad con biomas evolutivos, tienda de mejoras, misiones acrobáticas y física solvable.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23090e1c'/%3E%3Cpath d='M8 24 L16 8 L24 24 Z' fill='%2300f0ff'/%3E%3Ccircle cx='16' cy='12' r='3' fill='%23ffffff'/%3E%3C/svg%3E">
   <title>Corredor - Arcade 00</title>
   <link rel="stylesheet" href="../../shared/theme.css">
@@ -27,6 +27,15 @@
         <h1 class="brand-title">CORREDOR</h1>
       </div>
       <div class="hud-actions">
+        <button id="btn-shop-header" class="icon-button" aria-label="Abrir Tienda de Mejoras" title="Tienda">
+          🛒
+        </button>
+        <button id="btn-achievements-header" class="icon-button" aria-label="Ver Logros" title="Logros">
+          🏆
+        </button>
+        <button id="btn-options-header" class="icon-button" aria-label="Opciones y Accesibilidad" title="Ajustes">
+          ⚙️
+        </button>
         <button id="btn-sound-toggle" class="icon-button" aria-label="Silenciar / Activar sonido" title="Sonido">
           <svg id="icon-sound-on" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -81,22 +90,44 @@
       </div>
     </div>
 
+    <!-- Píldora de Misión Activa en Carrera -->
+    <div id="hud-mission-bar" class="hud-mission-bar">
+      <span class="mission-icon">🎯</span>
+      <span id="hud-mission-text" class="mission-text">Misión: Esquiva 5 obstáculos [0/5]</span>
+    </div>
+
     <!-- Escenario Principal (Canvas del Runner) -->
     <main class="game-stage">
       <div class="board-wrapper" id="runner-container">
         <canvas id="runner-canvas" width="480" height="640" aria-label="Pista del Corredor"></canvas>
 
-        <!-- Banner de Sector / Hito -->
+        <!-- Banner de Sector / Bioma -->
         <div id="sector-banner" class="sector-banner hidden">
           <span id="sector-title" class="sector-title">SECTOR 1</span>
           <span id="sector-desc" class="sector-desc">DISTRITO NEÓN</span>
         </div>
 
-        <!-- Pantalla Inicial / Instrucciones -->
+        <!-- Banner de Evento Dinámico Aleatorio -->
+        <div id="event-banner" class="event-banner hidden">
+          <span id="event-icon" class="event-icon">⚡</span>
+          <span id="event-title" class="event-title">TORMENTA DE CHISPAS</span>
+          <span id="event-desc" class="event-desc">¡Lluvia de energía orbital!</span>
+        </div>
+
+        <!-- Pantalla Inicial / Card Principal -->
         <div id="start-card" class="modal-card">
           <div class="glass-orb">🏃</div>
           <h2 class="card-title">CORREDOR 00</h2>
-          <p class="card-subtitle">Cyber-runner hipercinético de reflejos y acrobacias</p>
+          <p class="card-subtitle">Cyber-runner hipercinético con biomas dinámicos y acrobacias</p>
+
+          <div class="character-preview-chip" id="char-preview-chip">
+            <span class="skin-avatar" id="start-skin-avatar">⚡</span>
+            <div class="skin-info">
+              <span class="skin-name" id="start-skin-name">NEO (CIAN)</span>
+              <span class="skin-aura" id="start-aura-name">Estela de Plasma</span>
+            </div>
+            <button id="btn-quick-shop" class="btn-micro" title="Cambiar aspecto">Editar</button>
+          </div>
 
           <div class="instructions-card">
             <div class="inst-row">
@@ -105,34 +136,37 @@
             </div>
             <div class="inst-row">
               <span class="inst-key">👆 En el Aire</span>
-              <span class="inst-desc">Doble salto con acrobacia 360°</span>
+              <span class="inst-desc">Doble salto con voltereta 360°</span>
             </div>
             <div class="inst-row">
               <span class="inst-key">👇 Desliza Abajo</span>
               <span class="inst-desc">Deslizarse bajo drones y láseres</span>
             </div>
             <div class="inst-row">
-              <span class="inst-key">⚡ Power-ups</span>
-              <span class="inst-desc">🚀 Turbo, ⏳ Matriz, 🧲 Imán, 🛡️ Escudo</span>
-            </div>
-            <div class="inst-row">
-              <span class="inst-key">🔥 Esquivas</span>
-              <span class="inst-desc">Esquivar al límite aumenta Combo x2, x3...</span>
+              <span class="inst-key">⚡ Biomas</span>
+              <span class="inst-desc">Neón &gt; Cañón &gt; Cripta &gt; Órbita</span>
             </div>
           </div>
 
           <button type="button" id="btn-start-run" class="btn-launch">▶ INICIAR CARRERA</button>
-          <div class="record-indicator">RÉCORD: <strong id="start-record-val">0</strong> m</div>
+
+          <div class="card-footer-buttons">
+            <button id="btn-open-shop" class="btn-secondary btn-half">🛒 TIENDA</button>
+            <button id="btn-open-missions" class="btn-secondary btn-half">📋 MISIONES</button>
+          </div>
+
+          <div class="record-indicator">RÉCORD: <strong id="start-record-val">0</strong> m | BANCO: <strong id="start-coins-val">🪙 0</strong></div>
         </div>
 
         <!-- Pantalla de Pausa -->
         <div id="overlay-pause" class="game-overlay hidden">
           <div class="overlay-card glass-panel">
             <h2>EN PAUSA</h2>
-            <p>Carrera suspendida</p>
+            <p>Carrera suspendida temporalmente</p>
             <div class="overlay-actions">
-              <button id="btn-resume" class="btn-primary">Continuar</button>
+              <button id="btn-resume" class="btn-primary">Continuar Carrera</button>
               <button id="btn-restart-run" class="btn-secondary">Reiniciar</button>
+              <button id="btn-pause-options" class="btn-secondary">Ajustes</button>
               <a href="../../index.html" class="btn-secondary">Menú Principal</a>
             </div>
           </div>
@@ -153,18 +187,125 @@
                 <span class="stat-lbl">Monedas</span>
                 <span id="final-coins-val" class="stat-big">🪙 0</span>
               </div>
+              <div class="stat-col">
+                <span class="stat-lbl">Max Combo</span>
+                <span id="final-combo-val" class="stat-big">x1</span>
+              </div>
             </div>
 
             <div class="record-meta">
               <span>Mejor Distancia: <strong id="best-dist-val">0</strong> m</span>
+              <span style="margin-left: 10px;">Saldo Total: <strong id="final-bank-val">🪙 0</strong></span>
             </div>
 
             <div class="overlay-actions">
               <button id="btn-retry" class="btn-primary">Intentar de Nuevo</button>
+              <button id="btn-go-shop" class="btn-secondary">🛒 Ir a la Tienda</button>
               <a href="../../index.html" class="btn-secondary">Menú Principal</a>
             </div>
           </div>
         </div>
+
+        <!-- Modal de Tienda de Mejoras y Personalización -->
+        <div id="modal-shop" class="game-overlay hidden">
+          <div class="overlay-card glass-panel shop-panel">
+            <div class="modal-header">
+              <h3>🛒 TIENDA CIBERNÉTICA</h3>
+              <div class="shop-wallet">🪙 <span id="shop-wallet-val">0</span></div>
+            </div>
+
+            <div class="shop-tabs">
+              <button class="shop-tab active" data-tab="skins">Personajes</button>
+              <button class="shop-tab" data-tab="auras">Auras</button>
+              <button class="shop-tab" data-tab="upgrades">Mejoras</button>
+            </div>
+
+            <div class="shop-tab-content" id="tab-skins">
+              <div class="shop-grid" id="grid-skins">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+
+            <div class="shop-tab-content hidden" id="tab-auras">
+              <div class="shop-grid" id="grid-auras">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+
+            <div class="shop-tab-content hidden" id="tab-upgrades">
+              <div class="shop-grid" id="grid-upgrades">
+                <!-- Se llena dinámicamente -->
+              </div>
+            </div>
+
+            <div class="overlay-actions" style="margin-top: 14px;">
+              <button id="btn-close-shop" class="btn-primary">Aceptar y Salir</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal de Logros -->
+        <div id="modal-achievements" class="game-overlay hidden">
+          <div class="overlay-card glass-panel ach-panel">
+            <div class="modal-header">
+              <h3>🏆 LOGROS DEL CORREDOR</h3>
+            </div>
+            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">Desbloquea hazañas para demostrar tu maestría cuántica</p>
+            <div class="ach-list" id="ach-list">
+              <!-- Se puebla dinámicamente con los 8 logros -->
+            </div>
+            <div class="overlay-actions" style="margin-top: 14px;">
+              <button id="btn-close-ach" class="btn-primary">Cerrar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal de Misiones Diarias -->
+        <div id="modal-missions" class="game-overlay hidden">
+          <div class="overlay-card glass-panel missions-panel">
+            <div class="modal-header">
+              <h3>📋 MISIONES DIARIAS</h3>
+            </div>
+            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">Completa desafíos para recibir recompensas en monedas</p>
+            <div class="missions-list" id="missions-list">
+              <!-- Misiones diarias -->
+            </div>
+            <div class="overlay-actions" style="margin-top: 14px;">
+              <button id="btn-close-missions" class="btn-primary">Entendido</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal de Opciones y Accesibilidad -->
+        <div id="modal-options" class="game-overlay hidden">
+          <div class="overlay-card glass-panel options-panel">
+            <div class="modal-header">
+              <h3>⚙️ AJUSTES Y ACCESIBILIDAD</h3>
+            </div>
+            <div class="options-group">
+              <label class="opt-row">
+                <span>Efectos de Sonido (SFX)</span>
+                <input type="checkbox" id="opt-sfx" checked>
+              </label>
+              <label class="opt-row">
+                <span>Música Sintetizada (BGM)</span>
+                <input type="checkbox" id="opt-bgm" checked>
+              </label>
+              <label class="opt-row">
+                <span>Vibración Háptica</span>
+                <input type="checkbox" id="opt-vibration" checked>
+              </label>
+              <label class="opt-row">
+                <span>Modo Alto Contraste</span>
+                <input type="checkbox" id="opt-contrast">
+              </label>
+            </div>
+            <div class="overlay-actions" style="margin-top: 16px;">
+              <button id="btn-close-options" class="btn-primary">Guardar y Cerrar</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
   </div>
@@ -172,6 +313,7 @@
   <script src="../../shared/canvas.js"></script>
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
+  <script src="../../shared/juice.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

@@ -1,6 +1,8 @@
 /**
- * games/fronton/game.js - Frontón Arcade 80
- * Duelo retro de paletas y pelota cuántica con perspectiva 3D, física de aceleración y 2P móvil.
+ * games/fronton/game.js - Frontón Arcade 80 (Arena Futurista)
+ * Duelo retro de paletas y pelota cuántica con perspectiva 3D, líneas de luz,
+ * estela cambiante por velocidad, inclinación de paleta, power-ups, torneo de 5 rivales,
+ * modo supervivencia, repetición en cámara lenta, 8 logros y misiones diarias.
  */
 (() => {
   'use strict';
@@ -28,7 +30,24 @@
       MED:  { label: 'PRO',    speed: 380, errorRate: 12, reactionLag: 0.08 },
       HARD: { label: 'CYBER',  speed: 530, errorRate: 2,  reactionLag: 0.02 }
     },
-    PARTICLE_POOL_SIZE: 60,
+    TOURNAMENT_RIVALS: [
+      { id: 'vector1', name: 'Vector-1', avatar: '🤖', desc: 'IA de prototipo con disparos suaves y predecibles', speed: 270, errorRate: 24, reactionLag: 0.15 },
+      { id: 'aerobot', name: 'Aero-Bot', avatar: '⚡', desc: 'Ágil y rápido, busca tiros cruzados a las esquinas', speed: 360, errorRate: 14, reactionLag: 0.09 },
+      { id: 'vortex',  name: 'Vortex',   avatar: '🌀', desc: 'Efectos giroscópicos y rebotes agresivos en pared', speed: 430, errorRate: 8,  reactionLag: 0.06 },
+      { id: 'ironguard', name: 'Iron-Guard', avatar: '🛡️', desc: 'Muralla defensiva impenetrable con gran precisión', speed: 490, errorRate: 3, reactionLag: 0.03 },
+      { id: 'quantumx', name: 'Quantum-X', avatar: '🔮', desc: 'Maestro supremo: aceleración cuántica y spin letal', speed: 560, errorRate: 0, reactionLag: 0.01 }
+    ],
+    ACHIEVEMENTS: [
+      { id: 'first_point', title: 'Primer Saque', desc: 'Anota tu primer punto en la arena', icon: '🎯' },
+      { id: 'rally_15', title: 'Maestro del Rally', desc: 'Alcanza un rally de 15 o más golpes', icon: '⚡' },
+      { id: 'speed_650', title: 'Velocidad Supersónica', desc: 'Golpea la pelota a más de 650 px/s', icon: '🚀' },
+      { id: 'tournament_champ', title: 'Campeón del Torneo', desc: 'Vence a los 5 rivales cibernéticos', icon: '👑' },
+      { id: 'survival_25', title: 'Superviviente Cuántico', desc: 'Resiste 25 rebotes en modo Supervivencia', icon: '💠' },
+      { id: 'powerup_5', title: 'Sobrecarga Cuántica', desc: 'Recoge 5 power-ups en un solo partido', icon: '⭐' },
+      { id: 'goal_net_save', title: 'Salvada Épica', desc: 'Salva un punto con la red de portería', icon: '🛡️' },
+      { id: 'clean_sheet', title: 'Blanqueada Perfecta', desc: 'Gana un partido 7-0 sin conceder puntos', icon: '🏆' }
+    ],
+    PARTICLE_POOL_SIZE: 120,
     STORAGE_KEY: 'fronton:v1'
   };
 
@@ -103,67 +122,57 @@
       }
     }
 
-    spawn(x, y, vx, vy, life, size, color) {
-      for (let i = 0; i < this.size; i++) {
+    emit(x, y, count, color, speedBase = 90, spread = Math.PI * 2) {
+      let emitted = 0;
+      for (let i = 0; i < this.size && emitted < count; i++) {
         const p = this.items[i];
         if (!p.active) {
           p.active = true;
-          p.x = x; p.y = y;
-          p.vx = vx; p.vy = vy;
-          p.life = life; p.maxLife = life;
-          p.size = size;
+          p.x = x;
+          p.y = y;
+          const angle = Math.random() * spread;
+          const speed = speedBase * (0.4 + Math.random() * 0.9);
+          p.vx = Math.cos(angle) * speed;
+          p.vy = Math.sin(angle) * speed;
+          p.maxLife = 0.25 + Math.random() * 0.35;
+          p.life = p.maxLife;
+          p.size = 2 + Math.random() * 3;
           p.color = color;
-          return;
+          emitted++;
         }
       }
     }
 
-    burst(x, y, count, color) {
-      for (let i = 0; i < count; i++) {
-        const ang = Math.random() * Math.PI * 2;
-        const spd = 60 + Math.random() * 160;
-        this.spawn(
-          x, y,
-          Math.cos(ang) * spd,
-          Math.sin(ang) * spd,
-          0.3 + Math.random() * 0.35,
-          2 + Math.random() * 3,
-          color
-        );
-      }
-    }
-
     update(dt) {
+      let activeCount = 0;
       for (let i = 0; i < this.size; i++) {
         const p = this.items[i];
         if (p.active) {
+          activeCount++;
           p.x += p.vx * dt;
           p.y += p.vy * dt;
+          p.vx *= 0.94;
+          p.vy *= 0.94;
           p.life -= dt;
           if (p.life <= 0) {
             p.active = false;
           }
         }
       }
+      return activeCount;
     }
 
-    render(ctx) {
+    draw(ctx) {
       for (let i = 0; i < this.size; i++) {
         const p = this.items[i];
         if (p.active) {
           const alpha = Math.max(0, p.life / p.maxLife);
           ctx.save();
           ctx.globalAlpha = alpha;
-          // Halo exterior rápido sin shadowBlur
           ctx.fillStyle = p.color;
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * alpha * 1.5, 0, Math.PI * 2);
-          ctx.fill();
-          // Núcleo brillante
-          ctx.fillStyle = '#ffffff';
-          ctx.beginPath();
-          ctx.arc(p.x, p.y, p.size * alpha * 0.6, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.shadowBlur = 6;
+          ctx.shadowColor = p.color;
+          ctx.fillRect(p.x - p.size / 2, p.y - p.size / 2, p.size, p.size);
           ctx.restore();
         }
       }
@@ -174,41 +183,74 @@
   // ESTADO DEL JUEGO
   // ==========================================
   const State = {
-    mode: '1P', // '1P' vs IA, o '2P' local en el mismo teléfono
+    gameMode: 'QUICK', // 'QUICK', 'TOURNAMENT', 'SURVIVAL'
+    mode: '1P', // '1P' vs IA, o '2P' local
     difficulty: 'MED',
+    currentRivalIdx: 0,
+    tournamentBeaten: [], // Array de rival IDs vencidos
+
     p1Score: 0,
     p2Score: 0,
     rally: 0,
     bestRally: 0,
+    survivalRebounds: 0,
+    bestSurvivalRebounds: 0,
+    powerupsCollectedMatch: 0,
+
     paused: false,
     started: false,
     gameOver: false,
     serving: true,
     serveTimer: 0,
-    server: 'P1', // quién saca ('P1' o 'P2')
+    server: 'P1',
 
-    // Posiciones
-    p1: { x: CONFIG.VIRTUAL_W / 2, targetX: CONFIG.VIRTUAL_W / 2 },
-    p2: { x: CONFIG.VIRTUAL_W / 2, targetX: CONFIG.VIRTUAL_W / 2 },
-
-    // Pelota
-    ball: {
+    // Jugadores
+    p1: {
       x: CONFIG.VIRTUAL_W / 2,
-      y: CONFIG.VIRTUAL_H / 2,
-      vx: 0,
-      vy: 0,
-      speed: CONFIG.BASE_SPEED,
-      spin: 0
+      targetX: CONFIG.VIRTUAL_W / 2,
+      tilt: 0,
+      width: CONFIG.PADDLE_W,
+      bigPaddleTimer: 0,
+      hasGoalNet: false
     },
+    p2: {
+      x: CONFIG.VIRTUAL_W / 2,
+      targetX: CONFIG.VIRTUAL_W / 2,
+      tilt: 0,
+      width: CONFIG.PADDLE_W,
+      bigPaddleTimer: 0
+    },
+
+    // Pelotas (soporta Multipelota)
+    balls: [
+      {
+        x: CONFIG.VIRTUAL_W / 2,
+        y: CONFIG.VIRTUAL_H / 2,
+        vx: 0,
+        vy: 0,
+        speed: CONFIG.BASE_SPEED,
+        spin: 0,
+        trail: [] // buffer circular de estela
+      }
+    ],
+
+    // Power-up activo en pista
+    courtPowerup: null, // { type, x, y, radius: 14, timer: 12 }
+    powerupSpawnTimer: 10,
+
+    // Búfer de repetición en cámara lenta (últimos 90 frames)
+    replayFrames: [],
+    isReplaying: false,
+    replayFrameIdx: 0,
 
     // IA
     aiLagTimer: 0,
     aiTargetX: CONFIG.VIRTUAL_W / 2,
 
-    // Controles táctiles mapeados por touchId
+    // Controles táctiles
     touches: new Map(),
 
-    // Escalado de pantalla
+    // Escalado
     scale: 1,
     offsetX: 0,
     offsetY: 0
@@ -226,6 +268,7 @@
     p2Score: document.getElementById('p2-score'),
     p2Tag: document.getElementById('p2-tag'),
     matchRally: document.getElementById('match-rally'),
+    targetModeLabel: document.getElementById('target-mode-label'),
     startCard: document.getElementById('start-card'),
     btnStart: document.getElementById('btn-start-match'),
     difficultyGroup: document.getElementById('difficulty-group'),
@@ -234,595 +277,949 @@
     pointBanner: document.getElementById('point-banner'),
     pointText: document.getElementById('point-text'),
     pointSub: document.getElementById('point-sub'),
+    replayBanner: document.getElementById('replay-banner'),
+    powerupToast: document.getElementById('powerup-toast'),
+    powerupIcon: document.getElementById('powerup-icon'),
+    powerupName: document.getElementById('powerup-name'),
+
+    // Modales
+    panelQuick: document.getElementById('panel-quick'),
+    panelTournament: document.getElementById('panel-tournament'),
+    panelSurvival: document.getElementById('panel-survival'),
+    tournamentRoster: document.getElementById('tournament-roster'),
+    survBestRebounds: document.getElementById('surv-best-rebounds'),
+
+    modalOptions: document.getElementById('modal-options'),
+    btnOptionsHeader: document.getElementById('btn-options-header'),
+    btnCloseOptions: document.getElementById('btn-close-options'),
+    sliderSfx: document.getElementById('slider-sfx'),
+    sliderBgm: document.getElementById('slider-bgm'),
+    valSfx: document.getElementById('val-sfx'),
+    valBgm: document.getElementById('val-bgm'),
+    toggleVibration: document.getElementById('toggle-vibration'),
+    toggleContrast: document.getElementById('toggle-contrast'),
+
+    modalAchievements: document.getElementById('modal-achievements'),
+    btnAchievementsHeader: document.getElementById('btn-achievements-header'),
+    btnAchievementsView: document.getElementById('btn-achievements-view'),
+    btnCloseAchievements: document.getElementById('btn-close-achievements'),
+    achievementsList: document.getElementById('achievements-list'),
+
+    modalMissions: document.getElementById('modal-missions'),
+    btnDailyMissions: document.getElementById('btn-daily-missions'),
+    btnCloseMissions: document.getElementById('btn-close-missions'),
+    missionsList: document.getElementById('missions-list'),
+
     overlayPause: document.getElementById('overlay-pause'),
     btnPauseHeader: document.getElementById('btn-pause-header'),
     btnResume: document.getElementById('btn-resume'),
-    btnRestartHeader: document.getElementById('btn-restart-header'),
     btnPauseRestart: document.getElementById('btn-pause-restart'),
+    btnPauseOptions: document.getElementById('btn-pause-options'),
+
     overlayGameOver: document.getElementById('overlay-gameover'),
     winnerTitle: document.getElementById('winner-title'),
     winnerSub: document.getElementById('winner-sub'),
     finalP1Score: document.getElementById('final-p1-score'),
     finalP2Score: document.getElementById('final-p2-score'),
     bestRallyDisplay: document.getElementById('best-rally'),
+    newRecordTag: document.getElementById('new-record-tag'),
     btnMatchRestart: document.getElementById('btn-match-restart'),
+    btnBackToSetup: document.getElementById('btn-back-to-setup'),
+
     btnSoundToggle: document.getElementById('btn-sound-toggle'),
     iconSoundOn: document.getElementById('icon-sound-on'),
-    iconSoundOff: document.getElementById('icon-sound-off'),
-    modeButtons: document.querySelectorAll('.btn-toggle'),
-    diffButtons: document.querySelectorAll('.btn-diff')
+    iconSoundOff: document.getElementById('icon-sound-off')
   };
 
-  dom.ctx = dom.canvas.getContext('2d');
+  // ==========================================
+  // COLOR DE PELOTA SEGÚN VELOCIDAD
+  // ==========================================
+  function getBallSpeedColor(speed) {
+    if (speed < 400) return '#00f0ff'; // Cian
+    if (speed < 550) return '#facc15'; // Ámbar
+    if (speed < 680) return '#ff007f'; // Magenta
+    return '#ffffff'; // Blanco cuántico
+  }
 
   // ==========================================
-  // AUDIO HELPER CON WEBAUDIO SINTETIZADO
+  // AUDIO PROCEDURAL MEJORADO CON SÍNTESIS BGM
   // ==========================================
-  function playBeep(type) {
-    if (!window.ArcadeAudio) return;
-    switch (type) {
-      case 'paddle-p1':
-        window.ArcadeAudio.playTone(520 + Math.min(State.rally * 15, 300), 'square', 0.06, 0.12);
-        break;
-      case 'paddle-p2':
-        window.ArcadeAudio.playTone(390 + Math.min(State.rally * 15, 300), 'square', 0.06, 0.12);
-        break;
-      case 'wall':
-        window.ArcadeAudio.playTone(240, 'triangle', 0.04, 0.08);
-        break;
-      case 'point':
-        window.ArcadeAudio.playTone(660, 'sine', 0.14, 0.16);
-        setTimeout(() => window.ArcadeAudio?.playTone(880, 'sine', 0.18, 0.16), 100);
-        break;
-      case 'lose-point':
-        window.ArcadeAudio.playTone(180, 'sawtooth', 0.18, 0.14);
-        break;
-      case 'win-match':
-        [523, 659, 784, 1046].forEach((f, i) => {
-          setTimeout(() => window.ArcadeAudio?.playTone(f, 'square', 0.12, 0.18), i * 110);
+  const SynthArenaAudio = {
+    bgmOsc: null,
+    bgmGain: null,
+    bgmTimer: null,
+    bgmStep: 0,
+
+    init() {
+      if (window.ArcadeAudio && window.ArcadeAudio.initCtx) {
+        window.ArcadeAudio.initCtx();
+      }
+    },
+
+    playPitchJitter(baseFreq, type = 'square', dur = 0.08, gain = 0.1) {
+      if (window.ArcadeAudio && !window.ArcadeAudio.isMuted) {
+        const jitter = (Math.random() - 0.5) * 0.12 * baseFreq;
+        window.ArcadeAudio.playTone(baseFreq + jitter, type, dur, gain);
+      }
+    },
+
+    sfxPaddleHit(speed) {
+      this.init();
+      const freq = 360 + Math.min(450, (speed - CONFIG.BASE_SPEED) * 1.1);
+      this.playPitchJitter(freq, 'triangle', 0.08, 0.22);
+      if (speed >= 650) {
+        this.playPitchJitter(780, 'sine', 0.15, 0.25);
+      }
+    },
+
+    sfxWallBounce() {
+      this.init();
+      this.playPitchJitter(240, 'sine', 0.05, 0.15);
+    },
+
+    sfxPowerupSpawn() {
+      this.init();
+      if (window.ArcadeAudio && !window.ArcadeAudio.isMuted) {
+        window.ArcadeAudio.playTone(520, 'sine', 0.1, 0.15);
+        setTimeout(() => window.ArcadeAudio.playTone(660, 'sine', 0.15, 0.15), 80);
+      }
+    },
+
+    sfxPowerupCollect() {
+      this.init();
+      if (window.ArcadeAudio && !window.ArcadeAudio.isMuted) {
+        window.ArcadeAudio.playTone(440, 'triangle', 0.08, 0.2);
+        setTimeout(() => window.ArcadeAudio.playTone(660, 'triangle', 0.1, 0.2), 70);
+        setTimeout(() => window.ArcadeAudio.playTone(880, 'triangle', 0.18, 0.25), 140);
+      }
+    },
+
+    sfxPointScored(isPlayerWin) {
+      this.init();
+      if (window.ArcadeAudio && !window.ArcadeAudio.isMuted) {
+        if (isPlayerWin) {
+          window.ArcadeAudio.playTone(440, 'triangle', 0.1, 0.25);
+          setTimeout(() => window.ArcadeAudio.playTone(660, 'triangle', 0.2, 0.25), 100);
+        } else {
+          window.ArcadeAudio.playTone(220, 'sawtooth', 0.18, 0.2);
+          setTimeout(() => window.ArcadeAudio.playTone(160, 'sawtooth', 0.25, 0.2), 120);
+        }
+      }
+    },
+
+    // Música ambiental generativa simple en bucle
+    startBgm() {
+      if (this.bgmTimer) return;
+      const notes = [130.81, 146.83, 164.81, 196.00, 220.00, 164.81]; // C3 escala pentatónica
+      this.bgmTimer = setInterval(() => {
+        if (!State.started || State.paused || (window.ArcadeAudio && window.ArcadeAudio.isMuted)) return;
+        const bgmVol = (window.ArcadeJuice ? window.ArcadeJuice.getOption('bgm_vol', 70) : 70) / 100;
+        if (bgmVol <= 0.02) return;
+
+        const note = notes[this.bgmStep % notes.length];
+        this.bgmStep++;
+        if (window.ArcadeAudio && window.ArcadeAudio.ctx) {
+          try {
+            const osc = window.ArcadeAudio.ctx.createOscillator();
+            const gain = window.ArcadeAudio.ctx.createGain();
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(note, window.ArcadeAudio.ctx.currentTime);
+            gain.gain.setValueAtTime(0.04 * bgmVol, window.ArcadeAudio.ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, window.ArcadeAudio.ctx.currentTime + 0.35);
+            osc.connect(gain);
+            gain.connect(window.ArcadeAudio.ctx.destination);
+            osc.start();
+            osc.stop(window.ArcadeAudio.ctx.currentTime + 0.35);
+          } catch (_) {}
+        }
+      }, 420);
+    },
+
+    stopBgm() {
+      if (this.bgmTimer) {
+        clearInterval(this.bgmTimer);
+        this.bgmTimer = null;
+      }
+    }
+  };
+
+  // ==========================================
+  // GESTIÓN DE POWER-UPS
+  // ==========================================
+  const POWERUP_TYPES = [
+    { type: 'BIG_PADDLE', name: 'PALETA GRANDE', icon: '↔️', color: '#10b981' },
+    { type: 'SLOW_BALL',  name: 'PELOTA LENTA',  icon: '❄️', color: '#00f0ff' },
+    { type: 'MULTI_BALL', name: 'MULTIPELOTA',   icon: '⚽', color: '#f59e0b' },
+    { type: 'GOAL_NET',   name: 'RED DEFENSIVA', icon: '🛡️', color: '#ec4899' }
+  ];
+
+  function spawnCourtPowerup() {
+    if (State.courtPowerup) return;
+    const picked = POWERUP_TYPES[Math.floor(Math.random() * POWERUP_TYPES.length)];
+    State.courtPowerup = {
+      type: picked.type,
+      name: picked.name,
+      icon: picked.icon,
+      color: picked.color,
+      x: 60 + Math.random() * (CONFIG.VIRTUAL_W - 120),
+      y: 200 + Math.random() * (CONFIG.VIRTUAL_H - 400),
+      radius: 14,
+      timer: 14.0
+    };
+    SynthArenaAudio.sfxPowerupSpawn();
+    showPowerupToast(picked.icon, `¡${picked.name} EN PISTA!`);
+  }
+
+  function collectPowerup(pow) {
+    SynthArenaAudio.sfxPowerupCollect();
+    State.courtPowerup = null;
+    State.powerupsCollectedMatch++;
+    showPowerupToast(pow.icon, `¡${pow.name} ACTIVADO!`);
+    if (window.ArcadeJuice) {
+      window.ArcadeJuice.spawnFloat(`+${pow.name}`, pow.x, pow.y, pow.color, 14);
+      if (State.powerupsCollectedMatch >= 5) {
+        window.ArcadeJuice.unlockAchievement('fronton', 'powerup_5', 'Sobrecarga Cuántica', 'Recogiste 5 power-ups en un solo partido', '⭐');
+      }
+    }
+
+    if (pow.type === 'BIG_PADDLE') {
+      State.p1.width = CONFIG.PADDLE_W * 1.4;
+      State.p1.bigPaddleTimer = 10.0;
+    } else if (pow.type === 'SLOW_BALL') {
+      State.balls.forEach(b => {
+        b.speed = CONFIG.BASE_SPEED;
+        const mag = Math.hypot(b.vx, b.vy);
+        if (mag > 0) {
+          b.vx = (b.vx / mag) * CONFIG.BASE_SPEED;
+          b.vy = (b.vy / mag) * CONFIG.BASE_SPEED;
+        }
+      });
+    } else if (pow.type === 'MULTI_BALL') {
+      // Duplicar pelota principal
+      const mainB = State.balls[0];
+      if (mainB && State.balls.length < 3) {
+        State.balls.push({
+          x: mainB.x,
+          y: mainB.y,
+          vx: -mainB.vx * 0.9,
+          vy: mainB.vy,
+          speed: mainB.speed,
+          spin: -mainB.spin,
+          trail: []
         });
-        break;
-      default:
-        break;
+      }
+    } else if (pow.type === 'GOAL_NET') {
+      State.p1.hasGoalNet = true;
     }
   }
 
-  // ==========================================
-  // RESIZE Y AJUSTE DE RESOLUCIÓN (RETINA / MOBILE)
-  // ==========================================
-  function handleResize() {
-    const parent = dom.canvas.parentElement;
-    if (!parent) return;
-
-    const fit = window.ArcadeCanvas.fit(
-      dom.canvas,
-      parent,
-      CONFIG.VIRTUAL_W,
-      CONFIG.VIRTUAL_H,
-      8
-    );
-
-    State.scale = fit.width / CONFIG.VIRTUAL_W;
+  function showPowerupToast(icon, text) {
+    if (!dom.powerupToast) return;
+    dom.powerupIcon.textContent = icon;
+    dom.powerupName.textContent = text;
+    dom.powerupToast.classList.remove('hidden');
+    clearTimeout(dom.powerupToast._timeout);
+    dom.powerupToast._timeout = setTimeout(() => {
+      dom.powerupToast.classList.add('hidden');
+    }, 2200);
   }
 
-  window.addEventListener('resize', handleResize);
+  // ==========================================
+  // INICIALIZACIÓN Y CONFIGURACIÓN DE PARTIDA
+  // ==========================================
+  function resetBall(servingToP1 = true) {
+    State.balls = [
+      {
+        x: CONFIG.VIRTUAL_W / 2,
+        y: CONFIG.VIRTUAL_H / 2,
+        vx: 0,
+        vy: 0,
+        speed: CONFIG.BASE_SPEED,
+        spin: 0,
+        trail: []
+      }
+    ];
 
-  // ==========================================
-  // CONTROLADOR DE SAQUE Y PUNTOS
-  // ==========================================
-  function resetBall(servingPlayer = 'P1') {
     State.serving = true;
     State.serveTimer = CONFIG.POINT_DELAY;
-    State.server = servingPlayer;
-    State.rally = 0;
-    updateHUD();
+    State.server = servingToP1 ? 'P2' : 'P1';
 
-    State.ball.x = CONFIG.VIRTUAL_W / 2;
-    State.ball.y = servingPlayer === 'P1' ? CONFIG.P1_Y - 30 : CONFIG.P2_Y + 30;
-    State.ball.vx = 0;
-    State.ball.vy = 0;
-    State.ball.speed = CONFIG.BASE_SPEED;
-
-    // Colocar paletas centradas suavemente
-    State.p1.targetX = CONFIG.VIRTUAL_W / 2;
-    State.p2.targetX = CONFIG.VIRTUAL_W / 2;
+    if (dom.pointBanner) {
+      dom.pointBanner.classList.remove('hidden');
+      dom.pointText.textContent = '¡SAQUE!';
+      dom.pointSub.textContent = State.server === 'P1' ? 'JUGADOR 1 AL SERVICIO' : 'RIVAL AL SERVICIO';
+    }
   }
 
-  function launchServe() {
+  function launchBall() {
     State.serving = false;
-    const isP1 = State.server === 'P1';
-    const angle = (Math.random() * 0.5 - 0.25) * CONFIG.MAX_BOUNCE_ANGLE;
-    State.ball.speed = CONFIG.BASE_SPEED;
-    State.ball.vx = State.ball.speed * Math.sin(angle);
-    State.ball.vy = (isP1 ? -1 : 1) * State.ball.speed * Math.cos(angle);
-    playBeep(isP1 ? 'paddle-p1' : 'paddle-p2');
-    window.ArcadeCanvas.haptic(16);
+    if (dom.pointBanner) {
+      dom.pointBanner.classList.add('hidden');
+    }
+
+    const b = State.balls[0];
+    if (!b) return;
+
+    // Ángulo aleatorio centrado hacia quien recibe
+    const dirY = State.server === 'P1' ? -1 : 1;
+    const angle = (Math.random() - 0.5) * (Math.PI * 0.28);
+    b.speed = CONFIG.BASE_SPEED;
+    b.vx = b.speed * Math.sin(angle);
+    b.vy = b.speed * Math.cos(angle) * dirY;
+
+    SynthArenaAudio.sfxPaddleHit(b.speed);
   }
 
-  function awardPoint(winner) {
+  function startMatch() {
+    State.p1Score = 0;
+    State.p2Score = 0;
+    State.rally = 0;
+    State.survivalRebounds = 0;
+    State.powerupsCollectedMatch = 0;
+    State.courtPowerup = null;
+    State.powerupSpawnTimer = 10;
+    State.started = true;
+    State.gameOver = false;
+    State.paused = false;
+    State.isReplaying = false;
+    State.replayFrames = [];
+
+    // Ajustes de Jugador
+    State.p1.width = CONFIG.PADDLE_W;
+    State.p1.bigPaddleTimer = 0;
+    State.p1.hasGoalNet = false;
+    State.p2.width = CONFIG.PADDLE_W;
+    State.p2.bigPaddleTimer = 0;
+
+    // Etiquetas según modo
+    if (State.gameMode === 'SURVIVAL') {
+      dom.p2Tag.textContent = 'SUPERVIVENCIA';
+      dom.targetModeLabel.textContent = 'REBOTES: 0';
+    } else if (State.gameMode === 'TOURNAMENT') {
+      const rival = CONFIG.TOURNAMENT_RIVALS[State.currentRivalIdx];
+      dom.p2Tag.textContent = `${rival.avatar} ${rival.name.toUpperCase()}`;
+      dom.targetModeLabel.textContent = `A 7 (RONDA ${State.currentRivalIdx + 1}/5)`;
+    } else {
+      dom.p2Tag.textContent = State.mode === '2P' ? 'JUGADOR 2' : 'RIVAL (IA)';
+      dom.targetModeLabel.textContent = 'A 7 PUNTOS';
+    }
+
+    dom.startCard.classList.add('hidden');
+    dom.overlayGameOver.classList.add('hidden');
+    dom.overlayPause.classList.add('hidden');
+
+    resetBall(true);
+    updateScoreboard();
+    SynthArenaAudio.startBgm();
+
+    if (window.ArcadeJuice) {
+      window.ArcadeJuice.trackPlay('fronton', 0);
+    }
+  }
+
+  // ==========================================
+  // FÍSICA Y ACTUALIZACIÓN POR FRAME
+  // ==========================================
+  function update(dt) {
+    if (!State.started || State.paused) return;
+
+    // Juice update (si está en hitstop, congela el avance)
+    if (window.ArcadeJuice && window.ArcadeJuice.update(dt)) {
+      return;
+    }
+
+    // Modo Repetición en Cámara Lenta del punto final
+    if (State.isReplaying) {
+      updateSlowMoReplay(dt);
+      return;
+    }
+
+    // Temporizador de Power-up en pista
+    if (State.gameMode !== 'SURVIVAL') {
+      if (State.courtPowerup) {
+        State.courtPowerup.timer -= dt;
+        if (State.courtPowerup.timer <= 0) {
+          State.courtPowerup = null;
+        }
+      } else {
+        State.powerupSpawnTimer -= dt;
+        if (State.powerupSpawnTimer <= 0) {
+          spawnCourtPowerup();
+          State.powerupSpawnTimer = 16.0;
+        }
+      }
+    }
+
+    // Timers de beneficios de paleta
+    if (State.p1.bigPaddleTimer > 0) {
+      State.p1.bigPaddleTimer -= dt;
+      if (State.p1.bigPaddleTimer <= 0) {
+        State.p1.width = CONFIG.PADDLE_W;
+      }
+    }
+
+    // Guardar frame en el búfer de repetición circular (últimos 90 frames)
+    if (State.balls.length > 0) {
+      State.replayFrames.push({
+        bX: State.balls[0].x,
+        bY: State.balls[0].y,
+        p1X: State.p1.x,
+        p2X: State.p2.x,
+        speed: State.balls[0].speed
+      });
+      if (State.replayFrames.length > 90) {
+        State.replayFrames.shift();
+      }
+    }
+
+    // Suavizado e inclinación de paleta P1
+    const p1Diff = State.p1.targetX - State.p1.x;
+    State.p1.x += p1Diff * Math.min(1, dt * 18);
+    State.p1.tilt = Math.max(-0.25, Math.min(0.25, p1Diff * 0.008));
+
+    // Paleta P2 (IA o segundo jugador)
+    if (State.gameMode === 'SURVIVAL') {
+      // En supervivencia, la pared superior actúa como frontón perfecto
+      State.p2.x = State.balls[0] ? State.balls[0].x : CONFIG.VIRTUAL_W / 2;
+    } else if (State.mode === '2P') {
+      const p2Diff = State.p2.targetX - State.p2.x;
+      State.p2.x += p2Diff * Math.min(1, dt * 18);
+      State.p2.tilt = Math.max(-0.25, Math.min(0.25, p2Diff * 0.008));
+    } else {
+      updateAI(dt);
+    }
+
+    // Saque en curso
+    if (State.serving) {
+      State.serveTimer -= dt;
+      if (State.serveTimer <= 0) {
+        launchBall();
+      }
+      return;
+    }
+
+    // Actualizar cada pelota activa
+    for (let i = State.balls.length - 1; i >= 0; i--) {
+      updateBall(State.balls[i], dt, i);
+    }
+
+    particles.update(dt);
+  }
+
+  function updateBall(b, dt, ballIndex) {
+    // Registro de estela
+    b.trail.push({ x: b.x, y: b.y, speed: b.speed });
+    if (b.trail.length > 18) {
+      b.trail.shift();
+    }
+
+    b.x += b.vx * dt;
+    b.y += b.vy * dt;
+
+    // Rebote en paredes laterales (Izquierda y Derecha)
+    const courtLeft = 12 + CONFIG.BALL_RADIUS;
+    const courtRight = CONFIG.VIRTUAL_W - 12 - CONFIG.BALL_RADIUS;
+
+    if (b.x <= courtLeft) {
+      b.x = courtLeft;
+      b.vx = Math.abs(b.vx);
+      SynthArenaAudio.sfxWallBounce();
+      particles.emit(b.x, b.y, 6, getBallSpeedColor(b.speed));
+    } else if (b.x >= courtRight) {
+      b.x = courtRight;
+      b.vx = -Math.abs(b.vx);
+      SynthArenaAudio.sfxWallBounce();
+      particles.emit(b.x, b.y, 6, getBallSpeedColor(b.speed));
+    }
+
+    // Colisión con Power-up en pista
+    if (State.courtPowerup) {
+      const pDist = Math.hypot(b.x - State.courtPowerup.x, b.y - State.courtPowerup.y);
+      if (pDist <= CONFIG.BALL_RADIUS + State.courtPowerup.radius) {
+        collectPowerup(State.courtPowerup);
+      }
+    }
+
+    // Colisión con Paleta P1 (Inferior)
+    const p1Top = CONFIG.P1_Y - CONFIG.PADDLE_H / 2;
+    const p1Bottom = CONFIG.P1_Y + CONFIG.PADDLE_H / 2;
+    const p1Left = State.p1.x - State.p1.width / 2;
+    const p1Right = State.p1.x + State.p1.width / 2;
+
+    if (b.vy > 0 && b.y + CONFIG.BALL_RADIUS >= p1Top && b.y - CONFIG.BALL_RADIUS <= p1Bottom) {
+      if (b.x >= p1Left - 8 && b.x <= p1Right + 8) {
+        // Impacto válido en paleta P1
+        const rebound = FrontonPhysics.calculatePaddleRebound(b.x, State.p1.x, State.p1.width, b.speed, false);
+        b.vx = rebound.vx;
+        b.vy = rebound.vy;
+        b.speed = rebound.newSpeed;
+        b.y = p1Top - CONFIG.BALL_RADIUS - 1;
+
+        State.rally++;
+        if (State.rally > State.bestRally) {
+          State.bestRally = State.rally;
+        }
+
+        if (State.gameMode === 'SURVIVAL') {
+          State.survivalRebounds++;
+          if (State.survivalRebounds > State.bestSurvivalRebounds) {
+            State.bestSurvivalRebounds = State.survivalRebounds;
+          }
+          dom.targetModeLabel.textContent = `REBOTES: ${State.survivalRebounds}`;
+        }
+
+        dom.matchRally.textContent = `RALLY: ${State.rally}`;
+
+        SynthArenaAudio.sfxPaddleHit(b.speed);
+        particles.emit(b.x, b.y, b.speed > 550 ? 14 : 8, getBallSpeedColor(b.speed));
+
+        // Juice: screen shake y hitstop si el golpe es fuerte
+        if (b.speed > 550 && window.ArcadeJuice) {
+          window.ArcadeJuice.shake(Math.min(10, Math.floor((b.speed - 480) * 0.03)), 0.2);
+          if (b.speed >= 650) {
+            window.ArcadeJuice.hitstop(50);
+            window.ArcadeJuice.unlockAchievement('fronton', 'speed_650', 'Velocidad Supersónica', 'Golpeaste a más de 650 px/s', '🚀');
+          }
+        }
+
+        // Logro de Rally
+        if (State.rally >= 15 && window.ArcadeJuice) {
+          window.ArcadeJuice.unlockAchievement('fronton', 'rally_15', 'Maestro del Rally', 'Rally de 15 o más golpes', '⚡');
+        }
+      }
+    }
+
+    // Red de portería protectora de P1
+    if (b.vy > 0 && b.y >= CONFIG.VIRTUAL_H - 18 && State.p1.hasGoalNet) {
+      State.p1.hasGoalNet = false;
+      b.vy = -Math.abs(b.vy);
+      b.y = CONFIG.VIRTUAL_H - 20;
+      SynthArenaAudio.sfxPaddleHit(b.speed);
+      particles.emit(b.x, b.y, 20, '#ec4899');
+      if (window.ArcadeJuice) {
+        window.ArcadeJuice.spawnFloat('¡RED DEFENSIVA!', b.x, b.y - 30, '#ec4899');
+        window.ArcadeJuice.unlockAchievement('fronton', 'goal_net_save', 'Salvada Épica', 'Salvaste un punto con la red', '🛡️');
+      }
+      return;
+    }
+
+    // Colisión con Paleta P2 (Superior) o Frontón de Supervivencia
+    if (State.gameMode === 'SURVIVAL') {
+      if (b.vy < 0 && b.y - CONFIG.BALL_RADIUS <= 24) {
+        b.vy = Math.abs(b.vy);
+        b.y = 25 + CONFIG.BALL_RADIUS;
+        b.speed += 12; // Acelera sin límite
+        SynthArenaAudio.sfxWallBounce();
+        particles.emit(b.x, b.y, 10, '#00f0ff');
+      }
+    } else {
+      const p2Top = CONFIG.P2_Y - CONFIG.PADDLE_H / 2;
+      const p2Bottom = CONFIG.P2_Y + CONFIG.PADDLE_H / 2;
+      const p2Left = State.p2.x - State.p2.width / 2;
+      const p2Right = State.p2.x + State.p2.width / 2;
+
+      if (b.vy < 0 && b.y - CONFIG.BALL_RADIUS <= p2Bottom && b.y + CONFIG.BALL_RADIUS >= p2Top) {
+        if (b.x >= p2Left - 8 && b.x <= p2Right + 8) {
+          const rebound = FrontonPhysics.calculatePaddleRebound(b.x, State.p2.x, State.p2.width, b.speed, true);
+          b.vx = rebound.vx;
+          b.vy = rebound.vy;
+          b.speed = rebound.newSpeed;
+          b.y = p2Bottom + CONFIG.BALL_RADIUS + 1;
+
+          State.rally++;
+          if (State.rally > State.bestRally) {
+            State.bestRally = State.rally;
+          }
+          dom.matchRally.textContent = `RALLY: ${State.rally}`;
+
+          SynthArenaAudio.sfxPaddleHit(b.speed);
+          particles.emit(b.x, b.y, b.speed > 550 ? 12 : 7, '#ff007f');
+        }
+      }
+    }
+
+    // Anotación de Puntos (Pelota traspasa los fondos)
+    if (b.y > CONFIG.VIRTUAL_H + 20) {
+      // Punto para P2 / Rival (P1 no la alcanzó)
+      if (State.balls.length > 1) {
+        State.balls.splice(ballIndex, 1);
+        return;
+      }
+      handlePointScored('P2');
+    } else if (b.y < -20) {
+      // Punto para P1 (P2 no la alcanzó)
+      if (State.balls.length > 1) {
+        State.balls.splice(ballIndex, 1);
+        return;
+      }
+      handlePointScored('P1');
+    }
+  }
+
+  function handlePointScored(winner) {
+    if (State.gameMode === 'SURVIVAL') {
+      // En supervivencia, fallar la pelota es Game Over
+      triggerGameOver('SUPERVIVENCIA', false);
+      return;
+    }
+
     if (winner === 'P1') {
       State.p1Score++;
-      playBeep('point');
-      window.ArcadeCanvas.haptic(28);
-      showPointBanner('¡PUNTO P1!', State.mode === '1P' ? 'Anotaste contra la IA' : 'Jugador 1 suma');
+      SynthArenaAudio.sfxPointScored(true);
+      if (window.ArcadeJuice) {
+        window.ArcadeJuice.spawnFloat('¡PUNTO P1!', CONFIG.VIRTUAL_W / 2, CONFIG.VIRTUAL_H / 2, '#00f0ff', 18);
+        window.ArcadeJuice.unlockAchievement('fronton', 'first_point', 'Primer Saque', 'Anotaste tu primer punto', '🎯');
+      }
     } else {
       State.p2Score++;
-      playBeep(State.mode === '1P' ? 'lose-point' : 'point');
-      window.ArcadeCanvas.haptic(35);
-      showPointBanner('¡PUNTO P2!', State.mode === '1P' ? 'Punto para la IA' : 'Jugador 2 suma');
+      SynthArenaAudio.sfxPointScored(false);
+      if (window.ArcadeJuice) {
+        window.ArcadeJuice.spawnFloat('¡PUNTO RIVAL!', CONFIG.VIRTUAL_W / 2, CONFIG.VIRTUAL_H / 2, '#ff007f', 18);
+      }
     }
 
-    if (State.rally > State.bestRally) {
-      State.bestRally = State.rally;
-      try {
-        window.ArcadeStorage?.setHighScore(CONFIG.STORAGE_KEY, State.bestRally);
-      } catch (e) {}
-    }
+    updateScoreboard();
 
-    updateHUD();
-
-    // Comprobar victoria a 7 puntos
+    // Comprobar si se ha alcanzado la puntuación ganadora (7 puntos)
     if (State.p1Score >= CONFIG.WINNING_SCORE || State.p2Score >= CONFIG.WINNING_SCORE) {
-      endMatch(winner);
+      // Activar repetición en cámara lenta del punto definitivo
+      startSlowMoReplay(winner === 'P1');
     } else {
-      // El que anota realiza el siguiente saque
-      resetBall(winner);
+      resetBall(winner === 'P1');
     }
   }
 
-  function showPointBanner(title, sub) {
-    dom.pointText.textContent = title;
-    dom.pointSub.textContent = sub;
-    dom.pointBanner.classList.remove('hidden');
-    setTimeout(() => {
-      dom.pointBanner.classList.add('hidden');
-    }, 950);
+  function startSlowMoReplay(playerWon) {
+    State.isReplaying = true;
+    State.replayFrameIdx = 0;
+    if (dom.replayBanner) {
+      dom.replayBanner.classList.remove('hidden');
+    }
   }
 
-  function endMatch(winner) {
+  function updateSlowMoReplay(dt) {
+    if (!State.replayFrames || State.replayFrames.length === 0) {
+      finishMatch();
+      return;
+    }
+
+    // Reproducción al 35% de velocidad
+    State.replayFrameIdx += dt * 30 * 0.35;
+    const idx = Math.floor(State.replayFrameIdx);
+
+    if (idx >= State.replayFrames.length) {
+      State.isReplaying = false;
+      if (dom.replayBanner) {
+        dom.replayBanner.classList.add('hidden');
+      }
+      finishMatch();
+      return;
+    }
+
+    const frame = State.replayFrames[idx];
+    if (State.balls[0]) {
+      State.balls[0].x = frame.bX;
+      State.balls[0].y = frame.bY;
+      State.balls[0].speed = frame.speed;
+    }
+    State.p1.x = frame.p1X;
+    State.p2.x = frame.p2X;
+  }
+
+  function finishMatch() {
+    SynthArenaAudio.stopBgm();
     State.gameOver = true;
     State.started = false;
 
-    playBeep('win-match');
-    window.ArcadeCanvas.haptic([40, 60, 80]);
+    const p1Won = State.p1Score >= CONFIG.WINNING_SCORE;
 
-    if (winner === 'P1') {
-      dom.winnerTitle.textContent = State.mode === '1P' ? '¡VICTORIA!' : '¡JUGADOR 1 GANA!';
-      dom.winnerTitle.style.color = '#00f0ff';
-      dom.winnerSub.textContent = State.mode === '1P' ? `Derrotaste a la IA (${CONFIG.DIFFICULTIES[State.difficulty].label})` : 'Duelo dominado con maestría';
+    if (State.gameMode === 'TOURNAMENT') {
+      if (p1Won) {
+        const rival = CONFIG.TOURNAMENT_RIVALS[State.currentRivalIdx];
+        if (!State.tournamentBeaten.includes(rival.id)) {
+          State.tournamentBeaten.push(rival.id);
+          saveTournamentProgress();
+        }
+
+        if (State.currentRivalIdx < CONFIG.TOURNAMENT_RIVALS.length - 1) {
+          State.currentRivalIdx++;
+          saveTournamentProgress();
+          triggerGameOver(`¡RONDA SUPERADA! Siguiente rival: ${CONFIG.TOURNAMENT_RIVALS[State.currentRivalIdx].name}`, true);
+        } else {
+          triggerGameOver('¡CAMPEÓN DEL TORNEO CUÁNTICO!', true);
+          if (window.ArcadeJuice) {
+            window.ArcadeJuice.unlockAchievement('fronton', 'tournament_champ', 'Campeón del Torneo', 'Venciste a los 5 rivales', '👑');
+          }
+        }
+      } else {
+        triggerGameOver('¡DERROTA EN EL TORNEO! Entrena y vuelve a intentarlo.', false);
+      }
     } else {
-      dom.winnerTitle.textContent = State.mode === '1P' ? 'DERROTA' : '¡JUGADOR 2 GANA!';
-      dom.winnerTitle.style.color = '#ff007f';
-      dom.winnerSub.textContent = State.mode === '1P' ? 'La IA se llevó el duelo a 7 puntos' : 'Jugador 2 se corona en el Frontón';
+      triggerGameOver(p1Won ? '¡VICTORIA ÉPICA!' : '¡PARTIDO FINALIZADO!', p1Won);
     }
 
+    // Comprobar logro de blanqueada
+    if (p1Won && State.p2Score === 0 && (State.difficulty === 'HARD' || State.gameMode === 'TOURNAMENT') && window.ArcadeJuice) {
+      window.ArcadeJuice.unlockAchievement('fronton', 'clean_sheet', 'Blanqueada Perfecta', 'Ganaste 7-0 en máxima exigencia', '🏆');
+    }
+  }
+
+  function triggerGameOver(title, playerWon) {
+    dom.overlayGameOver.classList.remove('hidden');
+    dom.winnerTitle.textContent = title;
+    dom.winnerSub.textContent = playerWon ? 'Jugador 1 se lleva el partido' : 'El rival ha dominado la pista';
     dom.finalP1Score.textContent = State.p1Score;
     dom.finalP2Score.textContent = State.p2Score;
     dom.bestRallyDisplay.textContent = State.bestRally;
 
-    dom.overlayGameOver.classList.remove('hidden');
-  }
-
-  function updateHUD() {
-    dom.p1Score.textContent = State.p1Score;
-    dom.p2Score.textContent = State.p2Score;
-    dom.matchRally.textContent = `RALLY: ${State.rally}`;
-    dom.p2Tag.textContent = State.mode === '1P' ? `IA (${CONFIG.DIFFICULTIES[State.difficulty].label})` : 'JUGADOR 2';
-  }
-
-  // ==========================================
-  // ACTUALIZACIÓN DE FÍSICA Y IA
-  // ==========================================
-  function update(dt) {
-    if (!State.started || State.paused || State.gameOver) return;
-
-    // Partículas
-    particles.update(dt);
-
-    // Paletas se mueven de forma ultra-reactiva hacia su targetX (cero sensación de lag)
-    State.p1.x += (State.p1.targetX - State.p1.x) * Math.min(1, 48 * dt);
-    State.p1.x = FrontonPhysics.clampPaddleX(State.p1.x, CONFIG.PADDLE_W, CONFIG.VIRTUAL_W);
-
-    if (State.mode === '1P') {
-      // Control de IA para P2
-      updateAI(dt);
-    } else {
-      // 2P: P2 se mueve a su targetX táctil de forma ultra-reactiva
-      State.p2.x += (State.p2.targetX - State.p2.x) * Math.min(1, 48 * dt);
-      State.p2.x = FrontonPhysics.clampPaddleX(State.p2.x, CONFIG.PADDLE_W, CONFIG.VIRTUAL_W);
-    }
-
-    // Saque con retardo
-    if (State.serving) {
-      State.serveTimer -= dt;
-      // La pelota vibra o pulsa suavemente
-      State.ball.x = State.server === 'P1' ? State.p1.x : State.p2.x;
-      if (State.serveTimer <= 0) {
-        launchServe();
+    // Guardar récord
+    if (window.ArcadeStorage) {
+      const oldBest = window.ArcadeStorage.getHighScore(CONFIG.STORAGE_KEY) || 0;
+      if (State.bestRally > oldBest) {
+        window.ArcadeStorage.setHighScore(CONFIG.STORAGE_KEY, State.bestRally);
+        dom.newRecordTag.classList.remove('hidden');
+      } else {
+        dom.newRecordTag.classList.add('hidden');
       }
-      return;
     }
+  }
 
-    // Movimiento de la pelota
-    const nextX = State.ball.x + State.ball.vx * dt;
-    const nextY = State.ball.y + State.ball.vy * dt;
-
-    // Rebote en paredes laterales (izq/der)
-    const courtLeft = 20 + CONFIG.BALL_RADIUS;
-    const courtRight = CONFIG.VIRTUAL_W - 20 - CONFIG.BALL_RADIUS;
-
-    if (nextX <= courtLeft) {
-      State.ball.x = courtLeft;
-      State.ball.vx = Math.abs(State.ball.vx);
-      playBeep('wall');
-      particles.burst(State.ball.x, State.ball.y, 6, '#00f0ff');
-      window.ArcadeCanvas.haptic(8);
-    } else if (nextX >= courtRight) {
-      State.ball.x = courtRight;
-      State.ball.vx = -Math.abs(State.ball.vx);
-      playBeep('wall');
-      particles.burst(State.ball.x, State.ball.y, 6, '#00f0ff');
-      window.ArcadeCanvas.haptic(8);
-    } else {
-      State.ball.x = nextX;
+  function saveTournamentProgress() {
+    if (window.ArcadeStorage) {
+      try {
+        localStorage.setItem('fronton_tourney_idx', String(State.currentRivalIdx));
+        localStorage.setItem('fronton_tourney_beaten', JSON.stringify(State.tournamentBeaten));
+      } catch (_) {}
     }
+  }
 
-    // Detección de colisión con Paleta P1 (inferior)
-    const p1Top = CONFIG.P1_Y - CONFIG.PADDLE_H / 2;
-    const p1Bottom = CONFIG.P1_Y + CONFIG.PADDLE_H / 2;
-    if (
-      State.ball.vy > 0 &&
-      State.ball.y <= p1Top &&
-      nextY >= p1Top - CONFIG.BALL_RADIUS &&
-      Math.abs(State.ball.x - State.p1.x) <= CONFIG.PADDLE_W / 2 + CONFIG.BALL_RADIUS
-    ) {
-      const reb = FrontonPhysics.calculatePaddleRebound(
-        State.ball.x,
-        State.p1.x,
-        CONFIG.PADDLE_W,
-        State.ball.speed,
-        false
-      );
-      State.ball.vx = reb.vx;
-      State.ball.vy = reb.vy;
-      State.ball.speed = reb.newSpeed;
-      State.ball.y = p1Top - CONFIG.BALL_RADIUS;
-      State.rally++;
-      updateHUD();
-      playBeep('paddle-p1');
-      particles.burst(State.ball.x, p1Top, 12, '#00f0ff');
-      window.ArcadeCanvas.haptic(14);
-    }
-
-    // Detección de colisión con Paleta P2 (superior)
-    const p2Bottom = CONFIG.P2_Y + CONFIG.PADDLE_H / 2;
-    if (
-      State.ball.vy < 0 &&
-      State.ball.y >= p2Bottom &&
-      nextY <= p2Bottom + CONFIG.BALL_RADIUS &&
-      Math.abs(State.ball.x - State.p2.x) <= CONFIG.PADDLE_W / 2 + CONFIG.BALL_RADIUS
-    ) {
-      const reb = FrontonPhysics.calculatePaddleRebound(
-        State.ball.x,
-        State.p2.x,
-        CONFIG.PADDLE_W,
-        State.ball.speed,
-        true
-      );
-      State.ball.vx = reb.vx;
-      State.ball.vy = reb.vy;
-      State.ball.speed = reb.newSpeed;
-      State.ball.y = p2Bottom + CONFIG.BALL_RADIUS;
-      State.rally++;
-      updateHUD();
-      playBeep('paddle-p2');
-      particles.burst(State.ball.x, p2Bottom, 12, '#ff007f');
-      window.ArcadeCanvas.haptic(14);
-    }
-
-    // Fuera de límites (Punto)
-    if (nextY > CONFIG.VIRTUAL_H + 20) {
-      // Pelota pasó a P1 -> Punto para P2
-      awardPoint('P2');
-      return;
-    } else if (nextY < -20) {
-      // Pelota pasó a P2 -> Punto para P1
-      awardPoint('P1');
-      return;
-    }
-
-    State.ball.y = nextY;
-
-    // Rastro cuántico de la pelota
-    if (Math.random() < 0.6) {
-      particles.spawn(
-        State.ball.x,
-        State.ball.y,
-        (Math.random() - 0.5) * 20,
-        (Math.random() - 0.5) * 20,
-        0.25,
-        3,
-        State.ball.vy > 0 ? '#ff007f' : '#00f0ff'
-      );
+  function loadTournamentProgress() {
+    try {
+      State.currentRivalIdx = parseInt(localStorage.getItem('fronton_tourney_idx') || '0', 10);
+      State.tournamentBeaten = JSON.parse(localStorage.getItem('fronton_tourney_beaten') || '[]');
+    } catch (_) {
+      State.currentRivalIdx = 0;
+      State.tournamentBeaten = [];
     }
   }
 
   // ==========================================
-  // IA DEL OPONENTE (3 DIFICULTADES)
+  // IA DE LOS RIVALES
   // ==========================================
   function updateAI(dt) {
-    const diff = CONFIG.DIFFICULTIES[State.difficulty];
-    State.aiLagTimer += dt;
+    let aiConfig = CONFIG.DIFFICULTIES[State.difficulty];
+    if (State.gameMode === 'TOURNAMENT') {
+      aiConfig = CONFIG.TOURNAMENT_RIVALS[State.currentRivalIdx];
+    }
 
-    if (State.aiLagTimer >= diff.reactionLag) {
-      State.aiLagTimer = 0;
-
-      if (State.ball.vy < 0) {
-        // La pelota va hacia la IA: estimar trayectoria
-        const timeToReach = Math.max(0.01, (CONFIG.P2_Y - State.ball.y) / State.ball.vy);
-        let predictedX = State.ball.x + State.ball.vx * timeToReach;
-
-        // Rebotes en paredes para la predicción
-        const leftBound = 28;
-        const rightBound = CONFIG.VIRTUAL_W - 28;
-        const courtW = rightBound - leftBound;
-
-        // Plegar rebotes matemáticamente
-        let normX = (predictedX - leftBound) % (2 * courtW);
-        if (normX < 0) normX += 2 * courtW;
-        if (normX > courtW) normX = 2 * courtW - normX;
-        predictedX = leftBound + normX;
-
-        // Añadir margen de error de la dificultad
-        const error = (Math.sin(Date.now() * 0.005) * diff.errorRate);
-        State.aiTargetX = predictedX + error;
+    State.aiLagTimer -= dt;
+    if (State.aiLagTimer <= 0) {
+      State.aiLagTimer = aiConfig.reactionLag;
+      const targetBall = State.balls[0];
+      if (targetBall && targetBall.vy < 0) {
+        // La bola se acerca a P2: predecir llegada con error controlado
+        const errorOffset = (Math.random() - 0.5) * aiConfig.errorRate * 2;
+        State.aiTargetX = targetBall.x + errorOffset;
       } else {
-        // La pelota se aleja: volver suavemente al centro
-        State.aiTargetX = CONFIG.VIRTUAL_W / 2 + Math.sin(Date.now() * 0.002) * 30;
+        // La bola se aleja: volver al centro
+        State.aiTargetX = CONFIG.VIRTUAL_W / 2;
       }
     }
 
-    // Mover hacia el target con límite de velocidad
-    const step = diff.speed * dt;
-    const diffX = State.aiTargetX - State.p2.x;
-    if (Math.abs(diffX) < step) {
+    const maxMove = aiConfig.speed * dt;
+    const diff = State.aiTargetX - State.p2.x;
+    if (Math.abs(diff) <= maxMove) {
       State.p2.x = State.aiTargetX;
     } else {
-      State.p2.x += Math.sign(diffX) * step;
+      State.p2.x += Math.sign(diff) * maxMove;
     }
+    State.p2.x = FrontonPhysics.clampPaddleX(State.p2.x, State.p2.width, CONFIG.VIRTUAL_W);
+    State.p2.tilt = Math.max(-0.25, Math.min(0.25, diff * 0.006));
+  }
 
-    State.p2.x = FrontonPhysics.clampPaddleX(State.p2.x, CONFIG.PADDLE_W, CONFIG.VIRTUAL_W);
+  function updateScoreboard() {
+    dom.p1Score.textContent = State.p1Score;
+    dom.p2Score.textContent = State.p2Score;
   }
 
   // ==========================================
-  // RENDERIZADO VECTORIAL 3D PSEUDO-ESPACIAL
+  // RENDERIZADO VISUAL EN CANVAS
   // ==========================================
   function render() {
     const ctx = dom.ctx;
-    const W = CONFIG.VIRTUAL_W;
-    const H = CONFIG.VIRTUAL_H;
+    if (!ctx) return;
 
     ctx.save();
-    ctx.resetTransform();
-    const dpr = window.devicePixelRatio || 1;
-    ctx.scale(dpr * State.scale, dpr * State.scale);
 
-    // Limpiar fondo
-    ctx.fillStyle = '#060814';
-    ctx.fillRect(0, 0, W, H);
-
-    // 1. Pista en perspectiva 3D (Rejilla synthwave en profundidad)
-    renderCourt3D(ctx, W, H);
-
-    // 2. Línea divisoria central con efecto neón
-    ctx.save();
-    ctx.strokeStyle = State.mode === '2P' ? 'rgba(255, 208, 0, 0.4)' : 'rgba(0, 240, 255, 0.15)';
-    ctx.setLineDash([8, 8]);
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(18, H / 2);
-    ctx.lineTo(W - 18, H / 2);
-    ctx.stroke();
-
-    if (State.mode === '2P') {
-      ctx.fillStyle = 'rgba(255, 208, 0, 0.5)';
-      ctx.font = '10px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('LÍNEA DIVISORIA 2P (TOCA TU MITAD)', W / 2, H / 2 - 6);
+    // Screen Shake de Juice
+    if (window.ArcadeJuice && (window.ArcadeJuice.shakeX !== 0 || window.ArcadeJuice.shakeY !== 0)) {
+      ctx.translate(window.ArcadeJuice.shakeX, window.ArcadeJuice.shakeY);
     }
-    ctx.restore();
 
-    // 3. Sombra proyectada de la pelota en el suelo
-    const shadowY = State.ball.y + 12;
-    ctx.save();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.55)';
-    ctx.beginPath();
-    ctx.ellipse(State.ball.x, shadowY, CONFIG.BALL_RADIUS * 1.2, CONFIG.BALL_RADIUS * 0.5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    // Fondo futurista profundo con rejilla suave
+    ctx.fillStyle = '#060814';
+    ctx.fillRect(0, 0, CONFIG.VIRTUAL_W, CONFIG.VIRTUAL_H);
 
-    // 4. Sombras proyectadas de las paletas en el suelo
-    renderPaddleShadow(ctx, State.p1.x, CONFIG.P1_Y + 12, CONFIG.PADDLE_W, CONFIG.PADDLE_H);
-    renderPaddleShadow(ctx, State.p2.x, CONFIG.P2_Y + 8, CONFIG.PADDLE_W, CONFIG.PADDLE_H);
+    drawCourtGrid(ctx);
+    drawCourtPowerup(ctx);
+    drawPaddles(ctx);
+    drawBalls(ctx);
+    particles.draw(ctx);
 
-    // 5. Partículas activas
-    particles.render(ctx);
-
-    // 6. Paletas 3D Extruidas
-    render3DPaddle(ctx, State.p1.x, CONFIG.P1_Y, CONFIG.PADDLE_W, CONFIG.PADDLE_H, CONFIG.PADDLE_DEPTH, '#00f0ff', '#0077aa', '#cceeff');
-    render3DPaddle(ctx, State.p2.x, CONFIG.P2_Y, CONFIG.PADDLE_W, CONFIG.PADDLE_H, CONFIG.PADDLE_DEPTH, '#ff007f', '#99004d', '#ffcce6');
-
-    // 7. Pelota cuántica 3D esférica
-    render3DBall(ctx, State.ball.x, State.ball.y, CONFIG.BALL_RADIUS);
+    // Textos flotantes del Juice
+    if (window.ArcadeJuice) {
+      window.ArcadeJuice.drawFloats(ctx);
+      window.ArcadeJuice.drawDebugOverlay(ctx, particles.items.filter(p => p.active).length);
+    }
 
     ctx.restore();
   }
 
-  /**
-   * Pista con perspectiva de profundidad y líneas de fuga
-   */
-  function renderCourt3D(ctx, W, H) {
-    ctx.save();
+  function drawCourtGrid(ctx) {
+    const time = Date.now() * 0.002;
+    const pulseAlpha = 0.25 + 0.15 * Math.sin(time);
 
-    // Rejilla de perspectiva
-    const gridYSteps = 14;
+    // Líneas laterales de luz de la arena
+    ctx.strokeStyle = `rgba(0, 240, 255, ${pulseAlpha})`;
+    ctx.lineWidth = 3;
+    ctx.strokeRect(10, 10, CONFIG.VIRTUAL_W - 20, CONFIG.VIRTUAL_H - 20);
+
+    // Red de medio campo holográfica
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.12)';
     ctx.lineWidth = 1;
-    for (let i = 0; i <= gridYSteps; i++) {
-      const t = i / gridYSteps;
-      const y = t * H;
-      const alpha = 0.06 + Math.pow(Math.abs(t - 0.5) * 2, 1.5) * 0.12;
-      ctx.strokeStyle = `rgba(0, 240, 255, ${alpha})`;
+    ctx.setLineDash([8, 8]);
+    ctx.beginPath();
+    ctx.moveTo(10, CONFIG.VIRTUAL_H / 2);
+    ctx.lineTo(CONFIG.VIRTUAL_W - 10, CONFIG.VIRTUAL_H / 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Círculo central cuántico
+    ctx.strokeStyle = `rgba(0, 240, 255, ${pulseAlpha * 0.8})`;
+    ctx.beginPath();
+    ctx.arc(CONFIG.VIRTUAL_W / 2, CONFIG.VIRTUAL_H / 2, 45, 0, Math.PI * 2);
+    ctx.stroke();
+
+    // Red de portería protectora activa de P1
+    if (State.p1.hasGoalNet) {
+      ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)';
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.moveTo(18, y);
-      ctx.lineTo(W - 18, y);
+      ctx.moveTo(12, CONFIG.VIRTUAL_H - 12);
+      ctx.lineTo(CONFIG.VIRTUAL_W - 12, CONFIG.VIRTUAL_H - 12);
       ctx.stroke();
     }
+  }
 
-    // Paredes laterales 3D biseladas
-    const wallW = 16;
-    // Pared Izquierda
-    const gradLeft = ctx.createLinearGradient(0, 0, wallW, 0);
-    gradLeft.addColorStop(0, '#00f0ff');
-    gradLeft.addColorStop(0.3, '#082535');
-    gradLeft.addColorStop(1, 'rgba(6, 8, 20, 0)');
-    ctx.fillStyle = gradLeft;
-    ctx.fillRect(0, 0, wallW, H);
+  function drawCourtPowerup(ctx) {
+    const pow = State.courtPowerup;
+    if (!pow) return;
 
-    // Pared Derecha
-    const gradRight = ctx.createLinearGradient(W - wallW, 0, W, 0);
-    gradRight.addColorStop(0, 'rgba(6, 8, 20, 0)');
-    gradRight.addColorStop(0.7, '#082535');
-    gradRight.addColorStop(1, '#ff007f');
-    ctx.fillStyle = gradRight;
-    ctx.fillRect(W - wallW, 0, wallW, H);
+    ctx.save();
+    ctx.translate(pow.x, pow.y);
 
-    // Borde brillante de las paredes
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.4)';
+    // Resplandor pulsante
+    const pulse = 1 + 0.15 * Math.sin(Date.now() * 0.008);
+    ctx.fillStyle = pow.color;
+    ctx.globalAlpha = 0.25;
     ctx.beginPath();
-    ctx.moveTo(16, 0);
-    ctx.lineTo(16, H);
+    ctx.arc(0, 0, pow.radius * 1.5 * pulse, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.globalAlpha = 1;
+    ctx.strokeStyle = pow.color;
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(0, 0, pow.radius, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.strokeStyle = 'rgba(255, 0, 127, 0.4)';
-    ctx.beginPath();
-    ctx.moveTo(W - 16, 0);
-    ctx.lineTo(W - 16, H);
-    ctx.stroke();
-
+    ctx.font = '14px system-ui, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.fillText(pow.icon, 0, 1);
     ctx.restore();
   }
 
-  function renderPaddleShadow(ctx, x, y, w, h) {
+  function drawPaddles(ctx) {
+    // Paleta 1 (Inferior - Cian)
     ctx.save();
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.6)';
-    ctx.beginPath();
-    ctx.roundRect(x - w / 2, y, w, h * 0.6, 4);
-    ctx.fill();
-    ctx.restore();
-  }
+    ctx.translate(State.p1.x, CONFIG.P1_Y);
+    ctx.rotate(State.p1.tilt);
 
-  /**
-   * Paleta 3D con cara superior iluminada, bisel frontal y profundidad
-   */
-  function render3DPaddle(ctx, x, y, w, h, depth, primaryColor, darkColor, lightColor) {
-    const left = x - w / 2;
-    const top = y - h / 2;
+    ctx.fillStyle = '#00f0ff';
+    ctx.shadowBlur = 12;
+    ctx.shadowColor = '#00f0ff';
+    ctx.fillRect(-State.p1.width / 2, -CONFIG.PADDLE_H / 2, State.p1.width, CONFIG.PADDLE_H);
 
-    ctx.save();
-
-    // 0. Resplandor neón exterior de alto rendimiento (sin shadowBlur)
-    ctx.fillStyle = primaryColor === '#00f0ff' ? 'rgba(0, 240, 255, 0.22)' : 'rgba(255, 0, 127, 0.22)';
-    ctx.beginPath();
-    ctx.roundRect(left - 4, top - 3, w + 8, h + depth + 6, 8);
-    ctx.fill();
-
-    // 1. Cara inferior / profundidad frontal
-    ctx.fillStyle = darkColor;
-    ctx.beginPath();
-    ctx.roundRect(left, top + 4, w, h + depth - 4, 6);
-    ctx.fill();
-
-    // 2. Cara frontal principal
-    const grad = ctx.createLinearGradient(left, top, left, top + h);
-    grad.addColorStop(0, lightColor);
-    grad.addColorStop(0.35, primaryColor);
-    grad.addColorStop(1, darkColor);
-
-    ctx.fillStyle = grad;
-    ctx.beginPath();
-    ctx.roundRect(left, top, w, h, 6);
-    ctx.fill();
-
-    // 3. Bisel superior con brillo especular
     ctx.fillStyle = '#ffffff';
-    ctx.globalAlpha = 0.55;
-    ctx.beginPath();
-    ctx.roundRect(left + 6, top + 2, w - 12, 3, 2);
-    ctx.fill();
-
-    // 4. Núcleo de energía interno
-    ctx.globalAlpha = 0.85;
-    ctx.fillStyle = primaryColor;
-    ctx.beginPath();
-    ctx.roundRect(left + w / 2 - 8, top + h / 2 - 2, 16, 4, 2);
-    ctx.fill();
-
+    ctx.fillRect(-State.p1.width / 4, -CONFIG.PADDLE_H / 4, State.p1.width / 2, CONFIG.PADDLE_H / 2);
     ctx.restore();
+
+    // Paleta 2 (Superior - Magenta)
+    if (State.gameMode !== 'SURVIVAL') {
+      ctx.save();
+      ctx.translate(State.p2.x, CONFIG.P2_Y);
+      ctx.rotate(State.p2.tilt);
+
+      ctx.fillStyle = '#ff007f';
+      ctx.shadowBlur = 12;
+      ctx.shadowColor = '#ff007f';
+      ctx.fillRect(-State.p2.width / 2, -CONFIG.PADDLE_H / 2, State.p2.width, CONFIG.PADDLE_H);
+
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-State.p2.width / 4, -CONFIG.PADDLE_H / 4, State.p2.width / 2, CONFIG.PADDLE_H / 2);
+      ctx.restore();
+    }
   }
 
-  /**
-   * Pelota cuántica 3D esférica con brillo radial y corona exterior rápida
-   */
-  function render3DBall(ctx, x, y, r) {
-    ctx.save();
+  function drawBalls(ctx) {
+    for (const b of State.balls) {
+      const ballColor = getBallSpeedColor(b.speed);
 
-    // Resplandor exterior rápido (halo en 2 capas sin shadowBlur)
-    ctx.fillStyle = 'rgba(255, 208, 0, 0.22)';
-    ctx.beginPath();
-    ctx.arc(x, y, r * 2.2, 0, Math.PI * 2);
-    ctx.fill();
+      // Estela larga con degradado
+      if (b.trail.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(b.trail[0].x, b.trail[0].y);
+        for (let i = 1; i < b.trail.length; i++) {
+          ctx.lineTo(b.trail[i].x, b.trail[i].y);
+        }
+        ctx.lineTo(b.x, b.y);
+        ctx.strokeStyle = ballColor;
+        ctx.lineWidth = 4;
+        ctx.lineCap = 'round';
+        ctx.globalAlpha = 0.35;
+        ctx.stroke();
+        ctx.globalAlpha = 1.0;
+      }
 
-    ctx.fillStyle = 'rgba(255, 240, 100, 0.4)';
-    ctx.beginPath();
-    ctx.arc(x, y, r * 1.4, 0, Math.PI * 2);
-    ctx.fill();
+      // Núcleo de la pelota
+      ctx.save();
+      ctx.fillStyle = ballColor;
+      ctx.shadowBlur = 15;
+      ctx.shadowColor = ballColor;
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, CONFIG.BALL_RADIUS, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Gradiente esférico 3D (luz en offset sup-izq)
-    const sphereGrad = ctx.createRadialGradient(
-      x - r * 0.35,
-      y - r * 0.35,
-      r * 0.1,
-      x,
-      y,
-      r
-    );
-    sphereGrad.addColorStop(0, '#ffffff');
-    sphereGrad.addColorStop(0.3, '#fff490');
-    sphereGrad.addColorStop(0.75, '#ffaa00');
-    sphereGrad.addColorStop(1, '#cc5500');
-
-    ctx.fillStyle = sphereGrad;
-    ctx.beginPath();
-    ctx.arc(x, y, r, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Reflejo especular blanco
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.beginPath();
-    ctx.arc(x - r * 0.35, y - r * 0.35, r * 0.28, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
+      // Centro brillante
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, CONFIG.BALL_RADIUS * 0.45, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
   }
 
   // ==========================================
-  // BUCLE PRINCIPAL CON DELTA TIME
+  // GAME LOOP
   // ==========================================
   let lastTime = 0;
   function gameLoop(timestamp) {
     if (!lastTime) lastTime = timestamp;
-    const dt = Math.min((timestamp - lastTime) / 1000, 0.05); // cap 50ms para evitar saltos enormes
+    let dt = (timestamp - lastTime) / 1000;
     lastTime = timestamp;
+
+    if (dt > 0.08) dt = 0.08;
 
     update(dt);
     render();
@@ -831,12 +1228,12 @@
   }
 
   // ==========================================
-  // CONTROLES Y ENTRADAS (TÁCTIL Y RATÓN / TECLADO)
+  // ENLACE DE ENTRADA (TOUCH & MOUSE & KEYBOARD)
   // ==========================================
   function setupInputs() {
     const canvas = dom.canvas;
 
-    function getCanvasCoords(clientX, clientY) {
+    const getCanvasPos = (clientX, clientY) => {
       const rect = canvas.getBoundingClientRect();
       const scaleX = CONFIG.VIRTUAL_W / rect.width;
       const scaleY = CONFIG.VIRTUAL_H / rect.height;
@@ -844,193 +1241,169 @@
         x: (clientX - rect.left) * scaleX,
         y: (clientY - rect.top) * scaleY
       };
-    }
+    };
 
-    // Eventos táctiles (Multi-touch para 2P en el mismo dispositivo)
-    canvas.addEventListener('touchstart', (e) => {
+    canvas.addEventListener('pointerdown', (e) => {
       e.preventDefault();
-      if (!State.started) return;
-      window.ArcadeAudio?.initCtx();
+      SynthArenaAudio.init();
+      const pos = getCanvasPos(e.clientX, e.clientY);
+      State.touches.set(e.pointerId, pos);
 
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        const touch = e.changedTouches[i];
-        const pt = getCanvasCoords(touch.clientX, touch.clientY);
-        const zone = FrontonPhysics.classifyTouchZone(pt.y, CONFIG.VIRTUAL_H);
-        State.touches.set(touch.identifier, { zone, x: pt.x, y: pt.y });
-
-        if (zone === 'P1') {
-          State.p1.targetX = pt.x;
-        } else if (zone === 'P2' && State.mode === '2P') {
-          State.p2.targetX = pt.x;
-        }
-      }
-    }, { passive: false });
-
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      if (!State.started) return;
-
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        const touch = e.changedTouches[i];
-        const pt = getCanvasCoords(touch.clientX, touch.clientY);
-        const record = State.touches.get(touch.identifier);
-
-        if (record) {
-          record.x = pt.x;
-          record.y = pt.y;
-          if (record.zone === 'P1') {
-            State.p1.targetX = pt.x;
-          } else if (record.zone === 'P2' && State.mode === '2P') {
-            State.p2.targetX = pt.x;
-          }
-        } else {
-          // Si no estaba registrado, clasificarlo
-          const zone = FrontonPhysics.classifyTouchZone(pt.y, CONFIG.VIRTUAL_H);
-          State.touches.set(touch.identifier, { zone, x: pt.x, y: pt.y });
-          if (zone === 'P1') State.p1.targetX = pt.x;
-          else if (zone === 'P2' && State.mode === '2P') State.p2.targetX = pt.x;
-        }
-      }
-    }, { passive: false });
-
-    canvas.addEventListener('touchend', (e) => {
-      e.preventDefault();
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        State.touches.delete(e.changedTouches[i].identifier);
-      }
-    }, { passive: false });
-
-    canvas.addEventListener('touchcancel', (e) => {
-      for (let i = 0; i < e.changedTouches.length; i++) {
-        State.touches.delete(e.changedTouches[i].identifier);
+      const zone = FrontonPhysics.classifyTouchZone(pos.y, CONFIG.VIRTUAL_H);
+      if (zone === 'P1') {
+        State.p1.targetX = FrontonPhysics.clampPaddleX(pos.x, State.p1.width, CONFIG.VIRTUAL_W);
+      } else if (State.mode === '2P' && State.gameMode === 'QUICK') {
+        State.p2.targetX = FrontonPhysics.clampPaddleX(pos.x, State.p2.width, CONFIG.VIRTUAL_W);
       }
     });
 
-    // Ratón para testing en PC o laptop
-    let isMouseDown = false;
-    canvas.addEventListener('mousedown', (e) => {
-      isMouseDown = true;
-      window.ArcadeAudio?.initCtx();
-      const pt = getCanvasCoords(e.clientX, e.clientY);
-      const zone = FrontonPhysics.classifyTouchZone(pt.y, CONFIG.VIRTUAL_H);
-      if (zone === 'P1') State.p1.targetX = pt.x;
-      else if (zone === 'P2' && State.mode === '2P') State.p2.targetX = pt.x;
+    canvas.addEventListener('pointermove', (e) => {
+      if (!State.touches.has(e.pointerId)) return;
+      const pos = getCanvasPos(e.clientX, e.clientY);
+      State.touches.set(e.pointerId, pos);
+
+      const zone = FrontonPhysics.classifyTouchZone(pos.y, CONFIG.VIRTUAL_H);
+      if (zone === 'P1') {
+        State.p1.targetX = FrontonPhysics.clampPaddleX(pos.x, State.p1.width, CONFIG.VIRTUAL_W);
+      } else if (State.mode === '2P' && State.gameMode === 'QUICK') {
+        State.p2.targetX = FrontonPhysics.clampPaddleX(pos.x, State.p2.width, CONFIG.VIRTUAL_W);
+      }
     });
 
-    window.addEventListener('mousemove', (e) => {
-      if (!isMouseDown) return;
-      const pt = getCanvasCoords(e.clientX, e.clientY);
-      const zone = FrontonPhysics.classifyTouchZone(pt.y, CONFIG.VIRTUAL_H);
-      if (zone === 'P1') State.p1.targetX = pt.x;
-      else if (zone === 'P2' && State.mode === '2P') State.p2.targetX = pt.x;
-    });
+    const removeTouch = (e) => {
+      State.touches.delete(e.pointerId);
+    };
+    canvas.addEventListener('pointerup', removeTouch);
+    canvas.addEventListener('pointercancel', removeTouch);
 
-    window.addEventListener('mouseup', () => {
-      isMouseDown = false;
-    });
-
-    // Teclado (Flechas para P1, A/D para P2 en modo 2P)
+    // Teclado
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'p' || e.key === 'P') {
+      SynthArenaAudio.init();
+      if (e.key === 'ArrowLeft') {
+        State.p1.targetX = FrontonPhysics.clampPaddleX(State.p1.targetX - 32, State.p1.width, CONFIG.VIRTUAL_W);
+      } else if (e.key === 'ArrowRight') {
+        State.p1.targetX = FrontonPhysics.clampPaddleX(State.p1.targetX + 32, State.p1.width, CONFIG.VIRTUAL_W);
+      } else if (e.key === 'a' || e.key === 'A') {
+        if (State.mode === '2P') State.p2.targetX = FrontonPhysics.clampPaddleX(State.p2.targetX - 32, State.p2.width, CONFIG.VIRTUAL_W);
+      } else if (e.key === 'd' || e.key === 'D') {
+        if (State.mode === '2P') State.p2.targetX = FrontonPhysics.clampPaddleX(State.p2.targetX + 32, State.p2.width, CONFIG.VIRTUAL_W);
+      } else if (e.key === 'p' || e.key === 'P') {
         togglePause();
-        return;
-      }
-      if (e.key === 'r' || e.key === 'R') {
-        restartMatch();
-        return;
-      }
-
-      if (e.key === 'ArrowLeft') State.p1.targetX -= 40;
-      if (e.key === 'ArrowRight') State.p1.targetX += 40;
-
-      if (State.mode === '2P') {
-        if (e.key === 'a' || e.key === 'A') State.p2.targetX -= 40;
-        if (e.key === 'd' || e.key === 'D') State.p2.targetX += 40;
       }
     });
   }
 
+  function togglePause() {
+    if (!State.started || State.gameOver) return;
+    State.paused = !State.paused;
+    dom.overlayPause.classList.toggle('hidden', !State.paused);
+  }
+
   // ==========================================
-  // CONFIGURACIÓN DE MODOS Y BOTONES UI
+  // CONFIGURACIÓN DE UI Y MODALES
   // ==========================================
   function setupUI() {
-    // Modo 1P vs 2P
-    dom.modeButtons.forEach(btn => {
-      btn.addEventListener('click', () => {
-        dom.modeButtons.forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        State.mode = btn.getAttribute('data-mode');
+    loadTournamentProgress();
 
-        if (State.mode === '1P') {
-          dom.difficultyGroup.style.display = 'block';
-          dom.controlLegend.textContent = 'Arrastra el dedo en tu mitad para mover la paleta';
-        } else {
-          dom.difficultyGroup.style.display = 'none';
-          dom.controlLegend.textContent = 'Mitad inferior: Jugador 1 | Mitad superior: Jugador 2';
-        }
-        updateHUD();
+    // Tabs de Modo
+    document.querySelectorAll('.btn-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.btn-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        State.gameMode = tab.dataset.gameMode;
+
+        dom.panelQuick.classList.toggle('hidden', State.gameMode !== 'QUICK');
+        dom.panelTournament.classList.toggle('hidden', State.gameMode !== 'TOURNAMENT');
+        dom.panelSurvival.classList.toggle('hidden', State.gameMode !== 'SURVIVAL');
+
+        if (State.gameMode === 'TOURNAMENT') renderTournamentRoster();
       });
     });
 
-    // Dificultades
-    dom.diffButtons.forEach(btn => {
+    // Modo 1P / 2P
+    document.querySelectorAll('.btn-toggle[data-mode]').forEach(btn => {
       btn.addEventListener('click', () => {
-        dom.diffButtons.forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.btn-toggle[data-mode]').forEach(b => b.classList.remove('active'));
         btn.classList.add('active');
-        State.difficulty = btn.getAttribute('data-diff');
-        const desc = {
-          EASY: 'IA con movimientos tranquilos y pequeños despistes',
-          MED: 'IA con reflejos ágiles y velocidad equilibrada',
-          HARD: 'IA cibernética con máxima predicción angular'
-        };
-        dom.diffDesc.textContent = desc[State.difficulty] || '';
-        updateHUD();
+        State.mode = btn.dataset.mode;
+        dom.difficultyGroup.style.display = State.mode === '1P' ? 'block' : 'none';
       });
     });
 
-    // Iniciar saque / partida
-    dom.btnStart.addEventListener('click', () => {
-      window.ArcadeAudio?.initCtx();
-      dom.startCard.classList.add('hidden');
-      State.started = true;
-      State.p1Score = 0;
-      State.p2Score = 0;
-      State.rally = 0;
-      State.gameOver = false;
-      State.paused = false;
-      updateHUD();
-      resetBall('P1');
+    // Dificultad IA
+    document.querySelectorAll('.btn-diff').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.btn-diff').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        State.difficulty = btn.dataset.diff;
+        dom.diffDesc.textContent =
+          State.difficulty === 'EASY' ? 'IA con reflejos relajados y margen de error' :
+          State.difficulty === 'MED' ? 'IA con reflejos ágiles y velocidad equilibrada' :
+          'IA cibernética de alta velocidad con lectura instantánea';
+      });
     });
 
-    // Pausa y Reanudar
-    function togglePause() {
-      if (!State.started || State.gameOver) return;
-      State.paused = !State.paused;
-      if (State.paused) {
-        dom.overlayPause.classList.remove('hidden');
-      } else {
-        dom.overlayPause.classList.add('hidden');
-      }
-    }
-
-    dom.btnPauseHeader.addEventListener('click', togglePause);
-    dom.btnResume.addEventListener('click', togglePause);
-
-    // Reiniciar
-    function restartMatch() {
-      State.started = false;
-      State.paused = false;
-      State.gameOver = false;
-      dom.overlayPause.classList.add('hidden');
+    dom.btnStart.addEventListener('click', startMatch);
+    dom.btnMatchRestart.addEventListener('click', startMatch);
+    dom.btnBackToSetup.addEventListener('click', () => {
       dom.overlayGameOver.classList.add('hidden');
       dom.startCard.classList.remove('hidden');
-    }
+    });
 
-    dom.btnRestartHeader.addEventListener('click', restartMatch);
-    dom.btnPauseRestart.addEventListener('click', restartMatch);
-    dom.btnMatchRestart.addEventListener('click', restartMatch);
+    // Pausa
+    dom.btnPauseHeader.addEventListener('click', togglePause);
+    dom.btnResume.addEventListener('click', togglePause);
+    dom.btnPauseRestart.addEventListener('click', () => {
+      dom.overlayPause.classList.add('hidden');
+      startMatch();
+    });
 
-    // Sonido
+    // Opciones
+    const openOptions = () => dom.modalOptions.classList.remove('hidden');
+    dom.btnOptionsHeader.addEventListener('click', openOptions);
+    if (dom.btnPauseOptions) dom.btnPauseOptions.addEventListener('click', openOptions);
+    dom.btnCloseOptions.addEventListener('click', () => dom.modalOptions.classList.add('hidden'));
+
+    dom.sliderSfx.addEventListener('input', (e) => {
+      dom.valSfx.textContent = `${e.target.value}%`;
+      if (window.ArcadeJuice) window.ArcadeJuice.setOption('sfx_vol', parseInt(e.target.value, 10));
+    });
+
+    dom.sliderBgm.addEventListener('input', (e) => {
+      dom.valBgm.textContent = `${e.target.value}%`;
+      if (window.ArcadeJuice) window.ArcadeJuice.setOption('bgm_vol', parseInt(e.target.value, 10));
+    });
+
+    dom.toggleVibration.addEventListener('click', () => {
+      const active = dom.toggleVibration.classList.toggle('active');
+      dom.toggleVibration.textContent = active ? 'ACTIVADA' : 'DESACTIVADA';
+      if (window.ArcadeJuice) window.ArcadeJuice.setOption('vibration', active);
+    });
+
+    dom.toggleContrast.addEventListener('click', () => {
+      const active = dom.toggleContrast.classList.toggle('active');
+      dom.toggleContrast.textContent = active ? 'ACTIVADO' : 'DESACTIVADO';
+      document.body.classList.toggle('high-contrast', active);
+      if (window.ArcadeJuice) window.ArcadeJuice.setOption('high_contrast', active);
+    });
+
+    // Logros
+    const openAchievements = () => {
+      renderAchievements();
+      dom.modalAchievements.classList.remove('hidden');
+    };
+    dom.btnAchievementsHeader.addEventListener('click', openAchievements);
+    dom.btnAchievementsView.addEventListener('click', openAchievements);
+    dom.btnCloseAchievements.addEventListener('click', () => dom.modalAchievements.classList.add('hidden'));
+
+    // Misiones
+    dom.btnDailyMissions.addEventListener('click', () => {
+      renderMissions();
+      dom.modalMissions.classList.remove('hidden');
+    });
+    dom.btnCloseMissions.addEventListener('click', () => dom.modalMissions.classList.add('hidden'));
+
+    // Sonido toggle
     dom.btnSoundToggle.addEventListener('click', () => {
       if (window.ArcadeAudio) {
         const muted = window.ArcadeAudio.toggleMute();
@@ -1038,29 +1411,88 @@
         dom.iconSoundOff.classList.toggle('hidden', !muted);
       }
     });
-
-    // Sincronizar estado inicial de sonido
-    if (window.ArcadeAudio && window.ArcadeAudio.isMuted) {
-      dom.iconSoundOn.classList.add('hidden');
-      dom.iconSoundOff.classList.remove('hidden');
-    }
   }
 
-  // ==========================================
-  // INICIALIZACIÓN
-  // ==========================================
+  function renderTournamentRoster() {
+    dom.tournamentRoster.innerHTML = '';
+    CONFIG.TOURNAMENT_RIVALS.forEach((rival, idx) => {
+      const isBeaten = State.tournamentBeaten.includes(rival.id);
+      const isCurrent = idx === State.currentRivalIdx;
+      const chip = document.createElement('div');
+      chip.className = `rival-chip ${isCurrent ? 'current' : ''} ${isBeaten ? 'beaten' : ''}`;
+      chip.innerHTML = `
+        <div class="rival-meta">
+          <span class="rival-avatar">${rival.avatar}</span>
+          <div>
+            <div class="rival-name">${rival.name}</div>
+            <div class="rival-desc">${rival.desc}</div>
+          </div>
+        </div>
+        <div class="rival-status">${isBeaten ? '✓ VENCIDO' : isCurrent ? 'ACTUAL' : 'BLOQUEADO'}</div>
+      `;
+      dom.tournamentRoster.appendChild(chip);
+    });
+  }
+
+  function renderAchievements() {
+    dom.achievementsList.innerHTML = '';
+    CONFIG.ACHIEVEMENTS.forEach(ach => {
+      const unlocked = window.ArcadeJuice ? window.ArcadeJuice.hasAchievement('fronton', ach.id) : false;
+      const el = document.createElement('div');
+      el.className = `ach-item ${unlocked ? 'unlocked' : ''}`;
+      el.innerHTML = `
+        <span class="ach-icon">${ach.icon}</span>
+        <div class="ach-info">
+          <div class="ach-title">${ach.title} ${unlocked ? '✓' : '🔒'}</div>
+          <div class="ach-desc">${ach.desc}</div>
+        </div>
+      `;
+      dom.achievementsList.appendChild(el);
+    });
+  }
+
+  function renderMissions() {
+    dom.missionsList.innerHTML = '';
+    const stats = window.ArcadeJuice ? window.ArcadeJuice.getStats('fronton') : { plays: 0, best: 0 };
+    const missions = [
+      { title: 'Veterano de Pista', desc: 'Juega 2 partidos en cualquier modo', current: Math.min(2, stats.plays), target: 2 },
+      { title: 'Duelo Intenso', desc: 'Consigue un rally de al menos 10 golpes', current: Math.min(10, stats.best), target: 10 },
+      { title: 'Cazador Cuántico', desc: 'Recoge 3 power-ups en tus partidas', current: Math.min(3, State.powerupsCollectedMatch), target: 3 }
+    ];
+
+    missions.forEach(m => {
+      const pct = Math.min(100, Math.round((m.current / m.target) * 100));
+      const el = document.createElement('div');
+      el.className = 'mission-item';
+      el.innerHTML = `
+        <div class="mission-info">
+          <div class="mission-title">${m.title} (${m.current}/${m.target})</div>
+          <div class="mission-desc">${m.desc}</div>
+          <div class="progress-bar-bg">
+            <div class="progress-bar-fill" style="width: ${pct}%"></div>
+          </div>
+        </div>
+      `;
+      dom.missionsList.appendChild(el);
+    });
+  }
+
+  function handleResize() {
+    const canvas = dom.canvas;
+    if (!canvas) return;
+    dom.ctx = canvas.getContext('2d');
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = CONFIG.VIRTUAL_W * dpr;
+    canvas.height = CONFIG.VIRTUAL_H * dpr;
+    dom.ctx.scale(dpr, dpr);
+  }
+
   function init() {
     handleResize();
+    window.addEventListener('resize', handleResize);
     setupInputs();
     setupUI();
-    updateHUD();
-
-    // Cargar récord histórico
-    try {
-      State.bestRally = window.ArcadeStorage?.getHighScore(CONFIG.STORAGE_KEY) || 0;
-      dom.bestRallyDisplay.textContent = State.bestRally;
-    } catch (e) {}
-
     requestAnimationFrame(gameLoop);
   }
 

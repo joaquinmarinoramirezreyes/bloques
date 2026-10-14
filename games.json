@@ -128,5 +128,25 @@
     "badge": "SHOOTER",
     "icon": "lanzaburbujas",
     "eras": ["00"]
+  },
+  {
+    "id": "lumen",
+    "name": "Lumen",
+    "folder": "games/lumen",
+    "description": "Laberinto de luz y persecución en la oscuridad. Enciende faroles, evade criaturas geométricas y usa chispas temporales.",
+    "color": "#ffd700",
+    "badge": "LABERINTO",
+    "icon": "lumen",
+    "eras": ["80"]
+  },
+  {
+    "id": "cargas",
+    "name": "Cargas",
+    "folder": "games/cargas",
+    "description": "Laberinto táctico con cargas de resonancia en rombo. Empuja núcleos, desata combos en cadena y derrota jefes con ataques telegrafiados.",
+    "color": "#f59e0b",
+    "badge": "ACCIÓN",
+    "icon": "cargas",
+    "eras": ["90"]
   }
 ]
