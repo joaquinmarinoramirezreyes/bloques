@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="theme-color" content="#090e1c">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="description" content="Corredor - Runner arcade 00 con física de salto variable, obstáculos procedurales verificables, power-ups y estética ciber-vidrio.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23090e1c'/%3E%3Cpath d='M8 24 L16 8 L24 24 Z' fill='%2300f0ff'/%3E%3Ccircle cx='16' cy='12' r='3' fill='%23ffffff'/%3E%3C/svg%3E">
+  <title>Corredor - Arcade 00</title>
+  <link rel="stylesheet" href="../../shared/theme.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="arcade-lock">
+  <div id="app-root">
+    <!-- Encabezado superior -->
+    <header class="hud-header">
+      <div class="brand">
+        <a href="../../index.html" class="icon-button back-button" aria-label="Volver al Menú Principal" title="Menú Principal">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+        </a>
+        <span class="brand-badge badge-00s">ARCADE 00</span>
+        <h1 class="brand-title">CORREDOR</h1>
+      </div>
+      <div class="hud-actions">
+        <button id="btn-sound-toggle" class="icon-button" aria-label="Silenciar / Activar sonido" title="Sonido">
+          <svg id="icon-sound-on" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+          </svg>
+          <svg id="icon-sound-off" class="hidden" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
+          </svg>
+        </button>
+        <button id="btn-pause-header" class="icon-button" aria-label="Pausar juego" title="Pausar (P)">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M6 4h4v16H6zm8 0h4v16h-4z"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Marcador HUD en juego -->
+    <div class="runner-hud">
+      <div class="hud-stat-box distance-box">
+        <span class="hud-label">DISTANCIA</span>
+        <span class="hud-val" id="hud-distance">0 <small>m</small></span>
+      </div>
+
+      <div class="hud-center-stats">
+        <div id="badge-combo" class="combo-badge hidden">
+          <span class="combo-text" id="combo-val">x1</span>
+          <span class="combo-sub">COMBO</span>
+        </div>
+        <div class="hud-powerups">
+          <div id="badge-shield" class="powerup-badge hidden" title="Escudo Activo">
+            <span class="badge-icon">🛡️</span>
+            <span class="badge-text">ESCUDO</span>
+          </div>
+          <div id="badge-turbo" class="powerup-badge hidden" title="Hiper Turbo">
+            <span class="badge-icon">🚀</span>
+            <span class="badge-meter turbo-meter" id="turbo-meter"></span>
+          </div>
+          <div id="badge-slowmo" class="powerup-badge hidden" title="Matriz Cuántica">
+            <span class="badge-icon">⏳</span>
+            <span class="badge-meter slowmo-meter" id="slowmo-meter"></span>
+          </div>
+          <div id="badge-magnet" class="powerup-badge hidden" title="Imán de Monedas">
+            <span class="badge-icon">🧲</span>
+            <span class="badge-meter" id="magnet-meter"></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="hud-stat-box coins-box">
+        <span class="hud-label">MONEDAS</span>
+        <span class="hud-val" id="hud-coins">🪙 0</span>
+      </div>
+    </div>
+
+    <!-- Escenario Principal (Canvas del Runner) -->
+    <main class="game-stage">
+      <div class="board-wrapper" id="runner-container">
+        <canvas id="runner-canvas" width="480" height="640" aria-label="Pista del Corredor"></canvas>
+
+        <!-- Banner de Sector / Hito -->
+        <div id="sector-banner" class="sector-banner hidden">
+          <span id="sector-title" class="sector-title">SECTOR 1</span>
+          <span id="sector-desc" class="sector-desc">DISTRITO NEÓN</span>
+        </div>
+
+        <!-- Pantalla Inicial / Instrucciones -->
+        <div id="start-card" class="modal-card">
+          <div class="glass-orb">🏃</div>
+          <h2 class="card-title">CORREDOR 00</h2>
+          <p class="card-subtitle">Cyber-runner hipercinético de reflejos y acrobacias</p>
+
+          <div class="instructions-card">
+            <div class="inst-row">
+              <span class="inst-key">👆 Toque</span>
+              <span class="inst-desc">Saltar (mantén para salto alto)</span>
+            </div>
+            <div class="inst-row">
+              <span class="inst-key">👆 En el Aire</span>
+              <span class="inst-desc">Doble salto con acrobacia 360°</span>
+            </div>
+            <div class="inst-row">
+              <span class="inst-key">👇 Desliza Abajo</span>
+              <span class="inst-desc">Deslizarse bajo drones y láseres</span>
+            </div>
+            <div class="inst-row">
+              <span class="inst-key">⚡ Power-ups</span>
+              <span class="inst-desc">🚀 Turbo, ⏳ Matriz, 🧲 Imán, 🛡️ Escudo</span>
+            </div>
+            <div class="inst-row">
+              <span class="inst-key">🔥 Esquivas</span>
+              <span class="inst-desc">Esquivar al límite aumenta Combo x2, x3...</span>
+            </div>
+          </div>
+
+          <button type="button" id="btn-start-run" class="btn-launch">▶ INICIAR CARRERA</button>
+          <div class="record-indicator">RÉCORD: <strong id="start-record-val">0</strong> m</div>
+        </div>
+
+        <!-- Pantalla de Pausa -->
+        <div id="overlay-pause" class="game-overlay hidden">
+          <div class="overlay-card glass-panel">
+            <h2>EN PAUSA</h2>
+            <p>Carrera suspendida</p>
+            <div class="overlay-actions">
+              <button id="btn-resume" class="btn-primary">Continuar</button>
+              <button id="btn-restart-run" class="btn-secondary">Reiniciar</button>
+              <a href="../../index.html" class="btn-secondary">Menú Principal</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Pantalla de Game Over -->
+        <div id="overlay-gameover" class="game-overlay hidden">
+          <div class="overlay-card glass-panel">
+            <h2 id="go-title" class="go-title">¡FIN DE CARRERA!</h2>
+            <p id="go-sub" class="go-sub">Colisión en la pista cuántica</p>
+
+            <div class="result-stats">
+              <div class="stat-col">
+                <span class="stat-lbl">Distancia</span>
+                <span id="final-dist-val" class="stat-big">0 m</span>
+              </div>
+              <div class="stat-col">
+                <span class="stat-lbl">Monedas</span>
+                <span id="final-coins-val" class="stat-big">🪙 0</span>
+              </div>
+            </div>
+
+            <div class="record-meta">
+              <span>Mejor Distancia: <strong id="best-dist-val">0</strong> m</span>
+            </div>
+
+            <div class="overlay-actions">
+              <button id="btn-retry" class="btn-primary">Intentar de Nuevo</button>
+              <a href="../../index.html" class="btn-secondary">Menú Principal</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../../shared/canvas.js"></script>
+  <script src="../../shared/storage.js"></script>
+  <script src="../../shared/audio.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

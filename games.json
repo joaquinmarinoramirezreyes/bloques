@@ -68,5 +68,35 @@
     "badge": "ROGUELIKE",
     "icon": "abismo",
     "eras": ["00"]
+  },
+  {
+    "id": "fronton",
+    "name": "Frontón",
+    "folder": "games/fronton",
+    "description": "Duelo de paletas y pelota cuántica con perspectiva 3D, física de aceleración, 3 dificultades de IA y modo 2P en un solo móvil.",
+    "color": "#00f0ff",
+    "badge": "RETRO 80",
+    "icon": "fronton",
+    "eras": ["80"]
+  },
+  {
+    "id": "campominado",
+    "name": "Campo Minado",
+    "folder": "games/campominado",
+    "description": "Despeje táctico de casillas con relieve 3D, primer toque 100% seguro y algoritmo de flood-fill iterativo sin recursión.",
+    "color": "#ffcc00",
+    "badge": "LÓGICA",
+    "icon": "campominado",
+    "eras": ["90"]
+  },
+  {
+    "id": "corredor",
+    "name": "Corredor",
+    "folder": "games/corredor",
+    "description": "Runner infinito de un botón con física de salto variable, obstáculos procedurales matemáticamente garantizados y power-ups.",
+    "color": "#b388ff",
+    "badge": "RUNNER",
+    "icon": "corredor",
+    "eras": ["00"]
   }
 ]

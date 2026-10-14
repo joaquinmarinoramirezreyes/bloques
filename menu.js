@@ -76,6 +76,36 @@
       badge: "ROGUELIKE",
       icon: "abismo",
       eras: ["00"]
+    },
+    {
+      id: "fronton",
+      name: "Frontón",
+      folder: "games/fronton",
+      description: "Duelo de paletas y pelota cuántica con perspectiva 3D, física de aceleración, 3 dificultades de IA y modo 2P en un solo móvil.",
+      color: "#00f0ff",
+      badge: "RETRO 80",
+      icon: "fronton",
+      eras: ["80"]
+    },
+    {
+      id: "campominado",
+      name: "Campo Minado",
+      folder: "games/campominado",
+      description: "Despeje táctico de casillas con relieve 3D, primer toque 100% seguro y algoritmo de flood-fill iterativo sin recursión.",
+      color: "#ffcc00",
+      badge: "LÓGICA",
+      icon: "campominado",
+      eras: ["90"]
+    },
+    {
+      id: "corredor",
+      name: "Corredor",
+      folder: "games/corredor",
+      description: "Runner infinito de un botón con física de salto variable, obstáculos procedurales matemáticamente garantizados y power-ups.",
+      color: "#b388ff",
+      badge: "RUNNER",
+      icon: "corredor",
+      eras: ["00"]
     }
   ];
 
@@ -168,6 +198,27 @@
       return `
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
           <path d="M11 2v4H9v2h2v7.17l-3.59-3.58L6 13.17 12 19.17l6-6-1.41-1.42L13 15.17V8h2V6h-2V2h-2zM4 20h16v2H4v-2z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'fronton') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M4 3h16v2H4V3zm2 4h12v2H6V7zm4 12h4v2h-4v-2zm-6-2h16v2H4v-2zm8-5a2 2 0 1 0 0-4 2 2 0 0 0 0 4z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'campominado') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M11 2h2v3h-2V2zm0 17h2v3h-2v-3zm9-8v2h-3v-2h3zM5 11v2H2v-2h3zm12.36-5.95l1.42 1.42-2.12 2.12-1.42-1.42 2.12-2.12zM6.34 16.24l1.42 1.42-2.12 2.12-1.42-1.42 2.12-2.12zm11.32 2.12l-1.42 1.42-2.12-2.12 1.42-1.42 2.12 2.12zM8.46 6.34l-1.42 1.42-2.12-2.12 1.42-1.42 2.12 2.12zM12 7a5 5 0 1 0 0 10 5 5 0 0 0 0-10z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'corredor') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M13.5 5.5c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zM9.8 8.9L7 23h2.1l1.8-8 2.1 2v6h2v-7.5l-2.1-2 .6-3c1.3 1.5 3.3 2.5 5.5 2.5v-2c-1.9 0-3.5-1-4.3-2.4l-1-1.6c-.4-.6-1-1-1.7-1-.3 0-.5.1-.8.1L6 8.3V13h2V9.6l1.8-.7z"/>
         </svg>
       `;
     }

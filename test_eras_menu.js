@@ -60,26 +60,26 @@ test('games.json define campo "eras" para cada juego con valores válidos', () =
   });
 
   // Verificar asignación exacta según especificación:
-  // 80 = bloques, snake, rompemuros, defensaorbital
+  // 80 = bloques, snake, rompemuros, defensaorbital, fronton
   const era80 = games.filter(g => g.eras.includes('80')).map(g => g.id);
-  ['bloques', 'snake', 'rompemuros', 'defensaorbital'].forEach(id => {
+  ['bloques', 'snake', 'rompemuros', 'defensaorbital', 'fronton'].forEach(id => {
     if (!era80.includes(id)) throw new Error(`El juego "${id}" debe pertenecer a la época 80`);
   });
 
-  // 90 = derrape, sombras
+  // 90 = derrape, sombras, campominado
   const era90 = games.filter(g => g.eras.includes('90')).map(g => g.id);
-  ['derrape', 'sombras'].forEach(id => {
+  ['derrape', 'sombras', 'campominado'].forEach(id => {
     if (!era90.includes(id)) throw new Error(`El juego "${id}" debe pertenecer a la época 90`);
   });
 
-  // 00 = abismo
+  // 00 = abismo, corredor
   const era00 = games.filter(g => g.eras.includes('00')).map(g => g.id);
-  ['abismo'].forEach(id => {
+  ['abismo', 'corredor'].forEach(id => {
     if (!era00.includes(id)) throw new Error(`El juego "${id}" debe pertenecer a la época 00`);
   });
 
   // Juegos que aún no existen deben estar fuera del catálogo
-  const unreleased = ['fronton', 'lumen', 'campominado', 'gotas', 'cargas', 'bastion', 'cristales', 'corredor', 'lanzaburbujas'];
+  const unreleased = ['lumen', 'gotas', 'cargas', 'bastion', 'cristales', 'lanzaburbujas'];
   unreleased.forEach(u => {
     if (games.some(g => g.id === u)) {
       throw new Error(`El juego aún no creado "${u}" debe quedar fuera del catálogo`);
@@ -159,9 +159,9 @@ test('FALLBACK_GAMES en menu.js está sincronizado con las épocas asignadas', (
   const count90 = fallback.filter(g => g.eras && g.eras.includes('90')).length;
   const count00 = fallback.filter(g => g.eras && g.eras.includes('00')).length;
 
-  if (count80 !== 4) throw new Error(`Época 80 debe tener 4 juegos, encontrados: ${count80}`);
-  if (count90 !== 2) throw new Error(`Época 90 debe tener 2 juegos, encontrados: ${count90}`);
-  if (count00 !== 1) throw new Error(`Época 00 debe tener 1 juego, encontrados: ${count00}`);
+  if (count80 !== 5) throw new Error(`Época 80 debe tener 5 juegos, encontrados: ${count80}`);
+  if (count90 !== 3) throw new Error(`Época 90 debe tener 3 juegos, encontrados: ${count90}`);
+  if (count00 !== 2) throw new Error(`Época 00 debe tener 2 juegos, encontrados: ${count00}`);
 });
 
 console.log('\n==========================================================');
