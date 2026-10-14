@@ -1,6 +1,6 @@
 /**
- * MENU JS - Renderizado dinámico de tarjetas a partir de games.json
- * Soporta modo offline y compatibilidad con protocolo file://
+ * MENU JS - Renderizado dinámico de tarjetas y filtrado por épocas (80s, 90s, 00s)
+ * Soporta modo offline, SPA pushState y compatibilidad con protocolo file://
  */
 (() => {
   'use strict';
@@ -14,7 +14,8 @@
       description: "El puzzle arcade de piezas que caen. Encaja líneas completas, gestiona la rotación y bate el récord.",
       color: "#00f0ff",
       badge: "PUZZLE",
-      icon: "bloques"
+      icon: "bloques",
+      eras: ["80"]
     },
     {
       id: "snake",
@@ -23,7 +24,8 @@
       description: "Dirige la víbora neón en la cuadrícula, devora orbes de energía y esquiva las paredes y tu propia cola.",
       color: "#00e676",
       badge: "CLÁSICO",
-      icon: "snake"
+      icon: "snake",
+      eras: ["80"]
     },
     {
       id: "rompemuros",
@@ -32,7 +34,8 @@
       description: "El clásico demoledor de ladrillos. Rebota la pelota, recoge power-ups y destruye los muros neón.",
       color: "#ff3366",
       badge: "ARCADE",
-      icon: "rompemuros"
+      icon: "rompemuros",
+      eras: ["80"]
     },
     {
       id: "defensaorbital",
@@ -41,7 +44,8 @@
       description: "Shooter vertical arcade. Defiende la órbita de invasiones alienígenas con fuego automático y reflejos rápidos.",
       color: "#38bdf8",
       badge: "SHOOTER",
-      icon: "defensaorbital"
+      icon: "defensaorbital",
+      eras: ["80"]
     },
     {
       id: "sombras",
@@ -50,7 +54,8 @@
       description: "Sigilo y escape en laberintos procedurales. Explora en la oscuridad con tu linterna y evita a los guardianes.",
       color: "#a855f7",
       badge: "SIGILO",
-      icon: "sombras"
+      icon: "sombras",
+      eras: ["90"]
     },
     {
       id: "derrape",
@@ -59,7 +64,8 @@
       description: "Carreras cenitales arcade con físicas de derrape, rivales inteligentes y circuitos de alta velocidad.",
       color: "#f97316",
       badge: "CARRERAS",
-      icon: "derrape"
+      icon: "derrape",
+      eras: ["90"]
     },
     {
       id: "abismo",
@@ -68,9 +74,58 @@
       description: "Roguelike cenital de acción en criptas infinitas con auto-ataque, sinergias y progresión permanente.",
       color: "#e11d48",
       badge: "ROGUELIKE",
-      icon: "abismo"
+      icon: "abismo",
+      eras: ["00"]
     }
   ];
+
+  // Configuración de Épocas del Arcade
+  const ERA_CONFIGS = {
+    '80': {
+      title: 'Arcade 80',
+      tag: 'ÉPOCA 1980s',
+      subtitle: 'Neón puro, estéticas fosfóricas y el nacimiento del videojuego arcade.',
+      bodyData: '80'
+    },
+    '90': {
+      title: 'Arcade 90',
+      tag: 'ÉPOCA 1990s',
+      subtitle: 'La era de los 16 bits: Colores saturados, tarjetas con relieve y alta velocidad.',
+      bodyData: '90'
+    },
+    '00': {
+      title: 'Arcade 00',
+      tag: 'ÉPOCA 2000s',
+      subtitle: 'El nuevo milenio: Acabados de vidrio, reflejos y roguelikes de acción.',
+      bodyData: '00'
+    }
+  };
+
+  let allGamesData = [];
+
+  // Detección de Época desde la URL
+  function detectEra() {
+    if (typeof window === 'undefined') return null;
+
+    // 1. Pathname de Vercel (/80, /90, /00, /80/, etc.)
+    const path = (window.location.pathname || '').toLowerCase();
+    const match = path.match(/\/(80|90|00)(?:\/|$)/);
+    if (match) return match[1];
+
+    // 2. Parámetro de búsqueda (?era=80, ?era=90, ?era=00)
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const qEra = urlParams.get('era');
+      if (qEra && ['80', '90', '00'].includes(qEra)) return qEra;
+    } catch (_) {}
+
+    // 3. Hash fallback (#80, #90, #00)
+    const hash = (window.location.hash || '').replace('#', '').trim();
+    if (['80', '90', '00'].includes(hash)) return hash;
+
+    // Rutas no reconocidas o raíz llevan al menú completo
+    return null;
+  }
 
   // Iconos SVG arcade según el juego
   function getGameIcon(iconType) {
@@ -124,23 +179,24 @@
     `;
   }
 
-  async function loadGames() {
+  // Renderizado dinámico de tarjetas filtradas por época
+  function renderGames(eraKey) {
     const grid = document.getElementById('games-grid');
     if (!grid) return;
 
-    let games = [];
-    try {
-      const response = await fetch('./games.json');
-      if (!response.ok) throw new Error('Respuesta de red no válida');
-      games = await response.json();
-    } catch (err) {
-      // Fallback automático si se carga desde file:// o hay restricción CORS local
-      games = FALLBACK_GAMES;
+    let filtered = allGamesData;
+    if (eraKey) {
+      filtered = allGamesData.filter(g => Array.isArray(g.eras) && g.eras.includes(eraKey));
     }
 
     grid.innerHTML = '';
 
-    games.forEach((game) => {
+    if (filtered.length === 0) {
+      grid.innerHTML = '<div class="empty-state">No hay juegos disponibles en esta época aún.</div>';
+      return;
+    }
+
+    filtered.forEach((game) => {
       // Obtener el récord actual del juego
       const highScore = window.ArcadeStorage ? window.ArcadeStorage.getHighScore(game.id) : 0;
       const card = document.createElement('article');
@@ -186,5 +242,99 @@
     });
   }
 
-  window.addEventListener('DOMContentLoaded', loadGames);
+  // Aplicar época: actualiza título, metadatos, temas CSS y catálogo
+  function applyEra(eraKey) {
+    const titleEl = document.getElementById('hub-title');
+    const tagEl = document.getElementById('hub-tag');
+    const subEl = document.getElementById('hub-subtitle');
+    const eraTabs = document.querySelectorAll('.era-tab');
+
+    if (eraKey && ERA_CONFIGS[eraKey]) {
+      const cfg = ERA_CONFIGS[eraKey];
+      document.body.setAttribute('data-era', cfg.bodyData);
+      document.title = `${cfg.title} - Juegos Clásicos`;
+      if (titleEl) titleEl.textContent = cfg.title;
+      if (tagEl) tagEl.textContent = cfg.tag;
+      if (subEl) subEl.textContent = cfg.subtitle;
+    } else {
+      document.body.removeAttribute('data-era');
+      document.title = 'Sala Arcade - Juegos Clásicos';
+      if (titleEl) titleEl.textContent = 'SALA ARCADE';
+      if (tagEl) tagEl.textContent = 'RETRO HUB';
+      if (subEl) subEl.textContent = 'Selecciona un juego para comenzar o escanea el QR desde tu móvil';
+    }
+
+    // Actualizar estado activo en la barra de navegación de épocas
+    eraTabs.forEach(tab => {
+      const tabEra = tab.getAttribute('data-era');
+      if ((!eraKey && tabEra === 'all') || (eraKey === tabEra)) {
+        tab.classList.add('active');
+      } else {
+        tab.classList.remove('active');
+      }
+    });
+
+    renderGames(eraKey);
+  }
+
+  // Inicializar navegación por épocas con soporte SPA y enlaces directos
+  function initEraTabs() {
+    const eraTabs = document.querySelectorAll('.era-tab');
+    eraTabs.forEach(tab => {
+      tab.addEventListener('click', (e) => {
+        const targetEra = tab.getAttribute('data-era');
+        const targetUrl = targetEra === 'all' ? '/' : `/${targetEra}`;
+
+        // Fallback en protocolo file:// o tests locales sin servidor web
+        if (window.location.protocol === 'file:') {
+          e.preventDefault();
+          window.location.hash = targetEra === 'all' ? '' : `#${targetEra}`;
+          applyEra(targetEra === 'all' ? null : targetEra);
+          return;
+        }
+
+        // Navegación fluida con History API
+        e.preventDefault();
+        try {
+          window.history.pushState({ era: targetEra }, '', targetUrl);
+          applyEra(targetEra === 'all' ? null : targetEra);
+        } catch (_) {
+          window.location.href = targetUrl;
+        }
+      });
+    });
+
+    window.addEventListener('popstate', () => {
+      applyEra(detectEra());
+    });
+  }
+
+  // Carga inicial de datos
+  async function loadGames() {
+    initEraTabs();
+
+    try {
+      const response = await fetch('./games.json');
+      if (!response.ok) throw new Error('Respuesta de red no válida');
+      allGamesData = await response.json();
+    } catch (_) {
+      // Fallback automático si se carga desde file:// o hay restricción CORS local
+      allGamesData = FALLBACK_GAMES;
+    }
+
+    applyEra(detectEra());
+  }
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', loadGames);
+  }
+
+  // Exponer utilidades para pruebas unitarias en Node.js
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = {
+      FALLBACK_GAMES,
+      ERA_CONFIGS,
+      detectEra
+    };
+  }
 })();

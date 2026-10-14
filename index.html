@@ -19,14 +19,22 @@
     <header class="menu-header">
       <div class="header-content">
         <div class="hub-brand">
-          <span class="hub-tag">RETRO HUB</span>
-          <h1 class="hub-title">SALA ARCADE</h1>
+          <span class="hub-tag" id="hub-tag">RETRO HUB</span>
+          <h1 class="hub-title" id="hub-title">SALA ARCADE</h1>
         </div>
         <div class="hub-actions">
           <span class="offline-pill">● OFFLINE</span>
         </div>
       </div>
-      <p class="hub-subtitle">Selecciona un juego para comenzar o escanea el QR desde tu móvil</p>
+      <p class="hub-subtitle" id="hub-subtitle">Selecciona un juego para comenzar o escanea el QR desde tu móvil</p>
+
+      <!-- Selector de Épocas -->
+      <nav class="era-nav" aria-label="Selector de Épocas">
+        <a href="/" class="era-tab active" data-era="all">TODOS</a>
+        <a href="/80" class="era-tab" data-era="80">Arcade 80</a>
+        <a href="/90" class="era-tab" data-era="90">Arcade 90</a>
+        <a href="/00" class="era-tab" data-era="00">Arcade 00</a>
+      </nav>
     </header>
 
     <!-- Lista dinámica de tarjetas de juegos -->

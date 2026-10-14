@@ -290,3 +290,207 @@ body::before {
     gap: 16px;
   }
 }
+
+/* ==========================================================================
+   NAVEGACIÓN DE ÉPOCAS
+   ========================================================================== */
+.era-nav {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.era-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 7px 14px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-decoration: none;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: var(--text-dim);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s ease;
+  min-height: 36px;
+  touch-action: manipulation;
+}
+
+.era-tab:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.era-tab.active {
+  background: var(--text-accent);
+  color: #070913;
+  border-color: var(--text-accent);
+  font-weight: 900;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.4);
+}
+
+/* ==========================================================================
+   TEMAS VISUALES POR ÉPOCA (CAMBIANDO VARIABLES CSS SIN DUPLICAR CÓDIGO)
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   TEMA 80: Fondo casi negro, neón (cian, magenta), monoespaciado, scanlines
+   -------------------------------------------------------------------------- */
+body[data-era="80"] {
+  --bg-space: #030408;
+  --bg-card: rgba(6, 8, 18, 0.96);
+  --bg-card-border: rgba(0, 240, 255, 0.4);
+  --text-main: #f0fdf4;
+  --text-dim: #94a3b8;
+  --text-accent: #00f0ff;
+  --font-family: var(--font-mono);
+  background: #030408 !important;
+}
+
+body[data-era="80"] .hub-title {
+  background: linear-gradient(90deg, #00f0ff 0%, #ff007f 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-family: var(--font-mono);
+  letter-spacing: 0.16em;
+  text-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+}
+
+body[data-era="80"] .game-card {
+  border: 1.5px solid rgba(0, 240, 255, 0.45);
+  box-shadow: 0 0 16px rgba(0, 240, 255, 0.22), inset 0 0 12px rgba(255, 0, 127, 0.12);
+}
+
+body[data-era="80"] .era-tab.active {
+  background: #00f0ff;
+  color: #030408;
+  border-color: #00f0ff;
+  box-shadow: 0 0 14px rgba(0, 240, 255, 0.6);
+}
+
+/* Efecto leve de líneas de escaneo (CRT Scanlines) */
+body[data-era="80"]::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 99;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(0, 0, 0, 0.32) 0px,
+    rgba(0, 0, 0, 0.32) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  opacity: 0.75;
+}
+
+/* --------------------------------------------------------------------------
+   TEMA 90: Colores saturados con degradados, tarjetas con relieve, redondeada
+   -------------------------------------------------------------------------- */
+body[data-era="90"] {
+  --bg-space: #160824;
+  --bg-card: #24113e;
+  --bg-card-border: #f43f5e;
+  --text-main: #fef08a;
+  --text-dim: #cbd5e1;
+  --text-accent: #facc15;
+  --font-family: ui-rounded, "Arial Rounded MT Bold", "Nunito", system-ui, -apple-system, sans-serif;
+  background: radial-gradient(circle at 50% 12%, #431248 0%, #1e0734 50%, #0d0118 100%) !important;
+}
+
+body[data-era="90"] .hub-title {
+  background: linear-gradient(90deg, #facc15 0%, #ff007f 50%, #38bdf8 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+/* Tarjetas con relieve noventero (Bisel y sombra de relieve 3D) */
+body[data-era="90"] .game-card {
+  border-top: 3px solid #ff49db;
+  border-left: 3px solid #00f0ff;
+  border-right: 3px solid #200533;
+  border-bottom: 3px solid #0e0117;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #2d144e 0%, #1a082d 100%);
+  box-shadow: 
+    4px 6px 0px rgba(0, 0, 0, 0.75),
+    inset 1px 1px 0px rgba(255, 255, 255, 0.3);
+}
+
+body[data-era="90"] .play-btn {
+  border-top: 2px solid rgba(255, 255, 255, 0.65);
+  border-left: 2px solid rgba(255, 255, 255, 0.45);
+  border-right: 2px solid rgba(0, 0, 0, 0.55);
+  border-bottom: 2px solid rgba(0, 0, 0, 0.75);
+  box-shadow: 2px 3px 0px rgba(0, 0, 0, 0.65);
+  background: linear-gradient(180deg, #facc15 0%, #ea580c 100%);
+  color: #170322;
+  font-weight: 900;
+}
+
+body[data-era="90"] .era-tab.active {
+  background: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
+  color: #1a0826;
+  border-color: #facc15;
+  box-shadow: 0 0 14px rgba(250, 204, 21, 0.5);
+}
+
+/* --------------------------------------------------------------------------
+   TEMA 00: Brillos tipo vidrio, botones redondeados con reflejo, degradado suave
+   -------------------------------------------------------------------------- */
+body[data-era="00"] {
+  --bg-space: #071324;
+  --bg-card: rgba(255, 255, 255, 0.06);
+  --bg-card-border: rgba(255, 255, 255, 0.25);
+  --text-main: #f0f9ff;
+  --text-dim: #94a3b8;
+  --text-accent: #38bdf8;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  background: radial-gradient(circle at 50% 0%, #183c66 0%, #0b1f38 45%, #040c18 100%) !important;
+}
+
+body[data-era="00"] .hub-title {
+  background: linear-gradient(180deg, #ffffff 0%, #93c5fd 55%, #3b82f6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 3px 10px rgba(59, 130, 246, 0.45));
+}
+
+/* Brillos tipo vidrio (Glassmorphism con bisel especular) */
+body[data-era="00"] .game-card {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 18px;
+  box-shadow: 
+    0 12px 32px rgba(0, 0, 0, 0.5),
+    inset 0 1px 1px rgba(255, 255, 255, 0.65),
+    inset 0 -1px 1px rgba(0, 0, 0, 0.3);
+}
+
+/* Botones redondeados con reflejo especular */
+body[data-era="00"] .play-btn {
+  border-radius: 24px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.1) 48%, rgba(0, 0, 0, 0.12) 52%, rgba(0, 0, 0, 0.3) 100%), #0284c7;
+  border: 1px solid rgba(255, 255, 255, 0.45);
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.85);
+  font-weight: 800;
+}
+
+body[data-era="00"] .era-tab.active {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, #0284c7 100%);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+}

@@ -6,7 +6,8 @@
     "description": "El puzzle arcade de piezas que caen. Encaja líneas completas, gestiona la rotación y bate el récord.",
     "color": "#00f0ff",
     "badge": "PUZZLE",
-    "icon": "bloques"
+    "icon": "bloques",
+    "eras": ["80"]
   },
   {
     "id": "snake",
@@ -15,7 +16,8 @@
     "description": "Dirige la víbora neón en la cuadrícula, devora orbes de energía y esquiva las paredes y tu propia cola.",
     "color": "#00e676",
     "badge": "CLÁSICO",
-    "icon": "snake"
+    "icon": "snake",
+    "eras": ["80"]
   },
   {
     "id": "rompemuros",
@@ -24,7 +26,8 @@
     "description": "El clásico demoledor de ladrillos. Rebota la pelota, recoge power-ups y destruye los muros neón.",
     "color": "#ff3366",
     "badge": "ARCADE",
-    "icon": "rompemuros"
+    "icon": "rompemuros",
+    "eras": ["80"]
   },
   {
     "id": "defensaorbital",
@@ -33,7 +36,8 @@
     "description": "Shooter vertical arcade. Defiende la órbita de invasiones alienígenas con fuego automático y reflejos rápidos.",
     "color": "#38bdf8",
     "badge": "SHOOTER",
-    "icon": "defensaorbital"
+    "icon": "defensaorbital",
+    "eras": ["80"]
   },
   {
     "id": "sombras",
@@ -42,7 +46,8 @@
     "description": "Sigilo y escape en laberintos procedurales. Explora en la oscuridad con tu linterna y evita a los guardianes.",
     "color": "#a855f7",
     "badge": "SIGILO",
-    "icon": "sombras"
+    "icon": "sombras",
+    "eras": ["90"]
   },
   {
     "id": "derrape",
@@ -51,7 +56,8 @@
     "description": "Carreras cenitales arcade con físicas de derrape, rivales inteligentes y circuitos de alta velocidad.",
     "color": "#f97316",
     "badge": "CARRERAS",
-    "icon": "derrape"
+    "icon": "derrape",
+    "eras": ["90"]
   },
   {
     "id": "abismo",
@@ -60,6 +66,7 @@
     "description": "Roguelike cenital de acción en criptas infinitas con auto-ataque, sinergias y progresión permanente.",
     "color": "#e11d48",
     "badge": "ROGUELIKE",
-    "icon": "abismo"
+    "icon": "abismo",
+    "eras": ["00"]
   }
 ]
