@@ -1,7 +1,8 @@
 /**
- * games/lumen/game.js - Lumen Arcade 80s
- * Laberinto de luz y persecución. Enciende faroles, huye de las criaturas de la oscuridad,
- * suelta chispas y destellos de emergencia.
+ * games/lumen/game.js - Lumen Arcade 80s (v2.0)
+ * Laberinto de luz y persecución con 30 niveles en 5 mundos temáticos, 7 criaturas con IA única,
+ * jefes con ataques telegrafiados, apagón clímax, sistema de mejoras entre niveles, renderizado offscreen
+ * de alto rendimiento y controles con búfer de giro.
  */
 (() => {
   'use strict';
@@ -14,326 +15,253 @@
     ROWS: 19,
     VIRTUAL_W: 330,
     VIRTUAL_H: 418, // 15x22 y 19x22
-    PLAYER_SPEED: 4.2, // Celdas por segundo
-    CREATURE_SPEED: 3.6,
-    TRAGALUZ_SPEED: 2.2,
+    BASE_PLAYER_SPEED: 4.4, // Celdas por segundo
+    CREATURE_BASE_SPEED: 3.4,
+    CREATURE_DARK_BOOST: 1.25, // Criaturas más rápidas en la oscuridad
     FLEE_SPEED: 2.8,
 
-    PLAYER_LIGHT_RADIUS: 1.8,
+    PLAYER_LIGHT_RADIUS: 2.0,
     LANTERN_MAX_LIGHT_RADIUS: 3.8,
+    LANTERN_DECAY_RATE: 0.05, // Radio consumido por segundo si no se mantiene
     SPARK_LIGHT_RADIUS: 2.6,
-    SPARK_DURATION: 6.5, // Segundos activa
-    SPARK_RECHARGE_TIME: 16.0,
-    FLASH_DURATION: 5.5,
+    SPARK_DURATION: 7.0, // Segundos activa
+    SPARK_RECHARGE_TIME: 14.0,
+    FLASH_DURATION: 5.0,
+    FLASH_COOLDOWN: 24.0,
 
     MAX_SPARKS: 2,
     STARTING_LIVES: 3,
-    STORAGE_KEY: 'lumen:v1:best_score',
+    STORAGE_KEY_PREFIX: 'lumen:v2',
+    STORAGE_KEY_V1: 'lumen:v1',
 
-    // 12 Niveles de Laberinto definidos como datos puros
-    // '#' = Pared, '.' = Pasillo, 'L' = Farol, 'P' = Jugador, 'E' = Spawn Criatura, 'T' = Túnel lateral
-    LEVELS: [
-    {
-        "id": 1,
-        "name": "El Atrio Oscuro",
-        "map": [
-            "###############",
-            "#L.....L.....L#",
-            "#.###.###.###.#",
-            "#.###.###.###.#",
-            "#....L###L....#",
-            "#.##..###..##.#",
-            "#.##..###..##.#",
-            "#.............#",
-            "#......E......#",
-            "T.............T",
-            "#.............#",
-            "#......P......#",
-            "#.###.###.###.#",
-            "#.###.###.###.#",
-            "#......L......#",
-            "#.####...####.#",
-            "#.####...####.#",
-            "#L...........L#",
-            "###############"
+    WORLDS: [
+      { id: 1, name: 'Bosque Sombrío', color: '#00ff88', glow: 'rgba(0, 255, 136, 0.3)', rule: 'Niebla densa y ramas vivas', boss: 'Espíritu de las Ramas' },
+      { id: 2, name: 'Cripta Olvidada', color: '#00f0ff', glow: 'rgba(0, 240, 255, 0.3)', rule: 'Puertas rúnicas y llaves doradas', boss: 'Gólem de Tumba' },
+      { id: 3, name: 'Mina de Obsidiana', color: '#ffaa00', glow: 'rgba(255, 170, 0, 0.3)', rule: 'Trampas solares y reliquias', boss: 'Monolito de Carbón' },
+      { id: 4, name: 'Ciudad Espectral', color: '#88aaff', glow: 'rgba(136, 170, 255, 0.3)', rule: 'Interruptores y losetas móviles', boss: 'Arconte Sombrío' },
+      { id: 5, name: 'Abismo Primordial', color: '#ff007f', glow: 'rgba(255, 0, 127, 0.3)', rule: 'Oscuridad voraz y jefes', boss: 'Devorador de Luz' }
+    ],
+
+    CREATURE_TYPES: [
+      { id: 1, name: 'Acechador', desc: 'Caza en la sombra y huye de la luz', shape: 'diamond', color: '#ff0055' },
+      { id: 2, name: 'Divisor', desc: 'Se divide en dos mini-sombras al ser destellado', shape: 'double-tri', color: '#ff5500' },
+      { id: 3, name: 'Emisor', desc: 'Deja una estela que apaga la luz temporalmente', shape: 'pentagon', color: '#aa00ff' },
+      { id: 4, name: 'Tímido', desc: 'Solo avanza cuando no lo miras de frente', shape: 'gazer', color: '#00e5ff' },
+      { id: 5, name: 'Tragaluz', desc: 'Patrulla buscando faroles para apagarlos', shape: 'square', color: '#ffff00' },
+      { id: 6, name: 'Fantasma', desc: 'Atraviesa un muro delgado cada 8 segundos', shape: 'spiral', color: '#ffffff' },
+      { id: 7, name: 'Coloso', desc: 'Acorazado e inmune a la luz de los faroles', shape: 'colossus', color: '#ff2200' }
+    ],
+
+    UPGRADES: [
+      { id: 'LANTERN_BOOST', icon: '🏮', name: 'Linterna Ampliada', desc: '+25% radio de luz del jugador' },
+      { id: 'EXTRA_SPARK', icon: '✨', name: 'Chispa Adicional', desc: '+1 slot de chispa máxima transportable' },
+      { id: 'SPEED_BOOTS', icon: '👟', name: 'Zancada Veloz', desc: '+15% velocidad de movimiento del farolero' },
+      { id: 'FAST_FLASH', icon: '⚡', name: 'Batería Solar', desc: '-30% tiempo de recarga del Destello' },
+      { id: 'OIL_RESERVE', icon: '🛢️', name: 'Reserva de Aceite', desc: 'Los faroles tardan 50% más en apagarse' },
+      { id: 'AURA_WARD', icon: '🛡️', name: 'Aura de Rechazo', desc: 'Las criaturas en el haz de luz se frenan 35%' }
+    ],
+
+    ACHIEVEMENTS: [
+      { id: 'FIRST_LIGHT', icon: '🏮', title: 'Primera Lumbre', desc: 'Enciende tu primer farol en el laberinto' },
+      { id: 'SPARK_MASTER', icon: '✨', title: 'Chispazo Táctico', desc: 'Ahuyenta a una criatura con una chispa' },
+      { id: 'SOLAR_FLASH', icon: '⚡', title: 'Destello Heroico', desc: 'Salva tu vida con el Destello de Emergencia' },
+      { id: 'SPEED_CLEAR', icon: '⏱️', title: 'Velocidad Luminosa', desc: 'Completa un nivel en menos de 30 segundos' },
+      { id: 'TRAP_CAUGHT', icon: '☀️', title: 'Trampa Solar', desc: 'Atrapa a una criatura en una trampa de luz' },
+      { id: 'RELIC_HUNTER', icon: '💎', title: 'Coleccionista Arcano', desc: 'Recoge 5 reliquias de luz' },
+      { id: 'BOSS_BRANCH', icon: '🌿', title: 'Guardián del Bosque', desc: 'Derrota al Espíritu de las Ramas en Nv 6' },
+      { id: 'BOSS_GOLEM', icon: '🗿', title: 'Rompe-Tumbas', desc: 'Supera al Gólem de Tumba en Nv 12' },
+      { id: 'PERFECT_LIGHT', icon: '🌟', title: 'Luz Impecable', desc: 'Consigue 3 estrellas en cualquier nivel' },
+      { id: 'ABYSS_CONQUEROR', icon: '🔱', title: 'Vencedor del Abismo', desc: 'Supera los 30 niveles de campaña' }
+    ],
+
+    // 30 NIVELES DEFINIDOS COMO DATOS (15x19)
+    LEVELS: (() => {
+      const baseTemplates = [
+        // 0: Anillo clásico con faroles perimetrales e interiores (8 faroles)
+        [
+          "###############",
+          "#L.....L.....L#",
+          "#.###.###.###.#",
+          "#.###.###.###.#",
+          "#....L###L....#",
+          "#.##..###..##.#",
+          "#.##..###..##.#",
+          "#.............#",
+          "#......E......#",
+          "T.............T",
+          "#.............#",
+          "#......P......#",
+          "#.###.###.###.#",
+          "#.###.###.###.#",
+          "#......L......#",
+          "#.####...####.#",
+          "#.####...####.#",
+          "#L...........L#",
+          "###############"
+        ],
+        // 1: Claustro con faroles en cruz (7 faroles)
+        [
+          "###############",
+          "#L...........L#",
+          "#.####...####.#",
+          "#.####...####.#",
+          "#......L......#",
+          "#.##..###..##.#",
+          "#.##..###..##.#",
+          "#.##.......##.#",
+          "#......E......#",
+          "T.............T",
+          "#......L......#",
+          "#......P......#",
+          "#.##..###..##.#",
+          "#.##..###..##.#",
+          "#......L......#",
+          "#.####...####.#",
+          "#.####...####.#",
+          "#L...........L#",
+          "###############"
+        ],
+        // 2: Cripta con galerías laterales (8 faroles)
+        [
+          "###############",
+          "#L...........L#",
+          "#.##.#####.##.#",
+          "#.##.#####.##.#",
+          "#.##.......##.#",
+          "#......L......#",
+          "#.####...####.#",
+          "#.####...####.#",
+          "#......E......#",
+          "T.............T",
+          "#.............#",
+          "#L.....P.....L#",
+          "#.####...####.#",
+          "#.####...####.#",
+          "#......L......#",
+          "#.##.#####.##.#",
+          "#.##.#####.##.#",
+          "#L##.......##L#",
+          "###############"
+        ],
+        // 3: Pasillos simétricos con recámaras (7 faroles)
+        [
+          "###############",
+          "#L.....L.....L#",
+          "#.###.###.###.#",
+          "#.###.###.###.#",
+          "#......L......#",
+          "#..###...###..#",
+          "#..###...###..#",
+          "#L....#.#....L#",
+          "#.....#E#.....#",
+          "T.............T",
+          "#.............#",
+          "#......P......#",
+          "#..###...###..#",
+          "#..###...###..#",
+          "#......L......#",
+          "#.###.###.###.#",
+          "#.###.###.###.#",
+          "#L...........L#",
+          "###############"
+        ],
+        // 4: Encrucijada en rombo (8 faroles)
+        [
+          "###############",
+          "#L.....L.....L#",
+          "#.###.....###.#",
+          "#.###.....###.#",
+          "#.###.....###.#",
+          "#.....###.....#",
+          "#.##..###..##.#",
+          "#.##..###..##.#",
+          "#......E......#",
+          "T.............T",
+          "#.L.........L.#",
+          "#......P......#",
+          "#.##..###..##.#",
+          "#.##..###..##.#",
+          "#.....###.....#",
+          "#.###.....###.#",
+          "#.###.....###.#",
+          "#L###..L..###L#",
+          "###############"
+        ],
+        // 5: Cámara con pilares aislados (8 faroles)
+        [
+          "###############",
+          "#L...........L#",
+          "#.##.##.##.##.#",
+          "#.##.##.##.##.#",
+          "#..L...L...L..#",
+          "#.##.##.##.##.#",
+          "#.##.##.##.##.#",
+          "#.............#",
+          "#......E......#",
+          "T.............T",
+          "#.............#",
+          "#......P......#",
+          "#.##.##.##.##.#",
+          "#.##.##.##.##.#",
+          "#..L...L...L..#",
+          "#.##.##.##.##.#",
+          "#.##.##.##.##.#",
+          "#L...........L#",
+          "###############"
         ]
-    },
-    {
-        "id": 2,
-        "name": "Claustro de Sombras",
-        "map": [
-            "###############",
-            "#L...........L#",
-            "#.####...####.#",
-            "#.####...####.#",
-            "#......L......#",
-            "#.##..###..##.#",
-            "#.##..###..##.#",
-            "#.##.......##.#",
-            "#......E......#",
-            "T.............T",
-            "#......L......#",
-            "#......P......#",
-            "#.##..###..##.#",
-            "#.##..###..##.#",
-            "#.##...L...##.#",
-            "#.####...####.#",
-            "#.####...####.#",
-            "#L...........L#",
-            "###############"
-        ]
-    },
-    {
-        "id": 3,
-        "name": "Cripta Olvidada",
-        "map": [
-            "###############",
-            "#L...........L#",
-            "#.##.#####.##.#",
-            "#.##.#####.##.#",
-            "#.##.......##.#",
-            "#......L......#",
-            "#.####...####.#",
-            "#.####...####.#",
-            "#......E......#",
-            "T.............T",
-            "#.............#",
-            "#L.....P.....L#",
-            "#.####...####.#",
-            "#.####...####.#",
-            "#......L......#",
-            "#.##.#####.##.#",
-            "#.##.#####.##.#",
-            "#L##.......##L#",
-            "###############"
-        ]
-    },
-    {
-        "id": 4,
-        "name": "La Galería Ciega",
-        "map": [
-            "###############",
-            "#L...........L#",
-            "#.###.###.###.#",
-            "#.###.###.###.#",
-            "#......L......#",
-            "#..###...###..#",
-            "#..###...###..#",
-            "#L....#.#....L#",
-            "#.....#E#.....#",
-            "T.............T",
-            "#.............#",
-            "#......P......#",
-            "#..###...###..#",
-            "#..###...###..#",
-            "#......L......#",
-            "#.###.###.###.#",
-            "#.###.###.###.#",
-            "#L...........L#",
-            "###############"
-        ]
-    },
-    {
-        "id": 5,
-        "name": "Encrucijada Ámbar",
-        "map": [
-            "###############",
-            "#L.....L.....L#",
-            "#.###.....###.#",
-            "#.###.....###.#",
-            "#.###.....###.#",
-            "#.....###.....#",
-            "#.##..###..##.#",
-            "#.##..###..##.#",
-            "#......E......#",
-            "T.............T",
-            "#.L.........L.#",
-            "#......P......#",
-            "#.##..###..##.#",
-            "#.##..###..##.#",
-            "#.....###.....#",
-            "#.###.....###.#",
-            "#.###.....###.#",
-            "#L###..L..###L#",
-            "###############"
-        ]
-    },
-    {
-        "id": 6,
-        "name": "Laberinto del Resplandor",
-        "map": [
-            "###############",
-            "#L.....L.....L#",
-            "#.##.##.##.##.#",
-            "#.##.##.##.##.#",
-            "#.............#",
-            "#.####...####.#",
-            "#.####...####.#",
-            "#......L......#",
-            "#......E......#",
-            "T.............T",
-            "#.............#",
-            "#......P......#",
-            "#.####...####.#",
-            "#.####...####.#",
-            "#......L......#",
-            "#.##.##.##.##.#",
-            "#.##.##.##.##.#",
-            "#L.....L.....L#",
-            "###############"
-        ]
-    },
-    {
-        "id": 7,
-        "name": "El Refugio Pétreo",
-        "map": [
-            "###############",
-            "#L...........L#",
-            "#..##.###.##..#",
-            "#..##.###.##..#",
-            "#..##.....##..#",
-            "#..##..L..##..#",
-            "#.....###.....#",
-            "#.#...###...#.#",
-            "#.#....E....#.#",
-            "T.............T",
-            "#......L......#",
-            "#.#....P....#.#",
-            "#.#...###...#.#",
-            "#.....###.....#",
-            "#L.##.###.##.L#",
-            "#..##.###.##..#",
-            "#..##.....##..#",
-            "#L.....L......#",
-            "###############"
-        ]
-    },
-    {
-        "id": 8,
-        "name": "Pasajes de Niebla",
-        "map": [
-            "###############",
-            "#L...........L#",
-            "#.#..#####..#.#",
-            "#.#..#####..#.#",
-            "#.#....L....#.#",
-            "#..###...###..#",
-            "#..###...###..#",
-            "#.....###.....#",
-            "#.....#E#.....#",
-            "T.............T",
-            "#......L......#",
-            "#......P......#",
-            "#..###...###..#",
-            "#..###...###..#",
-            "#......L......#",
-            "#.#..#####..#.#",
-            "#.#..#####..#.#",
-            "#L#.........#L#",
-            "###############"
-        ]
-    },
-    {
-        "id": 9,
-        "name": "Cámara de Ecos",
-        "map": [
-            "###############",
-            "#L.....L.....L#",
-            "#.####...####.#",
-            "#.####.#.####.#",
-            "#......#......#",
-            "#.###..#..###.#",
-            "#.###.....###.#",
-            "#.###.....###.#",
-            "#......E......#",
-            "T.............T",
-            "#L...........L#",
-            "#......P......#",
-            "#.###.....###.#",
-            "#.###.....###.#",
-            "#.###..#..###.#",
-            "#.####.#.####.#",
-            "#.####.#.####.#",
-            "#L.....L.....L#",
-            "###############"
-        ]
-    },
-    {
-        "id": 10,
-        "name": "La Espiral Sombría",
-        "map": [
-            "###############",
-            "#L...........L#",
-            "#.##.#####.##.#",
-            "#.##.......##.#",
-            "#.##...L...##.#",
-            "#....#####....#",
-            "#.##.#####.##.#",
-            "#.##.......##.#",
-            "#.##...E...##.#",
-            "T.............T",
-            "#......L......#",
-            "#.##...P...##.#",
-            "#.##.......##.#",
-            "#.##.#####.##.#",
-            "#....#####....#",
-            "#.##...L...##.#",
-            "#L##.......##L#",
-            "#.##.#####.##.#",
-            "###############"
-        ]
-    },
-    {
-        "id": 11,
-        "name": "Bastión del Fuego Fatuo",
-        "map": [
-            "###############",
-            "#L...........L#",
-            "#..###.#.###..#",
-            "#..###.#.###..#",
-            "#......#......#",
-            "#.##...L...##.#",
-            "#.##.##.##.##.#",
-            "#....##.##....#",
-            "#L.....E.....L#",
-            "T......L......T",
-            "#.............#",
-            "#......P......#",
-            "#....##.##....#",
-            "#.##.##.##.##.#",
-            "#.##...L...##.#",
-            "#..###.#.###..#",
-            "#..###.#.###..#",
-            "#L.....#.....L#",
-            "###############"
-        ]
-    },
-    {
-        "id": 12,
-        "name": "Santuario del Alba",
-        "map": [
-            "###############",
-            "#L...L...L...L#",
-            "#.##..###..##.#",
-            "#.##..###..##.#",
-            "#.............#",
-            "#.###.....###.#",
-            "#.###.....###.#",
-            "#.###.....###.#",
-            "#......E......#",
-            "T.............T",
-            "#......L......#",
-            "#......P......#",
-            "#.###.....###.#",
-            "#.###.....###.#",
-            "#.###.....###.#",
-            "#.##..###..##.#",
-            "#.##..###..##.#",
-            "#L...L...L...L#",
-            "###############"
-        ]
-    }
-]
+      ];
+
+      const LEVEL_NAMES = [
+        "El Atrio Oscuro", "Claustro de Hojas", "Senda de Espinas", "Coto de Sombras", "Paso de la Bruma", "Espíritu de las Ramas",
+        "Cripta de Piedra", "Catacumba Rúnica", "Galería Ciega", "Sepulcro Ancestral", "Cámara del Sello", "Gólem de Tumba",
+        "Túnel de Vastedad", "Pozo de Carbón", "Encrucijada Ámbar", "Roca Hueca", "Socavón Silencioso", "Monolito de Carbón",
+        "Avenida Espectral", "Plaza de Niebla", "Torreón Derruido", "Pasadizo Velado", "Bastión de Sombras", "Arconte Sombrío",
+        "Umbral del Vacío", "Grieta de Penumbra", "Vórtice Negro", "Fosa Infinita", "Cuna de la Noche", "Devorador de Luz"
+      ];
+
+      const levels = [];
+      for (let i = 1; i <= 30; i++) {
+        const world = Math.ceil(i / 6);
+        const isBoss = (i % 6 === 0);
+        const templateIdx = (i - 1) % baseTemplates.length;
+        const map = baseTemplates[templateIdx].map(r => r.split(''));
+
+        // Variaciones interactivas por mundo sin destruir faroles 'L'
+        if (world === 2) {
+          if (map[1][6] === '.') map[1][6] = 'K'; // Llave
+          if (map[7][7] === '.') map[7][7] = 'D'; // Puerta rúnica
+        } else if (world === 3) {
+          if (map[4][6] === '.') map[4][6] = 'X'; // Trampa de luz
+          if (map[13][6] === '.') map[13][6] = 'R'; // Reliquia
+        } else if (world === 4) {
+          if (map[10][4] === '.') map[10][4] = 'S'; // Interruptor
+          if (map[7][7] === '.') map[7][7] = 'D'; // Puerta
+          if (map[10][10] === '.') map[10][10] = 'X'; // Trampa
+        } else if (world === 5) {
+          if (map[4][6] === '.') map[4][6] = 'X';
+          if (map[1][6] === '.') map[1][6] = 'K';
+          if (map[7][7] === '.') map[7][7] = 'D';
+          if (map[13][6] === '.') map[13][6] = 'R';
+        }
+
+        const mapStrings = map.map(row => row.join(''));
+        const lvlObj = {
+          id: i,
+          world,
+          name: LEVEL_NAMES[i - 1],
+          map: mapStrings
+        };
+
+        if (isBoss) {
+          lvlObj.isBoss = true;
+          lvlObj.bossName = LEVEL_NAMES[i - 1];
+          lvlObj.bossHp = 4 + (world * 2);
+        }
+
+        levels.push(lvlObj);
+      }
+      return levels;
+    })()
   };
 
   // ==========================================
@@ -341,7 +269,7 @@
   // ==========================================
   const LumenLogic = {
     /**
-     * Parsea un mapa en formato string a matriz de celdas y extrae entidades
+     * Parsea un mapa a matrices numéricas e identifica entidades
      */
     parseMap(mapRows) {
       const rows = mapRows.length;
@@ -351,6 +279,11 @@
       let playerStart = null;
       const enemySpawns = [];
       const tunnels = [];
+      const keys = [];
+      const doors = [];
+      const switches = [];
+      const relics = [];
+      const traps = [];
 
       for (let r = 0; r < rows; r++) {
         grid[r] = new Array(cols);
@@ -359,7 +292,8 @@
           if (ch === '#') {
             grid[r][c] = 1; // Muro
           } else {
-            grid[r][c] = 0; // Pasillo
+            grid[r][c] = 0; // Pasillo transitable
+
             if (ch === 'L') {
               lanterns.push({ r, c, lit: false, radius: 0, offTimer: 0 });
             } else if (ch === 'P') {
@@ -368,6 +302,16 @@
               enemySpawns.push({ r, c });
             } else if (ch === 'T') {
               tunnels.push({ r, c });
+            } else if (ch === 'K') {
+              keys.push({ r, c, collected: false });
+            } else if (ch === 'D') {
+              doors.push({ r, c, open: false });
+            } else if (ch === 'S') {
+              switches.push({ r, c, active: false });
+            } else if (ch === 'R') {
+              relics.push({ r, c, collected: false });
+            } else if (ch === 'X') {
+              traps.push({ r, c, active: true });
             }
           }
         }
@@ -380,12 +324,17 @@
         lanterns,
         playerStart: playerStart || { r: 11, c: 7 },
         enemySpawns: enemySpawns.length > 0 ? enemySpawns : [{ r: 9, c: 7 }],
-        tunnels
+        tunnels,
+        keys,
+        doors,
+        switches,
+        relics,
+        traps
       };
     },
 
     /**
-     * Retorna vecinos transitables [r, c] de una celda, considerando túneles de envoltura
+     * Retorna vecinos transitables considerando túneles de envoltura lateral
      */
     getNeighbors(grid, r, c) {
       const rows = grid.length;
@@ -408,18 +357,15 @@
           }
         }
       }
-
       return neighbors;
     },
 
     /**
-     * Algoritmo de Búsqueda en Anchura (BFS) para encontrar la ruta más corta hacia una meta
+     * Búsqueda en anchura (BFS) para la ruta más corta
      */
     findPath(grid, startR, startC, targetR, targetC) {
       if (startR === targetR && startC === targetC) return [];
 
-      const rows = grid.length;
-      const cols = grid[0].length;
       const queue = [{ r: startR, c: startC }];
       const visited = new Set();
       const parent = new Map();
@@ -449,7 +395,6 @@
 
       if (!found) return null;
 
-      // Reconstruir camino hacia atrás
       const path = [];
       let curr = { r: targetR, c: targetC };
       while (curr.r !== startR || curr.c !== startC) {
@@ -462,7 +407,7 @@
     },
 
     /**
-     * Comprueba si el laberinto es conexo: todas las celdas de pasillo deben ser alcanzables
+     * Comprueba si el laberinto es conexo
      */
     isMazeConnected(grid, startR, startC) {
       const rows = grid.length;
@@ -495,7 +440,7 @@
     },
 
     /**
-     * Encuentra la celda transitable más cercana fuera de las zonas iluminadas (Estado Huida)
+     * Encuentra celda transitable en sombra fuera del radio de luz (Huida)
      */
     findEscapeTarget(grid, creatureR, creatureC, lightSources) {
       const rows = grid.length;
@@ -507,7 +452,6 @@
       while (queue.length > 0) {
         const curr = queue.shift();
 
-        // Verificar si la celda está en oscuridad
         let inLight = false;
         for (const ls of lightSources) {
           const dist = Math.hypot(curr.r - ls.r, curr.c - ls.c);
@@ -531,7 +475,6 @@
         }
       }
 
-      // Si todo está iluminado, huir a la celda más alejada
       let maxDist = -1;
       let fallback = { r: creatureR, c: creatureC };
       for (let r = 0; r < rows; r++) {
@@ -546,6 +489,152 @@
         }
       }
       return fallback;
+    },
+
+    /**
+     * Generador procedural de laberintos conexos y resolubles con algoritmo Recursive Backtracker
+     */
+    generateEndlessMaze(seed = 12345, rows = CONFIG.ROWS, cols = CONFIG.COLS) {
+      let s = seed % 2147483647;
+      if (s <= 0) s += 2147483646;
+      function rand() {
+        s = (s * 16807) % 2147483647;
+        return (s - 1) / 2147483646;
+      }
+      function randChoice(arr) {
+        return arr[Math.floor(rand() * arr.length)];
+      }
+
+      const grid = [];
+      for (let r = 0; r < rows; r++) {
+        grid[r] = [];
+        for (let c = 0; c < cols; c++) {
+          grid[r][c] = '#';
+        }
+      }
+
+      const stack = [];
+      grid[1][1] = '.';
+      stack.push({ r: 1, c: 1 });
+
+      const dirs = [
+        { dr: -2, dc: 0, wallR: -1, wallC: 0 },
+        { dr: 2, dc: 0, wallR: 1, wallC: 0 },
+        { dr: 0, dc: -2, wallR: 0, wallC: -1 },
+        { dr: 0, dc: 2, wallR: 0, wallC: 1 }
+      ];
+
+      while (stack.length > 0) {
+        const current = stack[stack.length - 1];
+        const neighbors = [];
+
+        for (const d of dirs) {
+          const nr = current.r + d.dr;
+          const nc = current.c + d.dc;
+          if (nr > 0 && nr < rows - 1 && nc > 0 && nc < cols - 1) {
+            if (grid[nr][nc] === '#') {
+              neighbors.push({ r: nr, c: nc, wallR: current.r + d.wallR, wallC: current.c + d.wallC });
+            }
+          }
+        }
+
+        if (neighbors.length > 0) {
+          const next = randChoice(neighbors);
+          grid[next.wallR][next.wallC] = '.';
+          grid[next.r][next.c] = '.';
+          stack.push({ r: next.r, c: next.c });
+        } else {
+          stack.pop();
+        }
+      }
+
+      // Túneles laterales wrap-around en fila central
+      const tunnelRow = Math.floor(rows / 2);
+      grid[tunnelRow][0] = 'T';
+      grid[tunnelRow][1] = '.';
+      grid[tunnelRow][cols - 2] = '.';
+      grid[tunnelRow][cols - 1] = 'T';
+
+      // Abrir lazos adicionales para variedad de rutas
+      for (let r = 2; r < rows - 2; r += 2) {
+        for (let c = 2; c < cols - 2; c += 2) {
+          if (grid[r][c] === '#' && rand() < 0.22) {
+            if (grid[r - 1][c] === '.' && grid[r + 1][c] === '.') grid[r][c] = '.';
+            else if (grid[r][c - 1] === '.' && grid[r][c + 1] === '.') grid[r][c] = '.';
+          }
+        }
+      }
+
+      // Spawns fijos
+      grid[rows - 3][Math.floor(cols / 2)] = 'P';
+      grid[tunnelRow - 1][Math.floor(cols / 2)] = 'E';
+
+      // Asignar entre 6 y 8 faroles
+      const freeCells = [];
+      for (let r = 1; r < rows - 1; r++) {
+        for (let c = 1; c < cols - 1; c++) {
+          if (grid[r][c] === '.') freeCells.push({ r, c });
+        }
+      }
+
+      for (let i = freeCells.length - 1; i > 0; i--) {
+        const j = Math.floor(rand() * (i + 1));
+        [freeCells[i], freeCells[j]] = [freeCells[j], freeCells[i]];
+      }
+
+      const numLanterns = 7;
+      for (let i = 0; i < Math.min(numLanterns, freeCells.length); i++) {
+        grid[freeCells[i].r][freeCells[i].c] = 'L';
+      }
+
+      return grid.map(row => row.join(''));
+    },
+
+    /**
+     * Migración transparente de registros desde lumen:v1 a lumen:v2
+     */
+    migrateV1toV2(storageObj) {
+      if (!storageObj) return false;
+      try {
+        const v1Best = storageObj.getItem('lumen:v1:best_score');
+        const v1Unlocked = storageObj.getItem('lumen:v1:unlocked');
+
+        if (v1Best) {
+          storageObj.setItem('lumen:v2:best_score', v1Best);
+        }
+        if (v1Unlocked) {
+          storageObj.setItem('lumen:v2:unlocked', v1Unlocked);
+        }
+
+        // Migrar puntuaciones de nivel
+        for (let i = 0; i < 12; i++) {
+          const v1Lvl = storageObj.getItem(`lumen:v1:level_${i}`);
+          if (v1Lvl) {
+            storageObj.setItem(`lumen:v2:lvl_${i}`, v1Lvl);
+          }
+        }
+        storageObj.setItem('lumen:v2:migrated', 'true');
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
+
+    /**
+     * Valida la solvencia matemática y estructural de un nivel
+     */
+    isLevelSolvable(level) {
+      if (!level || !level.map || level.map.length !== CONFIG.ROWS) return false;
+      const parsed = this.parseMap(level.map);
+
+      if (parsed.lanterns.length < 6 || parsed.lanterns.length > 10) return false;
+      if (!this.isMazeConnected(parsed.grid, parsed.playerStart.r, parsed.playerStart.c)) return false;
+
+      for (const lan of parsed.lanterns) {
+        const path = this.findPath(parsed.grid, parsed.playerStart.r, parsed.playerStart.c, lan.r, lan.c);
+        if (!path) return false;
+      }
+      return true;
     }
   };
 
@@ -561,92 +650,153 @@
   const State = {
     canvas: null,
     ctx: null,
-    boardW: 330,
-    boardH: 418,
-    cellSize: 22,
+    offscreenMazeCanvas: null,
+    offscreenMazeCtx: null,
+    offscreenLightCanvas: null,
+    offscreenLightCtx: null,
 
-    grid: null,
-    levelIdx: 0,
+    cellW: 22,
+    cellH: 22,
+    gridRows: CONFIG.ROWS,
+    gridCols: CONFIG.COLS,
+
+    grid: [],
+    lanterns: [],
+    keys: [],
+    doors: [],
+    switches: [],
+    relics: [],
+    traps: [],
+    tunnels: [],
+
+    currentLevelIdx: 0,
+    currentWorld: 1,
+    isEndless: false,
+    isDaily: false,
+
     score: 0,
     bestScore: 0,
     lives: CONFIG.STARTING_LIVES,
+    timeInLevel: 0,
 
-    state: 'MENU', // 'MENU', 'PLAYING', 'PAUSED', 'DEATH', 'GAMEOVER', 'VICTORY'
+    state: 'MENU', // 'MENU', 'PLAYING', 'PAUSED', 'UPGRADE', 'GAMEOVER', 'VICTORY'
 
-    // Jugador (Farolero)
+    // Jugador Farolero
     player: {
-      r: 11,
-      c: 7,
-      x: 7.5,
-      y: 11.5,
-      dirR: 0,
-      dirC: 0,
-      nextDirR: 0,
-      nextDirC: 0,
-      lightRadius: CONFIG.PLAYER_LIGHT_RADIUS
+      r: 11, c: 7,
+      x: 11 * 22 + 11, y: 7 * 22 + 11,
+      dirR: 0, dirC: 0,
+      nextDirR: 0, nextDirC: 0,
+      speed: CONFIG.BASE_PLAYER_SPEED,
+      lightRadius: CONFIG.PLAYER_LIGHT_RADIUS,
+      hasKey: false
     },
 
-    // Faroles
-    lanterns: [],
-    litLanternsCount: 0,
-
-    // Criaturas de la oscuridad
+    // Criaturas
     creatures: [],
+    boss: null,
 
-    // Chispas activas en el suelo
+    // Habilidades
     sparks: [],
-    sparkCharges: CONFIG.MAX_SPARKS,
+    availableSparks: CONFIG.MAX_SPARKS,
     sparkRechargeTimer: 0,
+    flashActive: false,
+    flashTimer: 0,
+    flashCooldown: 0,
 
-    // Destello de emergencia
-    flashUsedThisLevel: false,
-    flashActiveTimer: 0,
+    // Tensión y Clímax
+    isBlackout: false,
+    eventTimer: 0,
 
-    // Partículas vectoriales
+    // Mejoras activas
+    upgrades: new Set(),
+    achievements: {},
+    options: { sfx: true, bgm: true, vibration: true, contrast: false },
+
+    // Render y pooling
     particles: [],
+    floatingTexts: [],
+    routeCache: new Map(),
+    lastTime: 0,
 
-    // Caché de renderizado estático del laberinto
-    staticCanvas: null,
-
-    lastTime: 0
+    // Diagnóstico
+    fps: 60,
+    frameTime: 16.6,
+    frameCount: 0,
+    lastFpsUpdate: 0,
+    isDebug: false,
+    lowSpecMode: false
   };
 
-  // Elementos DOM
+  // Referencias DOM
   const dom = {
     container: document.getElementById('game-container'),
+    header: document.getElementById('game-header'),
+    subBar: document.getElementById('sub-bar'),
     canvas: document.getElementById('game-canvas'),
+    blackoutVignette: document.getElementById('blackout-vignette'),
+    debugOverlay: document.getElementById('debug-overlay'),
 
     scoreVal: document.getElementById('score-val'),
     lanternsVal: document.getElementById('lanterns-val'),
     livesVal: document.getElementById('lives-val'),
     levelDisplay: document.getElementById('level-display'),
 
+    // Barra de Jefe
+    bossBanner: document.getElementById('boss-banner'),
+    bossName: document.getElementById('boss-name'),
+    bossHpText: document.getElementById('boss-hp-text'),
+    bossHpFill: document.getElementById('boss-hp-fill'),
+    bossAttackWarn: document.getElementById('boss-attack-warn'),
+
+    // Habilidades
     pipSpark1: document.getElementById('pip-spark-1'),
     pipSpark2: document.getElementById('pip-spark-2'),
     pipFlash: document.getElementById('pip-flash'),
 
-    btnDpadUp: document.getElementById('btn-dpad-up'),
-    btnDpadLeft: document.getElementById('btn-dpad-left'),
-    btnDpadRight: document.getElementById('btn-dpad-right'),
-    btnDpadDown: document.getElementById('btn-dpad-down'),
-
-    btnActionSpark: document.getElementById('btn-action-spark'),
-    btnActionFlash: document.getElementById('btn-action-flash'),
-
+    // Botones
+    btnBack: document.getElementById('btn-back'),
     btnSoundToggle: document.getElementById('btn-sound-toggle'),
     iconSoundOn: document.getElementById('icon-sound-on'),
     iconSoundOff: document.getElementById('icon-sound-off'),
     btnPauseHeader: document.getElementById('btn-pause-header'),
+    btnAchievementsToggle: document.getElementById('btn-achievements-toggle'),
+    btnOptionsToggle: document.getElementById('btn-options-toggle'),
 
+    // Controles táctiles
+    btnDpadUp: document.getElementById('btn-dpad-up'),
+    btnDpadLeft: document.getElementById('btn-dpad-left'),
+    btnDpadRight: document.getElementById('btn-dpad-right'),
+    btnDpadDown: document.getElementById('btn-dpad-down'),
+    btnActionSpark: document.getElementById('btn-action-spark'),
+    btnActionFlash: document.getElementById('btn-action-flash'),
+
+    // Modales
     startCard: document.getElementById('start-card'),
     levelsGrid: document.getElementById('levels-grid'),
+    worldBanner: document.getElementById('world-banner'),
+    worldBadge: document.getElementById('world-badge'),
+    worldDesc: document.getElementById('world-desc'),
+    worldTabs: document.querySelectorAll('.world-tab'),
+    btnOpenDaily: document.getElementById('btn-open-daily'),
     btnStartEndless: document.getElementById('btn-start-endless'),
 
+    // Modal Mejoras
+    modalUpgrade: document.getElementById('modal-upgrade'),
+    upgradeCards: document.getElementById('upgrade-cards'),
+
+    // Modal Diario
+    modalDaily: document.getElementById('modal-daily'),
+    btnPlayDaily: document.getElementById('btn-play-daily'),
+    btnCloseDaily: document.getElementById('btn-close-daily'),
+
+    // Modal Pausa
     overlayPause: document.getElementById('overlay-pause'),
     btnResume: document.getElementById('btn-resume'),
     btnRestartLevel: document.getElementById('btn-restart-level'),
     btnLevelSelect: document.getElementById('btn-level-select'),
 
+    // Modal Resultados
     overlayResult: document.getElementById('overlay-result'),
     resultIcon: document.getElementById('result-icon'),
     resultTitle: document.getElementById('result-title'),
@@ -654,16 +804,31 @@
     resultScoreVal: document.getElementById('result-score-val'),
     resultLanternsVal: document.getElementById('result-lanterns-val'),
     resultBestVal: document.getElementById('result-best-val'),
+    starsRow: document.getElementById('stars-row'),
     btnNextLevel: document.getElementById('btn-next-level'),
     btnRetryLevel: document.getElementById('btn-retry-level'),
-    btnExitToLevels: document.getElementById('btn-exit-to-levels')
+    btnExitToLevels: document.getElementById('btn-exit-to-levels'),
+
+    // Logros y Opciones
+    modalAchievements: document.getElementById('modal-achievements'),
+    achList: document.getElementById('ach-list'),
+    btnCloseAch: document.getElementById('btn-close-ach'),
+    modalOptions: document.getElementById('modal-options'),
+    optSfx: document.getElementById('opt-sfx'),
+    optBgm: document.getElementById('opt-bgm'),
+    optVibration: document.getElementById('opt-vibration'),
+    optContrast: document.getElementById('opt-contrast'),
+    btnCloseOptions: document.getElementById('btn-close-options')
   };
 
   // ==========================================
-  // AUDIO SINTETIZADO CON WEB AUDIO
+  // SÍNTESIS DE AUDIO PROCEDURAL (Web Audio API)
   // ==========================================
-  function playAudio(type) {
-    if (!window.ArcadeAudio || window.ArcadeAudio.isMuted) return;
+  let bgmInterval = null;
+  let bgmStep = 0;
+
+  function playAudio(type, extra = 1) {
+    if (!State.options.sfx || !window.ArcadeAudio || window.ArcadeAudio.isMuted) return;
 
     try {
       const actx = window.ArcadeAudio.ctx;
@@ -672,82 +837,63 @@
 
       switch (type) {
         case 'light_lantern': {
-          // Tintineo armónico cristalino ascendente
-          const freqs = [523.25, 659.25, 783.99, 1046.50];
-          freqs.forEach((f, idx) => {
+          [440, 554.37, 659.25, 880].forEach((freq, idx) => {
             const osc = actx.createOscillator();
             const gain = actx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(f, now + idx * 0.05);
-            gain.gain.setValueAtTime(0.25, now + idx * 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.05 + 0.3);
+            osc.frequency.setValueAtTime(freq, now + idx * 0.04);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.04);
+            gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.04 + 0.15);
             osc.connect(gain);
             gain.connect(actx.destination);
-            osc.start(now + idx * 0.05);
-            osc.stop(now + idx * 0.05 + 0.3);
+            osc.start(now + idx * 0.04);
+            osc.stop(now + idx * 0.04 + 0.15);
           });
           break;
         }
 
-        case 'spark': {
+        case 'spark_drop': {
           const osc = actx.createOscillator();
           const gain = actx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(880, now);
-          osc.frequency.exponentialRampToValueAtTime(1760, now + 0.15);
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(700, now);
+          osc.frequency.exponentialRampToValueAtTime(1400, now + 0.1);
+          gain.gain.setValueAtTime(0.22, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
           osc.connect(gain);
           gain.connect(actx.destination);
           osc.start(now);
-          osc.stop(now + 0.15);
+          osc.stop(now + 0.1);
           break;
         }
 
-        case 'flash': {
-          // Destello masivo con onda expansiva
+        case 'flash_blast': {
           const osc = actx.createOscillator();
           const gain = actx.createGain();
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(300, now);
-          osc.frequency.exponentialRampToValueAtTime(1800, now + 0.4);
+          osc.frequency.setValueAtTime(1200, now);
+          osc.frequency.exponentialRampToValueAtTime(160, now + 0.45);
           gain.gain.setValueAtTime(0.4, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.45);
           osc.connect(gain);
           gain.connect(actx.destination);
           osc.start(now);
-          osc.stop(now + 0.4);
+          osc.stop(now + 0.45);
           break;
         }
 
         case 'creature_flee': {
           const osc = actx.createOscillator();
           const gain = actx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(400, now);
-          osc.frequency.exponentialRampToValueAtTime(120, now + 0.2);
-          gain.gain.setValueAtTime(0.25, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(320, now);
+          osc.frequency.linearRampToValueAtTime(90, now + 0.25);
+          gain.gain.setValueAtTime(0.2, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
           osc.connect(gain);
           gain.connect(actx.destination);
           osc.start(now);
-          osc.stop(now + 0.2);
-          break;
-        }
-
-        case 'lantern_snuffed': {
-          // Sonido sordo de luz apagada por la sombra
-          const osc = actx.createOscillator();
-          const gain = actx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(220, now);
-          osc.frequency.exponentialRampToValueAtTime(60, now + 0.3);
-          gain.gain.setValueAtTime(0.35, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.3);
-          osc.connect(gain);
-          gain.connect(actx.destination);
-          osc.start(now);
-          osc.stop(now + 0.3);
+          osc.stop(now + 0.25);
           break;
         }
 
@@ -755,9 +901,9 @@
           const osc = actx.createOscillator();
           const gain = actx.createGain();
           osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(180, now);
-          osc.frequency.linearRampToValueAtTime(40, now + 0.35);
-          gain.gain.setValueAtTime(0.4, now);
+          osc.frequency.setValueAtTime(140, now);
+          osc.frequency.exponentialRampToValueAtTime(40, now + 0.35);
+          gain.gain.setValueAtTime(0.5, now);
           gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
           osc.connect(gain);
           gain.connect(actx.destination);
@@ -766,19 +912,49 @@
           break;
         }
 
-        case 'victory': {
-          const melody = [523.25, 659.25, 783.99, 1046.50, 1318.51];
-          melody.forEach((freq, idx) => {
+        case 'relic_pickup': {
+          [587.33, 880, 1174.66].forEach((freq, idx) => {
             const osc = actx.createOscillator();
             const gain = actx.createGain();
             osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.1);
-            gain.gain.setValueAtTime(0.25, now + idx * 0.1);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.35);
+            osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+            gain.gain.setValueAtTime(0.2, now + idx * 0.06);
+            gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.06 + 0.12);
             osc.connect(gain);
             gain.connect(actx.destination);
-            osc.start(now + idx * 0.1);
-            osc.stop(now + idx * 0.1 + 0.35);
+            osc.start(now + idx * 0.06);
+            osc.stop(now + idx * 0.06 + 0.12);
+          });
+          break;
+        }
+
+        case 'blackout_alarm': {
+          const osc = actx.createOscillator();
+          const gain = actx.createGain();
+          osc.type = 'sawtooth';
+          osc.frequency.setValueAtTime(180, now);
+          osc.frequency.linearRampToValueAtTime(260, now + 0.2);
+          gain.gain.setValueAtTime(0.3, now);
+          gain.gain.linearRampToValueAtTime(0.01, now + 0.2);
+          osc.connect(gain);
+          gain.connect(actx.destination);
+          osc.start(now);
+          osc.stop(now + 0.2);
+          break;
+        }
+
+        case 'victory': {
+          [440, 554.37, 659.25, 880, 1108.73].forEach((freq, idx) => {
+            const osc = actx.createOscillator();
+            const gain = actx.createGain();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(freq, now + idx * 0.09);
+            gain.gain.setValueAtTime(0.25, now + idx * 0.09);
+            gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.09 + 0.22);
+            osc.connect(gain);
+            gain.connect(actx.destination);
+            osc.start(now + idx * 0.09);
+            osc.stop(now + idx * 0.09 + 0.22);
           });
           break;
         }
@@ -786,591 +962,745 @@
     } catch (e) {}
   }
 
-  // ==========================================
-  // PARTÍCULAS VECTORIALES
-  // ==========================================
-  const ParticlePool = {
-    pool: [],
-    spawn(x, y, color, count = 8, speed = 80) {
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const velocity = (Math.random() * 0.7 + 0.3) * speed;
-        const p = this.pool.pop() || {};
-        p.x = x;
-        p.y = y;
-        p.vx = Math.cos(angle) * velocity;
-        p.vy = Math.sin(angle) * velocity;
-        p.color = color;
-        p.size = Math.random() * 3 + 2;
-        p.life = 0;
-        p.maxLife = Math.random() * 0.4 + 0.3;
-        State.particles.push(p);
-      }
-    },
-    update(dt) {
-      for (let i = State.particles.length - 1; i >= 0; i--) {
-        const p = State.particles[i];
-        p.life += dt;
-        if (p.life >= p.maxLife) {
-          State.particles.splice(i, 1);
-          if (this.pool.length < 150) this.pool.push(p);
-          continue;
-        }
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.size = Math.max(0.1, p.size * (1 - dt * 2));
-      }
-    },
-    render(ctx) {
-      for (let i = 0; i < State.particles.length; i++) {
-        const p = State.particles[i];
-        const alpha = Math.max(0, 1 - p.life / p.maxLife);
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.restore();
-      }
+  function startBGM() {
+    if (!State.options.bgm || bgmInterval || !window.ArcadeAudio || window.ArcadeAudio.isMuted) return;
+
+    try {
+      const actx = window.ArcadeAudio.ctx;
+      if (!actx) return;
+
+      // Escalas modales según el mundo activo
+      const scales = [
+        [220, 261.63, 293.66, 329.63, 392.0], // Bosque: Dórico
+        [196, 233.08, 261.63, 311.13, 349.23], // Cripta: Eólico
+        [220, 246.94, 277.18, 329.63, 369.99], // Mina: Frigio mayor
+        [174.61, 207.65, 233.08, 277.18, 311.13], // Ciudad: Lidio
+        [164.81, 196.0, 220.0, 246.94, 329.63] // Abismo: Lócrio
+      ];
+
+      const activeScale = scales[(State.currentWorld - 1) % scales.length];
+      const tempo = State.isBlackout ? 260 : 520;
+
+      bgmInterval = setInterval(() => {
+        if (!State.options.bgm || State.state !== 'PLAYING') return;
+        const now = actx.currentTime;
+        const osc = actx.createOscillator();
+        const gain = actx.createGain();
+
+        const freq = activeScale[bgmStep % activeScale.length];
+        bgmStep = (bgmStep + 1) % activeScale.length;
+
+        osc.type = State.isBlackout ? 'sawtooth' : 'sine';
+        osc.frequency.setValueAtTime(freq, now);
+
+        gain.gain.setValueAtTime(State.isBlackout ? 0.05 : 0.035, now);
+        gain.gain.linearRampToValueAtTime(0.001, now + (tempo * 0.001 * 0.85));
+
+        osc.connect(gain);
+        gain.connect(actx.destination);
+        osc.start(now);
+        osc.stop(now + (tempo * 0.001 * 0.85));
+      }, tempo);
+    } catch (e) {}
+  }
+
+  function stopBGM() {
+    if (bgmInterval) {
+      clearInterval(bgmInterval);
+      bgmInterval = null;
     }
-  };
+  }
 
   // ==========================================
-  // INICIALIZACIÓN DE NIVEL Y CACHÉ ESTÁTICO
+  // INICIALIZACIÓN Y CONFIGURACIÓN DE NIVELES
   // ==========================================
-  function startLevel(lvlIdx) {
-    State.levelIdx = lvlIdx;
-    const lvl = CONFIG.LEVELS[lvlIdx];
+  function startLevel(lvlIdx, isDaily = false) {
+    State.currentLevelIdx = lvlIdx;
+    State.isDaily = isDaily;
+    const lvl = CONFIG.LEVELS[lvlIdx] || CONFIG.LEVELS[0];
+    State.currentWorld = lvl.world;
+
+    State.score = 0;
+    State.lives = CONFIG.STARTING_LIVES;
+    State.timeInLevel = 0;
+    State.sparks = [];
+    State.availableSparks = State.upgrades.has('EXTRA_SPARK') ? 3 : CONFIG.MAX_SPARKS;
+    State.sparkRechargeTimer = 0;
+    State.flashActive = false;
+    State.flashTimer = 0;
+    State.flashCooldown = 0;
+    State.isBlackout = false;
+    State.eventTimer = 12.0; // Evento aleatorio cada 12-18s
+
+    dom.blackoutVignette.classList.add('hidden');
+
+    // Parsear mapa del nivel
     const parsed = LumenLogic.parseMap(lvl.map);
-
     State.grid = parsed.grid;
     State.lanterns = parsed.lanterns;
-    State.litLanternsCount = 0;
-    State.flashUsedThisLevel = false;
-    State.flashActiveTimer = 0;
-    State.sparks = [];
-    State.sparkCharges = CONFIG.MAX_SPARKS;
-    State.sparkRechargeTimer = 0;
-    State.particles = [];
+    State.keys = parsed.keys;
+    State.doors = parsed.doors;
+    State.switches = parsed.switches;
+    State.relics = parsed.relics;
+    State.traps = parsed.traps;
+    State.tunnels = parsed.tunnels;
 
-    // Colocar jugador
-    State.player.r = parsed.playerStart.r;
-    State.player.c = parsed.playerStart.c;
-    State.player.x = parsed.playerStart.c + 0.5;
-    State.player.y = parsed.playerStart.r + 0.5;
-    State.player.dirR = 0;
-    State.player.dirC = 0;
-    State.player.nextDirR = 0;
-    State.player.nextDirC = 0;
+    // Configurar jugador
+    State.player = {
+      r: parsed.playerStart.r,
+      c: parsed.playerStart.c,
+      x: parsed.playerStart.c * State.cellW + State.cellW / 2,
+      y: parsed.playerStart.r * State.cellH + State.cellH / 2,
+      dirR: 0,
+      dirC: 0,
+      nextDirR: 0,
+      nextDirC: 0,
+      speed: CONFIG.BASE_PLAYER_SPEED * (State.upgrades.has('SPEED_BOOTS') ? 1.15 : 1.0),
+      lightRadius: CONFIG.PLAYER_LIGHT_RADIUS * (State.upgrades.has('LANTERN_BOOST') ? 1.25 : 1.0),
+      hasKey: false
+    };
 
-    // Crear las 4 criaturas geométricas originales
-    State.creatures = [];
-    const creatureTypes = [
-      { id: 'VORAZ',      speed: CONFIG.CREATURE_SPEED, color: '#ff0055', shape: 'OCTAGRAM' },
-      { id: 'ACECHADOR',  speed: CONFIG.CREATURE_SPEED * 1.05, color: '#cc00ff', shape: 'CHEVRON' },
-      { id: 'CENTINELA',  speed: CONFIG.CREATURE_SPEED * 0.95, color: '#00ffff', shape: 'HEXRING' },
-      { id: 'TRAGALUZ',   speed: CONFIG.TRAGALUZ_SPEED, color: '#ffaa00', shape: 'OBELISK' }
-    ];
+    // Configurar criaturas según mundo y nivel
+    setupCreatures(parsed.enemySpawns, lvl);
 
-    const spawns = parsed.enemySpawns;
-    creatureTypes.forEach((type, idx) => {
-      const spawn = spawns[idx % spawns.length];
-      State.creatures.push({
-        type: type.id,
-        shape: type.shape,
-        baseSpeed: type.speed,
-        color: type.color,
-        r: spawn.r,
-        c: spawn.c,
-        x: spawn.c + 0.5,
-        y: spawn.r + 0.5,
-        dirR: 0,
-        dirC: 0,
-        state: 'HUNT', // 'HUNT' o 'FLEE'
-        fleeTimer: 0,
-        targetR: 0,
-        targetC: 0,
-        path: [],
-        staggerTimer: (idx * 0.12) // Desfasar cálculo BFS para rendimiento óptimo
-      });
-    });
+    // Configurar jefe si aplica
+    if (lvl.isBoss) {
+      State.boss = {
+        name: lvl.bossName,
+        hp: lvl.bossHp,
+        maxHp: lvl.bossHp,
+        attackTimer: 8.0,
+        telegraphing: false,
+        telegraphTimer: 0
+      };
+      dom.bossName.textContent = lvl.bossName;
+      dom.bossHpText.textContent = `PV: ${State.boss.hp}/${State.boss.maxHp}`;
+      dom.bossHpFill.style.width = '100%';
+      dom.bossAttackWarn.classList.add('hidden');
+      dom.bossBanner.classList.remove('hidden');
+    } else {
+      State.boss = null;
+      dom.bossBanner.classList.add('hidden');
+    }
 
     // Pre-renderizar laberinto estático en canvas offscreen
-    buildStaticMazeCache();
+    renderOffscreenMaze();
 
     State.state = 'PLAYING';
-
     dom.startCard.classList.add('hidden');
     dom.overlayPause.classList.add('hidden');
     dom.overlayResult.classList.add('hidden');
+    dom.modalUpgrade.classList.add('hidden');
 
     updateHUD();
+    stopBGM();
+    startBGM();
   }
 
-  function buildStaticMazeCache() {
-    const cs = State.cellSize;
-    const w = CONFIG.COLS * cs;
-    const h = CONFIG.ROWS * cs;
+  function setupCreatures(spawns, lvl) {
+    State.creatures = [];
+    const world = lvl.world;
 
-    State.staticCanvas = document.createElement('canvas');
-    State.staticCanvas.width = w;
-    State.staticCanvas.height = h;
-    const sctx = State.staticCanvas.getContext('2d');
+    // Asignar tipos de criaturas según mundo y dificultad progresiva
+    spawns.forEach((spawn, idx) => {
+      let typeId = 1; // Acechador por defecto
 
-    // Fondo del laberinto
-    sctx.fillStyle = '#060a14';
-    sctx.fillRect(0, 0, w, h);
+      if (world === 2) typeId = (idx % 2 === 0) ? 2 : 4; // Divisor o Tímido
+      else if (world === 3) typeId = (idx % 2 === 0) ? 3 : 5; // Emisor o Tragaluz
+      else if (world === 4) typeId = (idx % 2 === 0) ? 6 : 1; // Fantasma o Acechador
+      else if (world === 5) typeId = (idx % 3 === 0) ? 7 : (idx % 2 === 0 ? 3 : 2); // Coloso, Emisor, Divisor
 
-    // Dibujar muros neón
-    for (let r = 0; r < CONFIG.ROWS; r++) {
-      for (let c = 0; c < CONFIG.COLS; c++) {
-        if (State.grid[r][c] === 1) {
-          const x = c * cs;
-          const y = r * cs;
-
-          // Muro estilizado con bisel retro neón
-          sctx.fillStyle = '#0d1829';
-          sctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
-
-          sctx.strokeStyle = 'rgba(0, 240, 255, 0.45)';
-          sctx.lineWidth = 1.5;
-          sctx.strokeRect(x + 2, y + 2, cs - 4, cs - 4);
-
-          // Núcleo central fosfórico
-          sctx.fillStyle = 'rgba(0, 240, 255, 0.15)';
-          sctx.fillRect(x + 5, y + 5, cs - 10, cs - 10);
-        } else {
-          // Suelo de piedra oscuro
-          const x = c * cs;
-          const y = r * cs;
-          sctx.fillStyle = 'rgba(255, 255, 255, 0.02)';
-          sctx.fillRect(x + cs / 2 - 1, y + cs / 2 - 1, 2, 2);
-        }
-      }
-    }
-  }
-
-  function updateHUD() {
-    dom.scoreVal.textContent = State.score.toLocaleString();
-    dom.lanternsVal.textContent = `${State.litLanternsCount}/${State.lanterns.length}`;
-
-    let livesStr = '';
-    for (let i = 0; i < State.lives; i++) livesStr += '🕯️';
-    dom.livesVal.textContent = livesStr || '💀';
-
-    const lvl = CONFIG.LEVELS[State.levelIdx];
-    dom.levelDisplay.textContent = `Nivel ${State.levelIdx + 1}: ${lvl.name}`;
-
-    // Chispas
-    dom.pipSpark1.classList.toggle('ready', State.sparkCharges >= 1);
-    dom.pipSpark2.classList.toggle('ready', State.sparkCharges >= 2);
-
-    // Destello
-    dom.pipFlash.classList.toggle('ready', !State.flashUsedThisLevel);
-    dom.pipFlash.textContent = State.flashUsedThisLevel ? '⚡ USADO' : '⚡ LISTO';
-  }
-
-  // ==========================================
-  // HABILIDADES: CHISPA Y DESTELLO
-  // ==========================================
-  function dropSpark() {
-    if (State.state !== 'PLAYING') return;
-    if (State.sparkCharges <= 0) return;
-
-    State.sparkCharges--;
-    playAudio('spark');
-    window.ArcadeCanvas?.haptic(10);
-
-    State.sparks.push({
-      x: State.player.x,
-      y: State.player.y,
-      r: Math.floor(State.player.y),
-      c: Math.floor(State.player.x),
-      timer: CONFIG.SPARK_DURATION,
-      maxTimer: CONFIG.SPARK_DURATION,
-      radius: CONFIG.SPARK_LIGHT_RADIUS
+      State.creatures.push(createCreature(typeId, spawn.r, spawn.c));
     });
-
-    const cs = State.cellSize;
-    ParticlePool.spawn(State.player.x * cs, State.player.y * cs, '#ffaa00', 16, 120);
-    updateHUD();
   }
 
-  function triggerEmergencyFlash() {
-    if (State.state !== 'PLAYING') return;
-    if (State.flashUsedThisLevel) return;
-
-    State.flashUsedThisLevel = true;
-    State.flashActiveTimer = CONFIG.FLASH_DURATION;
-    playAudio('flash');
-    window.ArcadeCanvas?.haptic(35);
-
-    // Ahuyentar a todas las criaturas inmediatamente
-    State.creatures.forEach(cr => {
-      cr.state = 'FLEE';
-      cr.fleeTimer = CONFIG.FLASH_DURATION;
-    });
-
-    updateHUD();
+  function createCreature(typeId, r, c) {
+    const typeCfg = CONFIG.CREATURE_TYPES.find(t => t.id === typeId) || CONFIG.CREATURE_TYPES[0];
+    return {
+      typeId,
+      name: typeCfg.name,
+      shape: typeCfg.shape,
+      color: typeCfg.color,
+      r, c,
+      x: c * State.cellW + State.cellW / 2,
+      y: r * State.cellH + State.cellH / 2,
+      dirR: 0, dirC: 0,
+      state: 'HUNT', // 'HUNT', 'FLEE', 'STUNNED', 'FROZEN'
+      stunTimer: 0,
+      path: [],
+      pathUpdateTimer: Math.random() * 0.3, // Intervalos escalonados
+      phaseTimer: 0,
+      isPhasing: false,
+      speed: CONFIG.CREATURE_BASE_SPEED
+    };
   }
 
   // ==========================================
-  // MOVIMIENTO DEL JUGADOR CON GIROS ENCOLADOS
+  // CONTROLES CON BÚFER DE GIRO (Corner Slip)
   // ==========================================
-  function setPlayerNextDirection(dr, dc) {
+  function setPlayerDirection(dr, dc) {
     State.player.nextDirR = dr;
     State.player.nextDirC = dc;
 
-    // Si el jugador está detenido o intentando dar la vuelta exactamente 180°
+    // Si está quieto o revierte dirección en línea recta, aplicar de inmediato
     if (State.player.dirR === -dr && State.player.dirC === -dc) {
       State.player.dirR = dr;
       State.player.dirC = dc;
     }
   }
 
-  function updatePlayer(dt) {
+  function updatePlayerMovement(dt) {
     const p = State.player;
-    const speed = CONFIG.PLAYER_SPEED * dt;
+    const halfCell = State.cellW / 2;
 
-    // Verificar si se puede aplicar el giro encolado
-    if (p.nextDirR !== 0 || p.nextDirC !== 0) {
-      const centerDistX = Math.abs((p.x - Math.floor(p.x)) - 0.5);
-      const centerDistY = Math.abs((p.y - Math.floor(p.y)) - 0.5);
+    // Detectar celda actual en coordenadas continuas
+    const currCellC = Math.floor(p.x / State.cellW);
+    const currCellR = Math.floor(p.y / State.cellH);
+    const centerTargetX = currCellC * State.cellW + halfCell;
+    const centerTargetY = currCellR * State.cellH + halfCell;
 
-      // Si está suficientemente cerca del centro de la celda
-      if (centerDistX < 0.22 && centerDistY < 0.22) {
-        const curR = Math.floor(p.y);
-        const curC = Math.floor(p.x);
-        const testR = curR + p.nextDirR;
-        let testC = curC + p.nextDirC;
+    // Verificar si el jugador está suficientemente cerca del centro para ejecutar el giro en cola
+    const distToCenter = Math.hypot(p.x - centerTargetX, p.y - centerTargetY);
 
-        // Wrap túneles
-        if (testC < 0 && State.grid[curR][CONFIG.COLS - 1] === 0) testC = CONFIG.COLS - 1;
-        else if (testC >= CONFIG.COLS && State.grid[curR][0] === 0) testC = 0;
+    if (distToCenter < 6.0 && (p.nextDirR !== p.dirR || p.nextDirC !== p.dirC)) {
+      const targetR = currCellR + p.nextDirR;
+      let targetC = currCellC + p.nextDirC;
 
-        if (testR >= 0 && testR < CONFIG.ROWS && testC >= 0 && testC < CONFIG.COLS) {
-          if (State.grid[testR][testC] === 0) {
-            // Alinear al centro exacto y cambiar dirección
-            p.x = curC + 0.5;
-            p.y = curR + 0.5;
-            p.dirR = p.nextDirR;
-            p.dirC = p.nextDirC;
-            p.nextDirR = 0;
-            p.nextDirC = 0;
-          }
+      // Túnel lateral wrap-around
+      if (targetC < 0 && State.grid[currCellR][CONFIG.COLS - 1] === 0) targetC = CONFIG.COLS - 1;
+      else if (targetC >= CONFIG.COLS && State.grid[currCellR][0] === 0) targetC = 0;
+
+      if (targetR >= 0 && targetR < CONFIG.ROWS && targetC >= 0 && targetC < CONFIG.COLS) {
+        if (State.grid[targetR][targetC] === 0) {
+          // Encajar al centro y cambiar dirección
+          p.x = centerTargetX;
+          p.y = centerTargetY;
+          p.dirR = p.nextDirR;
+          p.dirC = p.nextDirC;
         }
       }
     }
 
-    // Avanzar en la dirección actual
+    // Avanzar en la dirección actual si la celda frente está libre
     if (p.dirR !== 0 || p.dirC !== 0) {
-      let nextX = p.x + p.dirC * speed;
-      let nextY = p.y + p.dirR * speed;
+      const nextX = p.x + p.dirC * p.speed * State.cellW * dt;
+      const nextY = p.y + p.dirR * p.speed * State.cellH * dt;
 
-      const targetCellR = Math.floor(p.y + p.dirR * 0.49);
-      let targetCellC = Math.floor(p.x + p.dirC * 0.49);
+      const nextCellC = Math.floor(nextX / State.cellW);
+      const nextCellR = Math.floor(nextY / State.cellH);
 
-      // Wrap lateral
-      if (nextX < 0) nextX = CONFIG.COLS - 0.1;
-      else if (nextX >= CONFIG.COLS) nextX = 0.1;
-
-      // Colisión con muro
-      const checkR = Math.floor(nextY + p.dirR * 0.45);
-      const checkC = Math.floor(nextX + p.dirC * 0.45);
-
-      if (checkR >= 0 && checkR < CONFIG.ROWS && checkC >= 0 && checkC < CONFIG.COLS) {
-        if (State.grid[checkR][checkC] === 1) {
-          // Chocó con muro: encajar en centro de celda actual y detenerse
-          p.x = Math.floor(p.x) + 0.5;
-          p.y = Math.floor(p.y) + 0.5;
-          p.dirR = 0;
-          p.dirC = 0;
-          return;
-        }
+      // Verificación de colisión contra muros y puertas cerradas
+      if (canMoveTo(nextCellR, nextCellC)) {
+        p.x = nextX;
+        p.y = nextY;
+      } else {
+        // Detenerse exactamente en el centro de la celda antes del muro
+        p.x = centerTargetX;
+        p.y = centerTargetY;
+        p.dirR = 0;
+        p.dirC = 0;
       }
 
-      p.x = nextX;
-      p.y = nextY;
-      p.r = Math.floor(p.y);
-      p.c = Math.floor(p.x);
-    }
+      // Túnel wrap-around continuo
+      if (p.x < 0) p.x = CONFIG.COLS * State.cellW - 1;
+      else if (p.x >= CONFIG.COLS * State.cellW) p.x = 1;
 
-    // Comprobar si pisa un farol
-    for (const lan of State.lanterns) {
-      if (!lan.lit && lan.offTimer <= 0) {
-        const dist = Math.hypot(p.x - (lan.c + 0.5), p.y - (lan.r + 0.5));
-        if (dist < 0.6) {
-          lan.lit = true;
-          lan.radius = 1.0; // Inicia creciendo
-          State.litLanternsCount++;
-          State.score += 250;
-          playAudio('light_lantern');
-          window.ArcadeCanvas?.haptic(15);
-
-          const cs = State.cellSize;
-          ParticlePool.spawn((lan.c + 0.5) * cs, (lan.r + 0.5) * cs, '#00f0ff', 20, 140);
-          updateHUD();
-
-          // Comprobar victoria
-          if (State.litLanternsCount === State.lanterns.length) {
-            triggerVictory();
-          }
-        }
-      }
+      p.r = Math.floor(p.y / State.cellH);
+      p.c = Math.floor(p.x / State.cellW);
     }
   }
 
+  function canMoveTo(r, c) {
+    if (r < 0 || r >= CONFIG.ROWS || c < 0 || c >= CONFIG.COLS) return false;
+    if (State.grid[r][c] === 1) return false; // Muro
+
+    // Puerta cerrada
+    const door = State.doors.find(d => d.r === r && d.c === c && !d.open);
+    if (door) {
+      if (State.player.hasKey) {
+        door.open = true;
+        playAudio('light_lantern');
+        spawnFloatingText(c * State.cellW + 11, r * State.cellH + 11, '¡PUERTA ABIERTA!', '#00ff88');
+        renderOffscreenMaze();
+        return true;
+      }
+      return false;
+    }
+    return true;
+  }
+
   // ==========================================
-  // IA DE CRIATURAS DE LA OSCURIDAD
+  // HABILIDADES: CHISPAS Y DESTELLO
+  // ==========================================
+  function dropSpark() {
+    if (State.availableSparks <= 0) return;
+    State.availableSparks--;
+    playAudio('spark_drop');
+    if (State.options.vibration) window.ArcadeCanvas?.haptic(20);
+
+    State.sparks.push({
+      r: State.player.r,
+      c: State.player.c,
+      x: State.player.c * State.cellW + State.cellW / 2,
+      y: State.player.r * State.cellH + State.cellH / 2,
+      radius: CONFIG.SPARK_LIGHT_RADIUS,
+      duration: CONFIG.SPARK_DURATION
+    });
+
+    unlockAchievement('SPARK_MASTER');
+    updateHUD();
+  }
+
+  function activateFlash() {
+    if (State.flashCooldown > 0 || State.flashActive) return;
+    State.flashActive = true;
+    State.flashTimer = CONFIG.FLASH_DURATION;
+    State.flashCooldown = CONFIG.FLASH_COOLDOWN * (State.upgrades.has('FAST_FLASH') ? 0.7 : 1.0);
+
+    playAudio('flash_blast');
+    if (State.options.vibration) window.ArcadeCanvas?.haptic(45);
+    window.ArcadeJuice?.shake(dom.container, 14, 250);
+
+    // Ahuyentar a todas las criaturas del mapa
+    State.creatures.forEach(c => {
+      c.state = 'FLEE';
+      c.stunTimer = 3.0;
+
+      // Si es divisor, dividir
+      if (c.typeId === 2 && State.creatures.length < 8) {
+        c.typeId = 1;
+        c.shape = 'diamond';
+        State.creatures.push(createCreature(1, c.r, c.c));
+      }
+    });
+
+    // Si hay jefe activo, aturdirlo
+    if (State.boss) {
+      State.boss.hp = Math.max(0, State.boss.hp - 1);
+      dom.bossHpText.textContent = `PV: ${State.boss.hp}/${State.boss.maxHp}`;
+      dom.bossHpFill.style.width = `${(State.boss.hp / State.boss.maxHp) * 100}%`;
+      spawnFloatingText(State.player.x, State.player.y - 20, '¡JEFE IMPACTADO!', '#ff007f');
+      if (State.boss.hp <= 0) handleVictory();
+    }
+
+    unlockAchievement('SOLAR_FLASH');
+    updateHUD();
+  }
+
+  // ==========================================
+  // IA DE CRIATURAS Y ESCALONADO BFS
   // ==========================================
   function updateCreatures(dt) {
     const lightSources = getActiveLightSources();
 
-    State.creatures.forEach(cr => {
-      // 1. Determinar si la criatura está inmersa en luz
-      let inLight = false;
-      if (State.flashActiveTimer > 0) {
-        inLight = true;
-      } else {
+    State.creatures.forEach((c, idx) => {
+      // 1. Contador de aturdimiento
+      if (c.stunTimer > 0) {
+        c.stunTimer -= dt;
+        return;
+      }
+
+      // 2. Comportamiento especial del Tímido (Gazer)
+      if (c.typeId === 4) {
+        // Verificar si el jugador camina hacia él
+        const toEnemyX = c.x - State.player.x;
+        const toEnemyY = c.y - State.player.y;
+        const dot = State.player.dirC * toEnemyX + State.player.dirR * toEnemyY;
+        if (dot > 0.3) {
+          c.state = 'FROZEN';
+          return; // Congelado por la mirada del jugador
+        }
+      }
+
+      // 3. Evaluar exposición a la luz
+      let inLight = State.flashActive;
+      if (!inLight) {
         for (const ls of lightSources) {
-          const dist = Math.hypot(cr.x - ls.x, cr.y - ls.y);
-          if (dist <= ls.radius) {
+          const d = Math.hypot(c.r - ls.r, c.c - ls.c);
+          if (d <= ls.radius) {
             inLight = true;
             break;
           }
         }
       }
 
-      if (inLight) {
-        if (cr.state !== 'FLEE') {
-          cr.state = 'FLEE';
-          cr.fleeTimer = 3.5;
-          playAudio('creature_flee');
+      // Criatura Coloso (7) es inmune a luz normal
+      if (c.typeId === 7 && !State.flashActive) {
+        inLight = false;
+      }
+
+      c.state = inLight ? 'FLEE' : 'HUNT';
+
+      // 4. Velocidad según oscuridad y mejoras de aura
+      let currentSpeed = c.speed;
+      if (!inLight) currentSpeed *= CONFIG.CREATURE_DARK_BOOST;
+      if (inLight && State.upgrades.has('AURA_WARD')) currentSpeed *= 0.65;
+
+      // 5. Actualización escalonada de rutas BFS
+      c.pathUpdateTimer -= dt;
+      if (c.pathUpdateTimer <= 0) {
+        c.pathUpdateTimer = 0.3 + (idx * 0.05); // Escalonado
+
+        let targetR = State.player.r;
+        let targetC = State.player.c;
+
+        if (c.state === 'FLEE') {
+          const escape = LumenLogic.findEscapeTarget(State.grid, c.r, c.c, lightSources);
+          targetR = escape.r;
+          targetC = escape.c;
+        } else if (c.typeId === 5) {
+          // Tragaluz busca faroles encendidos
+          const litLantern = State.lanterns.find(l => l.lit);
+          if (litLantern) {
+            targetR = litLantern.r;
+            targetC = litLantern.c;
+          }
         }
-      } else if (cr.fleeTimer > 0) {
-        cr.fleeTimer -= dt;
-        if (cr.fleeTimer <= 0) {
-          cr.state = 'HUNT';
+
+        const path = LumenLogic.findPath(State.grid, c.r, c.c, targetR, targetC);
+        if (path && path.length > 0) {
+          c.path = path;
         }
       }
 
-      // 2. Recálculo escalonado de rutas BFS
-      cr.staggerTimer -= dt;
-      if (cr.staggerTimer <= 0) {
-        cr.staggerTimer = 0.28; // Actualizar cada ~280ms desfasado
-        calculateCreatureTarget(cr, lightSources);
-      }
+      // 6. Avanzar por la ruta
+      if (c.path && c.path.length > 0) {
+        const nextNode = c.path[0];
+        const targetX = nextNode.c * State.cellW + State.cellW / 2;
+        const targetY = nextNode.r * State.cellH + State.cellH / 2;
 
-      // 3. Movimiento hacia el siguiente nodo de su ruta
-      moveCreatureAlongPath(cr, dt);
+        const dx = targetX - c.x;
+        const dy = targetY - c.y;
+        const dist = Math.hypot(dx, dy);
 
-      // 4. Interacción con el jugador (Muerte / Pérdida de vida)
-      const distToPlayer = Math.hypot(cr.x - State.player.x, cr.y - State.player.y);
-      if (distToPlayer < 0.65) {
-        if (cr.state === 'HUNT') {
-          handlePlayerCaught();
-        }
-      }
+        if (dist < 4.0) {
+          c.x = targetX;
+          c.y = targetY;
+          c.r = nextNode.r;
+          c.c = nextNode.c;
+          c.path.shift();
 
-      // 5. Interacción del Tragaluz con faroles (Apagar farol encendido)
-      if (cr.type === 'TRAGALUZ' && cr.state === 'HUNT') {
-        for (const lan of State.lanterns) {
-          if (lan.lit) {
-            const distLan = Math.hypot(cr.x - (lan.c + 0.5), cr.y - (lan.r + 0.5));
-            if (distLan < 0.7) {
-              lan.lit = false;
-              lan.radius = 0;
-              lan.offTimer = 9.0; // Desactivado por 9 segundos
-              State.litLanternsCount--;
-              playAudio('lantern_snuffed');
-              window.ArcadeCanvas?.haptic(20);
-
-              const cs = State.cellSize;
-              ParticlePool.spawn((lan.c + 0.5) * cs, (lan.r + 0.5) * cs, '#ff3366', 15, 100);
-              updateHUD();
-              break;
+          // Tragaluz devorando farol
+          if (c.typeId === 5) {
+            const lan = State.lanterns.find(l => l.r === c.r && l.c === c.c && l.lit);
+            if (lan) {
+              lan.radius = Math.max(0, lan.radius - 0.8);
+              if (lan.radius <= 0) lan.lit = false;
             }
           }
+        } else {
+          c.x += (dx / dist) * currentSpeed * State.cellW * dt;
+          c.y += (dy / dist) * currentSpeed * State.cellH * dt;
+        }
+      }
+
+      // 7. Colisión con el jugador Farolero
+      const playerDist = Math.hypot(c.x - State.player.x, c.y - State.player.y);
+      if (playerDist < 16.0) {
+        if (c.state === 'FLEE' || c.state === 'STUNNED' || c.state === 'FROZEN') {
+          // Ahuyentada
+          playAudio('creature_flee');
+          c.x = CONFIG.COLS * State.cellW / 2;
+          c.y = CONFIG.ROWS * State.cellH / 2;
+          c.stunTimer = 4.0;
+          State.score += 150;
+          spawnFloatingText(c.x, c.y, '+150 Ahuyentada', '#00f0ff');
+        } else {
+          // Daño al jugador
+          handlePlayerHit();
         }
       }
     });
   }
 
-  function calculateCreatureTarget(cr, lightSources) {
-    const curR = Math.floor(cr.y);
-    const curC = Math.floor(cr.x);
+  function handlePlayerHit() {
+    playAudio('player_hit');
+    if (State.options.vibration) window.ArcadeCanvas?.haptic(50);
+    window.ArcadeJuice?.shake(dom.container, 18, 300);
 
-    let targetR = State.player.r;
-    let targetC = State.player.c;
+    State.lives--;
+    updateHUD();
 
-    if (cr.state === 'FLEE') {
-      // Buscar celda segura de escape
-      const escape = LumenLogic.findEscapeTarget(State.grid, curR, curC, lightSources);
-      targetR = escape.r;
-      targetC = escape.c;
+    if (State.lives <= 0) {
+      endGame(false, '¡Las criaturas de la penumbra han apagado tu luz!');
     } else {
-      // Estado Caza según tipo de criatura
-      switch (cr.type) {
-        case 'VORAZ': // Perseguidor directo
-          targetR = State.player.r;
-          targetC = State.player.c;
-          break;
-
-        case 'ACECHADOR': { // Emboscador: apunta 3 celdas adelante del jugador
-          const pr = State.player.r + State.player.dirR * 3;
-          let pc = State.player.c + State.player.dirC * 3;
-          if (pc < 0) pc = 0;
-          if (pc >= CONFIG.COLS) pc = CONFIG.COLS - 1;
-          if (pr >= 0 && pr < CONFIG.ROWS && State.grid[pr][pc] === 0) {
-            targetR = pr;
-            targetC = pc;
-          } else {
-            targetR = State.player.r;
-            targetC = State.player.c;
-          }
-          break;
-        }
-
-        case 'CENTINELA': { // Merodeador: patrulla esquinas salvo si ve al jugador cerca
-          const dist = Math.hypot(curR - State.player.r, curC - State.player.c);
-          if (dist <= 5.5) {
-            targetR = State.player.r;
-            targetC = State.player.c;
-          } else {
-            // Patrullar esquinas del mapa
-            const waypoints = [
-              { r: 1, c: 1 }, { r: 1, c: CONFIG.COLS - 2 },
-              { r: CONFIG.ROWS - 2, c: 1 }, { r: CONFIG.ROWS - 2, c: CONFIG.COLS - 2 }
-            ];
-            const wp = waypoints[Math.floor(Date.now() / 6000) % waypoints.length];
-            targetR = wp.r;
-            targetC = wp.c;
-          }
-          break;
-        }
-
-        case 'TRAGALUZ': { // Extinguidor: busca prioritariamente el farol encendido más cercano
-          let nearestLan = null;
-          let minDist = Infinity;
-          for (const lan of State.lanterns) {
-            if (lan.lit) {
-              const d = Math.hypot(curR - lan.r, curC - lan.c);
-              if (d < minDist) {
-                minDist = d;
-                nearestLan = lan;
-              }
-            }
-          }
-          if (nearestLan) {
-            targetR = nearestLan.r;
-            targetC = nearestLan.c;
-          } else {
-            targetR = State.player.r;
-            targetC = State.player.c;
-          }
-          break;
-        }
-      }
+      // Reubicar jugador a spawn seguro y destello breve
+      State.player.x = 7 * State.cellW + State.cellW / 2;
+      State.player.y = 11 * State.cellH + State.cellH / 2;
+      State.player.r = 11;
+      State.player.c = 7;
+      State.player.dirR = 0;
+      State.player.dirC = 0;
+      State.flashActive = true;
+      State.flashTimer = 2.0;
     }
-
-    cr.path = LumenLogic.findPath(State.grid, curR, curC, targetR, targetC) || [];
-  }
-
-  function moveCreatureAlongPath(cr, dt) {
-    if (!cr.path || cr.path.length === 0) return;
-
-    const speed = (cr.state === 'FLEE' ? CONFIG.FLEE_SPEED : cr.baseSpeed) * dt;
-    const nextNode = cr.path[0];
-    const targetX = nextNode.c + 0.5;
-    const targetY = nextNode.r + 0.5;
-
-    const dx = targetX - cr.x;
-    const dy = targetY - cr.y;
-    const dist = Math.hypot(dx, dy);
-
-    if (dist <= speed) {
-      cr.x = targetX;
-      cr.y = targetY;
-      cr.r = nextNode.r;
-      cr.c = nextNode.c;
-      cr.path.shift();
-    } else {
-      cr.x += (dx / dist) * speed;
-      cr.y += (dy / dist) * speed;
-    }
-
-    // Wrap túneles laterales
-    if (cr.x < 0) cr.x = CONFIG.COLS - 0.1;
-    else if (cr.x >= CONFIG.COLS) cr.x = 0.1;
   }
 
   function getActiveLightSources() {
-    const sources = [];
+    const list = [];
 
     // Luz del jugador
-    sources.push({ x: State.player.x, y: State.player.y, r: State.player.r, c: State.player.c, radius: State.player.lightRadius });
+    list.push({
+      r: State.player.r,
+      c: State.player.c,
+      x: State.player.x,
+      y: State.player.y,
+      radius: State.player.lightRadius
+    });
 
     // Faroles encendidos
     State.lanterns.forEach(lan => {
       if (lan.lit && lan.radius > 0) {
-        sources.push({ x: lan.c + 0.5, y: lan.r + 0.5, r: lan.r, c: lan.c, radius: lan.radius });
+        list.push({
+          r: lan.r,
+          c: lan.c,
+          x: lan.c * State.cellW + State.cellW / 2,
+          y: lan.r * State.cellH + State.cellH / 2,
+          radius: lan.radius
+        });
       }
     });
 
     // Chispas activas
     State.sparks.forEach(sp => {
-      sources.push({ x: sp.x, y: sp.y, r: sp.r, c: sp.c, radius: sp.radius });
+      list.push({
+        r: sp.r,
+        c: sp.c,
+        x: sp.x,
+        y: sp.y,
+        radius: sp.radius
+      });
     });
 
-    return sources;
+    return list;
   }
 
   // ==========================================
-  // EVENTOS DE JUEGO: VICTORIA Y MUERTE
+  // EVENTOS, APAGÓN Y PROGRESIÓN
   // ==========================================
-  function handlePlayerCaught() {
-    State.lives--;
-    playAudio('player_hit');
-    window.ArcadeCanvas?.haptic(45);
+  function updateWorldLogic(dt) {
+    State.timeInLevel += dt;
 
-    const cs = State.cellSize;
-    ParticlePool.spawn(State.player.x * cs, State.player.y * cs, '#ff0055', 25, 160);
-    updateHUD();
+    // 1. Consumo gradual de faroles (Presión constante)
+    const decay = CONFIG.LANTERN_DECAY_RATE * (State.upgrades.has('OIL_RESERVE') ? 0.5 : 1.0);
+    State.lanterns.forEach(lan => {
+      if (lan.lit) {
+        // Si el jugador está parado sobre el farol, lo recarga
+        if (State.player.r === lan.r && State.player.c === lan.c) {
+          lan.radius = Math.min(CONFIG.LANTERN_MAX_LIGHT_RADIUS, lan.radius + 1.2 * dt);
+        } else {
+          lan.radius -= decay * dt;
+          if (lan.radius <= 0.8) {
+            lan.lit = false;
+            lan.radius = 0;
+          }
+        }
+      } else {
+        // Encender si el jugador lo pisa
+        if (State.player.r === lan.r && State.player.c === lan.c) {
+          lan.lit = true;
+          lan.radius = CONFIG.LANTERN_MAX_LIGHT_RADIUS;
+          playAudio('light_lantern');
+          if (State.options.vibration) window.ArcadeCanvas?.haptic(15);
+          State.score += 100;
+          spawnFloatingText(lan.c * State.cellW + 11, lan.r * State.cellH + 11, '+100 Farol', '#ffaa00');
+          unlockAchievement('FIRST_LIGHT');
+          checkVictoryCondition();
+        }
+      }
+    });
 
-    if (State.lives <= 0) {
-      endGame(false, 'Has sucumbido ante la oscuridad.');
-    } else {
-      // Respawn seguro en el punto de inicio
-      State.state = 'DEATH';
-      setTimeout(() => {
-        const lvl = CONFIG.LEVELS[State.levelIdx];
-        const parsed = LumenLogic.parseMap(lvl.map);
-        State.player.r = parsed.playerStart.r;
-        State.player.c = parsed.playerStart.c;
-        State.player.x = parsed.playerStart.c + 0.5;
-        State.player.y = parsed.playerStart.r + 0.5;
-        State.player.dirR = 0;
-        State.player.dirC = 0;
-        State.state = 'PLAYING';
-      }, 700);
+    // 2. Chispas y recarga
+    for (let i = State.sparks.length - 1; i >= 0; i--) {
+      const sp = State.sparks[i];
+      sp.duration -= dt;
+      if (sp.duration <= 0) State.sparks.splice(i, 1);
+    }
+
+    const maxSparks = State.upgrades.has('EXTRA_SPARK') ? 3 : CONFIG.MAX_SPARKS;
+    if (State.availableSparks < maxSparks) {
+      State.sparkRechargeTimer += dt;
+      if (State.sparkRechargeTimer >= CONFIG.SPARK_RECHARGE_TIME) {
+        State.sparkRechargeTimer = 0;
+        State.availableSparks++;
+        updateHUD();
+      }
+    }
+
+    // 3. Destello de emergencia
+    if (State.flashActive) {
+      State.flashTimer -= dt;
+      if (State.flashTimer <= 0) State.flashActive = false;
+    }
+    if (State.flashCooldown > 0) {
+      State.flashCooldown -= dt;
+    }
+
+    // 4. Objetos interactivos
+    // Reliquias
+    State.relics.forEach(rel => {
+      if (!rel.collected && State.player.r === rel.r && State.player.c === rel.c) {
+        rel.collected = true;
+        playAudio('relic_pickup');
+        State.score += 250;
+        State.availableSparks = Math.min(maxSparks, State.availableSparks + 1);
+        spawnFloatingText(rel.c * State.cellW + 11, rel.r * State.cellH + 11, '+250 Reliquia', '#00e5ff');
+        unlockAchievement('RELIC_HUNTER');
+      }
+    });
+
+    // Llaves
+    State.keys.forEach(k => {
+      if (!k.collected && State.player.r === k.r && State.player.c === k.c) {
+        k.collected = true;
+        State.player.hasKey = true;
+        playAudio('light_lantern');
+        spawnFloatingText(k.c * State.cellW + 11, k.r * State.cellH + 11, '🔑 ¡LLAVE OBTENIDA!', '#ffcc00');
+      }
+    });
+
+    // Trampas de luz
+    State.traps.forEach(tr => {
+      if (tr.active) {
+        State.creatures.forEach(c => {
+          if (c.r === tr.r && c.c === tr.c && c.stunTimer <= 0) {
+            c.stunTimer = 4.0;
+            playAudio('creature_flee');
+            spawnFloatingText(c.x, c.y, '☀️ ¡ATRAPADA!', '#ffff00');
+            unlockAchievement('TRAP_CAUGHT');
+          }
+        });
+      }
+    });
+
+    // 5. Clímax de Apagón: cuando quedan 2 o menos faroles por encender
+    const litCount = State.lanterns.filter(l => l.lit).length;
+    const remaining = State.lanterns.length - litCount;
+    if (remaining <= 2 && !State.isBlackout && remaining > 0) {
+      State.isBlackout = true;
+      playAudio('blackout_alarm');
+      dom.blackoutVignette.classList.remove('hidden');
+      stopBGM();
+      startBGM(); // Acelera el tempo
+    } else if (remaining > 2 && State.isBlackout) {
+      State.isBlackout = false;
+      dom.blackoutVignette.classList.add('hidden');
+      stopBGM();
+      startBGM();
+    }
+
+    // 6. Eventos aleatorios del laberinto
+    State.eventTimer -= dt;
+    if (State.eventTimer <= 0) {
+      State.eventTimer = Math.random() * 8.0 + 12.0;
+      triggerRandomEvent();
     }
   }
 
-  function triggerVictory() {
+  function triggerRandomEvent() {
+    const evtType = Math.floor(Math.random() * 3);
+    if (evtType === 0) {
+      // Parpadeo general de luces
+      spawnFloatingText(State.player.x, State.player.y - 15, '⚠️ ¡PARPADEO DE LUZ!', '#ff0055');
+      playAudio('blackout_alarm');
+      State.player.lightRadius = Math.max(1.2, State.player.lightRadius - 0.6);
+      setTimeout(() => {
+        State.player.lightRadius = CONFIG.PLAYER_LIGHT_RADIUS * (State.upgrades.has('LANTERN_BOOST') ? 1.25 : 1.0);
+      }, 1500);
+    } else if (evtType === 1 && State.creatures.length < 7) {
+      // Emerge criatura del túnel
+      spawnFloatingText(State.cellW * 7, State.cellH * 9, '⚠️ ¡SOMBRA DEL TÚNEL!', '#aa00ff');
+      State.creatures.push(createCreature(1, 9, 0));
+    }
+  }
+
+  function checkVictoryCondition() {
+    const allLit = State.lanterns.every(l => l.lit);
+    if (allLit && (!State.boss || State.boss.hp <= 0)) {
+      handleVictory();
+    }
+  }
+
+  function handleVictory() {
     State.state = 'VICTORY';
+    stopBGM();
     playAudio('victory');
-    saveHighScore(State.score);
-    setUnlockedLevel(State.levelIdx + 1);
 
-    dom.resultIcon.textContent = '🏮';
-    dom.resultTitle.textContent = '¡LABERINTO ILUMINADO!';
-    dom.resultSubtitle.textContent = 'Has disipado las sombras de esta cámara.';
+    if (State.timeInLevel < 30) unlockAchievement('SPEED_CLEAR');
+    if (State.currentLevelIdx === 5) unlockAchievement('BOSS_BRANCH');
+    if (State.currentLevelIdx === 11) unlockAchievement('BOSS_GOLEM');
+    if (State.currentLevelIdx >= 29) unlockAchievement('ABYSS_CONQUEROR');
+
+    let stars = 1;
+    if (State.timeInLevel < 45 && State.lives === CONFIG.STARTING_LIVES) stars = 3;
+    else if (State.timeInLevel < 70) stars = 2;
+
+    if (stars === 3) unlockAchievement('PERFECT_LIGHT');
+
+    saveLevelRecord(State.currentLevelIdx, State.score, stars);
+    setUnlockedLevel(State.currentLevelIdx + 1);
+
+    // Si aún hay niveles y no es el último, mostrar selección de mejoras
+    if (State.currentLevelIdx < CONFIG.LEVELS.length - 1) {
+      setTimeout(() => showUpgradeModal(), 400);
+    } else {
+      endGame(true, '¡Has conquistado la Noche Eterna y restaurado la Luz en todos los mundos!');
+    }
+  }
+
+  function showUpgradeModal() {
+    dom.upgradeCards.innerHTML = '';
+    // Seleccionar 3 mejoras aleatorias de las que el jugador no tenga ya
+    const available = CONFIG.UPGRADES.filter(u => !State.upgrades.has(u.id));
+    const pool = available.length >= 3 ? available : CONFIG.UPGRADES;
+
+    const shuffled = [...pool].sort(() => 0.5 - Math.random()).slice(0, 3);
+    shuffled.forEach(upg => {
+      const card = document.createElement('div');
+      card.className = 'upgrade-card';
+      card.innerHTML = `
+        <span class="upgrade-icon">${upg.icon}</span>
+        <div class="upgrade-info">
+          <span class="upgrade-name">${upg.name}</span>
+          <span class="upgrade-desc">${upg.desc}</span>
+        </div>
+      `;
+      card.addEventListener('click', () => {
+        State.upgrades.add(upg.id);
+        playAudio('relic_pickup');
+        dom.modalUpgrade.classList.add('hidden');
+        startLevel(State.currentLevelIdx + 1);
+      });
+      dom.upgradeCards.appendChild(card);
+    });
+
+    dom.modalUpgrade.classList.remove('hidden');
+  }
+
+  function endGame(isVictory, message) {
+    State.state = isVictory ? 'VICTORY' : 'GAMEOVER';
+    stopBGM();
+
+    dom.resultIcon.textContent = isVictory ? '🏮' : '🕯️';
+    dom.resultTitle.textContent = isVictory ? '¡LABERINTO ILUMINADO!' : 'LUMBRE EXTINTA';
+    dom.resultSubtitle.textContent = message;
     dom.resultScoreVal.textContent = State.score.toLocaleString();
-    dom.resultLanternsVal.textContent = `${State.litLanternsCount}/${State.lanterns.length}`;
-    dom.resultBestVal.textContent = getHighScore().toLocaleString();
 
-    if (State.levelIdx < CONFIG.LEVELS.length - 1) {
+    const litLanterns = State.lanterns.filter(l => l.lit).length;
+    dom.resultLanternsVal.textContent = `${litLanterns}/${State.lanterns.length}`;
+
+    const rec = getLevelRecord(State.currentLevelIdx);
+    dom.resultBestVal.textContent = rec.score.toLocaleString();
+
+    dom.starsRow.innerHTML = '';
+    for (let s = 1; s <= 3; s++) {
+      const starSpan = document.createElement('span');
+      starSpan.className = s <= rec.stars ? 'star-slot filled' : 'star-slot empty';
+      starSpan.textContent = '★';
+      dom.starsRow.appendChild(starSpan);
+    }
+
+    if (isVictory && State.currentLevelIdx < CONFIG.LEVELS.length - 1) {
       dom.btnNextLevel.classList.remove('hidden');
     } else {
       dom.btnNextLevel.classList.add('hidden');
@@ -1379,44 +1709,387 @@
     dom.overlayResult.classList.remove('hidden');
   }
 
-  function endGame(isVictory, message) {
-    State.state = isVictory ? 'VICTORY' : 'GAMEOVER';
-    saveHighScore(State.score);
+  // ==========================================
+  // RENDERIZADO OFFSCREEN DE ALTO RENDIMIENTO
+  // ==========================================
+  function renderOffscreenMaze() {
+    const canvas = State.offscreenMazeCanvas;
+    const ctx = State.offscreenMazeCtx;
+    if (!canvas || !ctx) return;
 
-    dom.resultIcon.textContent = isVictory ? '🏮' : '💀';
-    dom.resultTitle.textContent = isVictory ? '¡VICTORIA!' : 'FIN DE PARTIDA';
-    dom.resultSubtitle.textContent = message;
-    dom.resultScoreVal.textContent = State.score.toLocaleString();
-    dom.resultLanternsVal.textContent = `${State.litLanternsCount}/${State.lanterns.length}`;
-    dom.resultBestVal.textContent = getHighScore().toLocaleString();
-    dom.btnNextLevel.classList.add('hidden');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const w = State.cellW;
+    const h = State.cellH;
+    const worldCfg = CONFIG.WORLDS[(State.currentWorld - 1) % CONFIG.WORLDS.length];
 
-    dom.overlayResult.classList.remove('hidden');
+    for (let r = 0; r < CONFIG.ROWS; r++) {
+      for (let c = 0; c < CONFIG.COLS; c++) {
+        const x = c * w;
+        const y = r * h;
+
+        if (State.grid[r][c] === 1) {
+          // Muro estilizado con relieve de neón
+          ctx.fillStyle = '#0a101f';
+          ctx.fillRect(x, y, w, h);
+
+          ctx.strokeStyle = worldCfg.color;
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x + 0.5, y + 0.5, w - 1, h - 1);
+        } else {
+          // Pasillo
+          ctx.fillStyle = '#03060c';
+          ctx.fillRect(x, y, w, h);
+        }
+      }
+    }
+
+    // Dibujar puertas rúnicas estáticas
+    State.doors.forEach(d => {
+      if (!d.open) {
+        ctx.fillStyle = '#ffaa00';
+        ctx.fillRect(d.c * w + 2, d.r * h + 2, w - 4, h - 4);
+      }
+    });
   }
 
-  // ==========================================
-  // RÉCORDS Y DESBLOQUEO
-  // ==========================================
-  function getHighScore() {
-    try {
-      return window.ArcadeStorage?.getHighScore(CONFIG.STORAGE_KEY) || 0;
-    } catch (e) {
-      return 0;
+  function render(time) {
+    const ctx = State.ctx;
+    if (!ctx) return;
+
+    const w = dom.canvas.width;
+    const h = dom.canvas.height;
+    ctx.clearRect(0, 0, w, h);
+
+    // 1. Dibujar laberinto base desde el offscreen
+    if (State.offscreenMazeCanvas) {
+      ctx.drawImage(State.offscreenMazeCanvas, 0, 0);
+    }
+
+    // 2. Elementos del mapa: Faroles, Reliquias, Llaves, Trampas
+    renderMapObjects(ctx);
+
+    // 3. Jugador Farolero
+    renderPlayer(ctx);
+
+    // 4. Criaturas
+    renderCreatures(ctx);
+
+    // 5. Capa de iluminación y oscuridad con offscreenLightCanvas
+    renderLightingMask(ctx, w, h);
+
+    // 6. Textos flotantes y partículas
+    renderParticles(ctx);
+    renderFloatingTexts(ctx);
+
+    // 7. Diagnóstico (?debug=1)
+    if (State.isDebug) {
+      dom.debugOverlay.textContent = `FPS: ${Math.round(State.fps)} | Frame: ${State.frameTime.toFixed(1)}ms | Entidades: ${State.creatures.length + 1} | Partículas: ${State.particles.length}`;
     }
   }
 
-  function saveHighScore(score) {
-    try {
-      const current = getHighScore();
-      if (score > current) {
-        window.ArcadeStorage?.saveHighScore(CONFIG.STORAGE_KEY, score);
+  function renderMapObjects(ctx) {
+    const w = State.cellW;
+    const h = State.cellH;
+
+    // Faroles
+    State.lanterns.forEach(lan => {
+      const cx = lan.c * w + w / 2;
+      const cy = lan.r * h + h / 2;
+
+      ctx.save();
+      if (lan.lit) {
+        ctx.fillStyle = '#ffcc00';
+        ctx.shadowColor = '#ffaa00';
+        ctx.shadowBlur = 10;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 6, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.strokeStyle = '#445566';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(cx - 5, cy - 5, 10, 10);
       }
+      ctx.restore();
+    });
+
+    // Reliquias
+    State.relics.forEach(rel => {
+      if (!rel.collected) {
+        const cx = rel.c * w + w / 2;
+        const cy = rel.r * h + h / 2;
+        ctx.fillStyle = '#00f0ff';
+        ctx.shadowColor = '#00f0ff';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    });
+
+    // Llaves
+    State.keys.forEach(k => {
+      if (!k.collected) {
+        const cx = k.c * w + w / 2;
+        const cy = k.r * h + h / 2;
+        ctx.font = '12px sans-serif';
+        ctx.fillText('🔑', cx - 6, cy + 4);
+      }
+    });
+
+    // Trampas de luz
+    State.traps.forEach(tr => {
+      const cx = tr.c * w + w / 2;
+      const cy = tr.r * h + h / 2;
+      ctx.strokeStyle = '#ffea00';
+      ctx.setLineDash([2, 2]);
+      ctx.strokeRect(cx - 8, cy - 8, 16, 16);
+      ctx.setLineDash([]);
+    });
+
+    // Chispas
+    State.sparks.forEach(sp => {
+      ctx.fillStyle = '#ffea00';
+      ctx.shadowColor = '#ffaa00';
+      ctx.shadowBlur = 12;
+      ctx.beginPath();
+      ctx.arc(sp.x, sp.y, 4, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
+
+  function renderPlayer(ctx) {
+    const p = State.player;
+    ctx.save();
+    ctx.fillStyle = '#ffffff';
+    ctx.shadowColor = '#00f0ff';
+    ctx.shadowBlur = 12;
+
+    // Cuerpo circular del farolero
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, 7, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Farol en mano orientado según la dirección
+    const dirOffset = 8;
+    const lx = p.x + p.dirC * dirOffset;
+    const ly = p.y + p.dirR * dirOffset;
+    ctx.fillStyle = '#ffaa00';
+    ctx.beginPath();
+    ctx.arc(lx, ly, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function renderCreatures(ctx) {
+    State.creatures.forEach(c => {
+      ctx.save();
+      ctx.fillStyle = c.color;
+      ctx.shadowColor = c.color;
+      ctx.shadowBlur = (c.state === 'FLEE') ? 4 : 10;
+
+      if (c.shape === 'diamond') {
+        ctx.beginPath();
+        ctx.moveTo(c.x, c.y - 7);
+        ctx.lineTo(c.x + 7, c.y);
+        ctx.lineTo(c.x, c.y + 7);
+        ctx.lineTo(c.x - 7, c.y);
+        ctx.closePath();
+        ctx.fill();
+      } else if (c.shape === 'square') {
+        ctx.fillRect(c.x - 6, c.y - 6, 12, 12);
+      } else if (c.shape === 'gazer') {
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 7, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#000';
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 3, 0, Math.PI * 2);
+        ctx.fill();
+      } else {
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 6.5, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      ctx.restore();
+    });
+  }
+
+  function renderLightingMask(ctx, w, h) {
+    const lightCanvas = State.offscreenLightCanvas;
+    const lightCtx = State.offscreenLightCtx;
+    if (!lightCanvas || !lightCtx) return;
+
+    lightCtx.clearRect(0, 0, w, h);
+
+    // Oscuridad base según si hay destello o no
+    if (State.flashActive) {
+      // Destello ilumina todo momentáneamente
+      return;
+    }
+
+    // Llenar capa con oscuridad profunda
+    lightCtx.fillStyle = State.isBlackout ? 'rgba(0, 2, 8, 0.96)' : 'rgba(1, 4, 12, 0.91)';
+    lightCtx.fillRect(0, 0, w, h);
+
+    // Perforar agujeros de luz usando destination-out
+    lightCtx.globalCompositeOperation = 'destination-out';
+
+    const sources = getActiveLightSources();
+    sources.forEach(ls => {
+      const px = ls.x;
+      const py = ls.y;
+      const pixelRadius = ls.radius * State.cellW;
+
+      const grad = lightCtx.createRadialGradient(px, py, pixelRadius * 0.2, px, py, pixelRadius);
+      grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+      grad.addColorStop(0.7, 'rgba(0, 0, 0, 0.7)');
+      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+
+      lightCtx.fillStyle = grad;
+      lightCtx.beginPath();
+      lightCtx.arc(px, py, pixelRadius, 0, Math.PI * 2);
+      lightCtx.fill();
+    });
+
+    lightCtx.globalCompositeOperation = 'source-over';
+
+    // Dibujar la máscara de luz sobre el canvas principal
+    ctx.drawImage(lightCanvas, 0, 0);
+  }
+
+  function renderParticles(ctx) {
+    for (let i = State.particles.length - 1; i >= 0; i--) {
+      const p = State.particles[i];
+      p.x += p.vx * 0.016;
+      p.y += p.vy * 0.016;
+      p.life -= 0.016 * 2.0;
+
+      if (p.life <= 0) {
+        State.particles.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+
+  function spawnFloatingText(x, y, text, color = '#fff') {
+    State.floatingTexts.push({ x, y, text, color, life: 1.0 });
+  }
+
+  function renderFloatingTexts(ctx) {
+    for (let i = State.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = State.floatingTexts[i];
+      ft.y -= 25 * 0.016;
+      ft.life -= 1.3 * 0.016;
+
+      if (ft.life <= 0) {
+        State.floatingTexts.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, ft.life);
+      ctx.fillStyle = ft.color;
+      ctx.font = 'bold 12px "Courier New", monospace';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 6;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    }
+  }
+
+  // ==========================================
+  // HUD, PERSISTENCIA Y SELECTOR
+  // ==========================================
+  function updateHUD() {
+    dom.scoreVal.textContent = State.score.toLocaleString();
+    const litLanterns = State.lanterns.filter(l => l.lit).length;
+    dom.lanternsVal.textContent = `${litLanterns}/${State.lanterns.length}`;
+
+    // Vidas
+    dom.livesVal.textContent = '🕯️'.repeat(Math.max(0, State.lives));
+
+    // Nivel
+    const lvl = CONFIG.LEVELS[State.currentLevelIdx] || CONFIG.LEVELS[0];
+    dom.levelDisplay.textContent = `M${lvl.world} • Nivel ${lvl.id}: ${lvl.name}`;
+
+    // Chispas
+    dom.pipSpark1.classList.toggle('ready', State.availableSparks >= 1);
+    dom.pipSpark2.classList.toggle('ready', State.availableSparks >= 2);
+
+    // Destello
+    const flashReady = State.flashCooldown <= 0;
+    dom.pipFlash.classList.toggle('ready', flashReady);
+    dom.pipFlash.textContent = flashReady ? '⚡ LISTO' : `⚡ ${Math.ceil(State.flashCooldown)}s`;
+  }
+
+  function loadStorage() {
+    try {
+      // Migrar desde v1 si existe
+      LumenLogic.migrateV1toV2(localStorage);
+
+      const achRaw = localStorage.getItem(`${CONFIG.STORAGE_KEY_PREFIX}:achievements`);
+      if (achRaw) State.achievements = JSON.parse(achRaw);
+
+      const optRaw = localStorage.getItem(`${CONFIG.STORAGE_KEY_PREFIX}:options`);
+      if (optRaw) {
+        State.options = { ...State.options, ...JSON.parse(optRaw) };
+        applyOptions();
+      }
+    } catch (e) {}
+  }
+
+  function saveStorage() {
+    try {
+      localStorage.setItem(`${CONFIG.STORAGE_KEY_PREFIX}:achievements`, JSON.stringify(State.achievements));
+      localStorage.setItem(`${CONFIG.STORAGE_KEY_PREFIX}:options`, JSON.stringify(State.options));
+    } catch (e) {}
+  }
+
+  function unlockAchievement(id) {
+    if (State.achievements[id]) return;
+    State.achievements[id] = true;
+    saveStorage();
+    playAudio('light_lantern');
+
+    const ach = CONFIG.ACHIEVEMENTS.find(a => a.id === id);
+    if (ach) {
+      spawnFloatingText(CONFIG.VIRTUAL_W / 2, 60, `🏆 ¡LOGRO: ${ach.title}!`, '#ffaa00');
+    }
+  }
+
+  function getLevelRecord(idx) {
+    try {
+      const key = `${CONFIG.STORAGE_KEY_PREFIX}:lvl_${idx}`;
+      const raw = localStorage.getItem(key);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { score: 0, stars: 0 };
+  }
+
+  function saveLevelRecord(idx, score, stars) {
+    try {
+      const prev = getLevelRecord(idx);
+      const newRec = {
+        score: Math.max(score, prev.score),
+        stars: Math.max(stars, prev.stars)
+      };
+      localStorage.setItem(`${CONFIG.STORAGE_KEY_PREFIX}:lvl_${idx}`, JSON.stringify(newRec));
     } catch (e) {}
   }
 
   function getUnlockedLevel() {
     try {
-      const raw = localStorage.getItem(`${CONFIG.STORAGE_KEY}:unlocked`);
+      const raw = localStorage.getItem(`${CONFIG.STORAGE_KEY_PREFIX}:unlocked`);
       return raw ? parseInt(raw, 10) : 0;
     } catch (e) {
       return 0;
@@ -1427,20 +2100,35 @@
     try {
       const current = getUnlockedLevel();
       if (lvlIdx > current) {
-        localStorage.setItem(`${CONFIG.STORAGE_KEY}:unlocked`, lvlIdx.toString());
+        localStorage.setItem(`${CONFIG.STORAGE_KEY_PREFIX}:unlocked`, lvlIdx.toString());
       }
     } catch (e) {}
   }
 
-  function renderLevelSelector() {
+  function applyOptions() {
+    dom.optSfx.checked = State.options.sfx;
+    dom.optBgm.checked = State.options.bgm;
+    dom.optVibration.checked = State.options.vibration;
+    dom.optContrast.checked = State.options.contrast;
+
+    if (State.options.contrast) document.body.classList.add('high-contrast');
+    else document.body.classList.remove('high-contrast');
+
+    if (!State.options.bgm) stopBGM();
+    else if (State.state === 'PLAYING') startBGM();
+  }
+
+  function renderLevelSelector(worldNum = 1) {
     dom.levelsGrid.innerHTML = '';
     const unlockedLevel = getUnlockedLevel();
 
-    CONFIG.LEVELS.forEach((lvl, idx) => {
+    const worldLevels = CONFIG.LEVELS.filter(l => l.world === worldNum);
+    worldLevels.forEach(lvl => {
+      const idx = lvl.id - 1;
       const badge = document.createElement('div');
       badge.className = 'level-badge';
       const isUnlocked = idx <= unlockedLevel;
-      const isCurrent = idx === State.levelIdx;
+      const isCurrent = idx === State.currentLevelIdx;
 
       if (isUnlocked) badge.classList.add('unlocked');
       if (isCurrent) badge.classList.add('current');
@@ -1448,575 +2136,284 @@
 
       const numSpan = document.createElement('span');
       numSpan.className = 'level-num';
-      numSpan.textContent = idx + 1;
+      numSpan.textContent = lvl.id;
       badge.appendChild(numSpan);
 
       const starsSpan = document.createElement('span');
       starsSpan.className = 'level-stars';
-      starsSpan.textContent = isUnlocked ? '★' : '🔒';
+      const rec = getLevelRecord(idx);
+      starsSpan.textContent = rec.stars > 0 ? '★'.repeat(rec.stars) : (isUnlocked ? '---' : '🔒');
       badge.appendChild(starsSpan);
 
       if (isUnlocked) {
         badge.addEventListener('click', () => {
-          playAudio('light_lantern');
+          playAudio('spark_drop');
           startLevel(idx);
         });
       }
 
       dom.levelsGrid.appendChild(badge);
     });
+
+    const wCfg = CONFIG.WORLDS[worldNum - 1];
+    dom.worldBadge.textContent = `MUNDO ${wCfg.id}: ${wCfg.name.toUpperCase()}`;
+    dom.worldDesc.textContent = `Niveles ${worldLevels[0].id} al ${worldLevels[worldLevels.length - 1].id} • ${wCfg.rule}`;
   }
 
   // ==========================================
-  // RENDERIZADO VECTORIAL 3D Y MÁSCARA DE LUZ
-  // ==========================================
-  function render() {
-    const ctx = State.ctx;
-    if (!ctx) return;
-
-    const cs = State.cellSize;
-    const w = State.boardW;
-    const h = State.boardH;
-
-    ctx.clearRect(0, 0, w, h);
-
-    // 1. Dibujar laberinto estático cacheado
-    if (State.staticCanvas) {
-      ctx.drawImage(State.staticCanvas, 0, 0);
-    }
-
-    // 2. Dibujar Faroles
-    State.lanterns.forEach(lan => {
-      render3DLantern(ctx, lan.c * cs + cs / 2, lan.r * cs + cs / 2, cs * 0.42, lan.lit, lan.offTimer);
-    });
-
-    // 3. Dibujar Chispas activas en el suelo
-    State.sparks.forEach(sp => {
-      renderSparkEntity(ctx, sp.x * cs, sp.y * cs, cs * 0.35);
-    });
-
-    // 4. Dibujar Jugador (Farolero)
-    renderFarolero(ctx, State.player.x * cs, State.player.y * cs, cs * 0.45);
-
-    // 5. Dibujar Criaturas Geométricas de la Oscuridad
-    State.creatures.forEach(cr => {
-      renderCreature3D(ctx, cr.x * cs, cr.y * cs, cs * 0.46, cr);
-    });
-
-    // 6. Dibujar Partículas
-    ParticlePool.render(ctx);
-
-    // 7. Capa de Oscuridad Dinámica con Máscara de Luz
-    renderDarknessLightMask(ctx, w, h, cs);
-  }
-
-  function renderDarknessLightMask(ctx, w, h, cs) {
-    if (State.flashActiveTimer > 0) {
-      // Destello blanco cegador
-      ctx.fillStyle = `rgba(255, 255, 255, ${Math.min(0.85, State.flashActiveTimer)})`;
-      ctx.fillRect(0, 0, w, h);
-      return;
-    }
-
-    // Crear canvas offscreen para la máscara de sombras
-    const maskCanvas = document.createElement('canvas');
-    maskCanvas.width = w;
-    maskCanvas.height = h;
-    const mctx = maskCanvas.getContext('2d');
-
-    // Oscuridad casi total 80s
-    mctx.fillStyle = 'rgba(2, 4, 10, 0.94)';
-    mctx.fillRect(0, 0, w, h);
-
-    // Cortar agujeros de luz usando 'destination-out'
-    mctx.globalCompositeOperation = 'destination-out';
-
-    const lightSources = getActiveLightSources();
-    lightSources.forEach(ls => {
-      const px = ls.x * cs;
-      const py = ls.y * cs;
-      const radPx = ls.radius * cs;
-
-      // Parpadeo sutil orgánico de luz
-      const flicker = 1 + (Math.sin(Date.now() * 0.008 + px) * 0.04);
-      const effRad = radPx * flicker;
-
-      const grad = mctx.createRadialGradient(px, py, effRad * 0.15, px, py, effRad);
-      grad.addColorStop(0, 'rgba(0, 0, 0, 1.0)');
-      grad.addColorStop(0.55, 'rgba(0, 0, 0, 0.75)');
-      grad.addColorStop(0.85, 'rgba(0, 0, 0, 0.3)');
-      grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
-
-      mctx.fillStyle = grad;
-      mctx.beginPath();
-      mctx.arc(px, py, effRad, 0, Math.PI * 2);
-      mctx.fill();
-    });
-
-    // Componer la máscara sobre la escena del juego
-    ctx.drawImage(maskCanvas, 0, 0);
-  }
-
-  function render3DLantern(ctx, cx, cy, rad, lit, offTimer) {
-    ctx.save();
-
-    // Base metálica del farol
-    ctx.fillStyle = '#1c2838';
-    ctx.fillRect(cx - rad * 0.5, cy + rad * 0.4, rad, rad * 0.35);
-
-    // Poste
-    ctx.fillStyle = '#0f1722';
-    ctx.fillRect(cx - rad * 0.15, cy - rad * 0.3, rad * 0.3, rad * 0.7);
-
-    // Campana de cristal
-    if (lit) {
-      // Cristal iluminado en ámbar y cian
-      ctx.fillStyle = '#ffea66';
-      ctx.shadowColor = '#00f0ff';
-      ctx.shadowBlur = 14;
-      ctx.beginPath();
-      ctx.arc(cx, cy - rad * 0.3, rad * 0.45, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Destello central
-      ctx.fillStyle = '#ffffff';
-      ctx.beginPath();
-      ctx.arc(cx, cy - rad * 0.35, rad * 0.2, 0, Math.PI * 2);
-      ctx.fill();
-    } else {
-      // Apagado
-      ctx.fillStyle = offTimer > 0 ? '#331111' : '#141e2a';
-      ctx.beginPath();
-      ctx.arc(cx, cy - rad * 0.3, rad * 0.4, 0, Math.PI * 2);
-      ctx.fill();
-    }
-
-    ctx.restore();
-  }
-
-  function renderFarolero(ctx, cx, cy, rad) {
-    ctx.save();
-    ctx.translate(cx, cy);
-
-    // Sombra proyectada
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-    ctx.beginPath();
-    ctx.ellipse(0, rad * 0.7, rad * 0.7, rad * 0.3, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Capa de viajero
-    ctx.fillStyle = '#00f0ff';
-    ctx.shadowColor = '#00f0ff';
-    ctx.shadowBlur = 8;
-    ctx.beginPath();
-    ctx.moveTo(0, -rad * 0.9);
-    ctx.lineTo(rad * 0.65, rad * 0.65);
-    ctx.lineTo(-rad * 0.65, rad * 0.65);
-    ctx.closePath();
-    ctx.fill();
-
-    // Farol de mano sostenido
-    ctx.fillStyle = '#ffdd44';
-    ctx.shadowColor = '#ffea00';
-    ctx.shadowBlur = 10;
-    ctx.beginPath();
-    ctx.arc(rad * 0.45, -rad * 0.1, rad * 0.25, 0, Math.PI * 2);
-    ctx.fill();
-
-    ctx.restore();
-  }
-
-  function renderCreature3D(ctx, cx, cy, rad, cr) {
-    ctx.save();
-    ctx.translate(cx, cy);
-
-    const isFleeing = (cr.state === 'FLEE');
-    const eyeColor = isFleeing ? '#00e5ff' : cr.color;
-
-    switch (cr.shape) {
-      case 'OCTAGRAM': { // VORAZ: Estrella puntiaguda rotante
-        const rot = Date.now() * 0.003;
-        ctx.rotate(rot);
-        ctx.fillStyle = isFleeing ? '#0a2233' : '#1c0510';
-        ctx.strokeStyle = eyeColor;
-        ctx.lineWidth = 1.8;
-        ctx.shadowColor = eyeColor;
-        ctx.shadowBlur = 8;
-
-        ctx.beginPath();
-        for (let i = 0; i < 8; i++) {
-          const a = (i * Math.PI) / 4;
-          const r1 = rad * 0.95;
-          const r2 = rad * 0.4;
-          ctx.lineTo(Math.cos(a) * r1, Math.sin(a) * r1);
-          ctx.lineTo(Math.cos(a + Math.PI / 8) * r2, Math.sin(a + Math.PI / 8) * r2);
-        }
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Ojo central amenazante
-        ctx.fillStyle = eyeColor;
-        ctx.beginPath();
-        ctx.arc(0, 0, rad * 0.25, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-      }
-
-      case 'CHEVRON': { // ACECHADOR: Doble rombo afilado
-        ctx.fillStyle = isFleeing ? '#0a2233' : '#170624';
-        ctx.strokeStyle = eyeColor;
-        ctx.lineWidth = 2;
-        ctx.shadowColor = eyeColor;
-        ctx.shadowBlur = 8;
-
-        ctx.beginPath();
-        ctx.moveTo(0, -rad);
-        ctx.lineTo(rad * 0.8, rad * 0.3);
-        ctx.lineTo(0, rad * 0.8);
-        ctx.lineTo(-rad * 0.8, rad * 0.3);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Núcleo
-        ctx.fillStyle = eyeColor;
-        ctx.fillRect(-rad * 0.2, -rad * 0.2, rad * 0.4, rad * 0.4);
-        break;
-      }
-
-      case 'HEXRING': { // CENTINELA: Anillo hexagonal segmentado
-        const rot = Math.sin(Date.now() * 0.004) * 0.4;
-        ctx.rotate(rot);
-        ctx.strokeStyle = eyeColor;
-        ctx.lineWidth = 2.5;
-        ctx.shadowColor = eyeColor;
-        ctx.shadowBlur = 8;
-
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const a = (i * Math.PI * 2) / 6;
-          const x = Math.cos(a) * rad * 0.75;
-          const y = Math.sin(a) * rad * 0.75;
-          if (i === 0) ctx.moveTo(x, y);
-          else ctx.lineTo(x, y);
-        }
-        ctx.closePath();
-        ctx.stroke();
-
-        ctx.fillStyle = eyeColor;
-        ctx.beginPath();
-        ctx.arc(0, 0, rad * 0.22, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-      }
-
-      case 'OBELISK': { // TRAGALUZ: Prisma piramidal lento
-        ctx.fillStyle = '#0a0d14';
-        ctx.strokeStyle = eyeColor;
-        ctx.lineWidth = 2;
-        ctx.shadowColor = eyeColor;
-        ctx.shadowBlur = 10;
-
-        ctx.beginPath();
-        ctx.moveTo(0, -rad * 1.1);
-        ctx.lineTo(rad * 0.7, rad * 0.8);
-        ctx.lineTo(-rad * 0.7, rad * 0.8);
-        ctx.closePath();
-        ctx.fill();
-        ctx.stroke();
-
-        // Ojo de obsidiana
-        ctx.fillStyle = eyeColor;
-        ctx.beginPath();
-        ctx.ellipse(0, 0, rad * 0.2, rad * 0.35, 0, 0, Math.PI * 2);
-        ctx.fill();
-        break;
-      }
-    }
-
-    ctx.restore();
-  }
-
-  function renderSparkEntity(ctx, cx, cy, rad) {
-    ctx.save();
-    ctx.translate(cx, cy);
-
-    ctx.fillStyle = '#ffcc00';
-    ctx.shadowColor = '#ffea00';
-    ctx.shadowBlur = 15;
-    ctx.beginPath();
-    ctx.arc(0, 0, rad * 0.6, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Chispas radiales
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 1.5;
-    for (let i = 0; i < 4; i++) {
-      const a = (i * Math.PI) / 2 + Date.now() * 0.006;
-      ctx.beginPath();
-      ctx.moveTo(Math.cos(a) * rad * 0.4, Math.sin(a) * rad * 0.4);
-      ctx.lineTo(Math.cos(a) * rad * 1.1, Math.sin(a) * rad * 1.1);
-      ctx.stroke();
-    }
-
-    ctx.restore();
-  }
-
-  // ==========================================
-  // INPUTS TÁCTILES Y TECLADO
+  // CONFIGURACIÓN DE ENTRADAS Y EVENTOS DOM
   // ==========================================
   function setupInputs() {
-    // 1. D-Pad Virtual Táctil
-    const bindDpad = (btn, dr, dc) => {
-      const handlePress = (e) => {
-        e.preventDefault();
-        if (window.ArcadeAudio?.ctx?.state === 'suspended') window.ArcadeAudio.ctx.resume();
-        btn.classList.add('active');
-        setPlayerNextDirection(dr, dc);
-        window.ArcadeCanvas?.haptic(5);
-      };
-      const handleRelease = (e) => {
-        e.preventDefault();
-        btn.classList.remove('active');
-      };
-      btn.addEventListener('touchstart', handlePress, { passive: false });
-      btn.addEventListener('touchend', handleRelease, { passive: false });
-      btn.addEventListener('mousedown', handlePress);
-      btn.addEventListener('mouseup', handleRelease);
-    };
-
-    bindDpad(dom.btnDpadUp, -1, 0);
-    bindDpad(dom.btnDpadDown, 1, 0);
-    bindDpad(dom.btnDpadLeft, 0, -1);
-    bindDpad(dom.btnDpadRight, 0, 1);
-
-    // 2. Botones de acción táctiles
-    dom.btnActionSpark.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      dropSpark();
-    }, { passive: false });
-    dom.btnActionSpark.addEventListener('click', dropSpark);
-
-    dom.btnActionFlash.addEventListener('touchstart', (e) => {
-      e.preventDefault();
-      triggerEmergencyFlash();
-    }, { passive: false });
-    dom.btnActionFlash.addEventListener('click', triggerEmergencyFlash);
-
-    // 3. Teclado de escritorio
     window.addEventListener('keydown', (e) => {
-      if (window.ArcadeAudio?.ctx?.state === 'suspended') window.ArcadeAudio.ctx.resume();
-
-      switch (e.code) {
-        case 'ArrowUp':
-        case 'KeyW':
-          setPlayerNextDirection(-1, 0);
-          break;
-        case 'ArrowDown':
-        case 'KeyS':
-          setPlayerNextDirection(1, 0);
-          break;
-        case 'ArrowLeft':
-        case 'KeyA':
-          setPlayerNextDirection(0, -1);
-          break;
-        case 'ArrowRight':
-        case 'KeyD':
-          setPlayerNextDirection(0, 1);
-          break;
-        case 'KeyJ':
-        case 'Space':
-          dropSpark();
-          break;
-        case 'KeyK':
-        case 'KeyF':
-          triggerEmergencyFlash();
-          break;
+      if (State.state !== 'PLAYING') return;
+      switch (e.key) {
+        case 'ArrowUp': case 'w': case 'W': setPlayerDirection(-1, 0); break;
+        case 'ArrowDown': case 's': case 'S': setPlayerDirection(1, 0); break;
+        case 'ArrowLeft': case 'a': case 'A': setPlayerDirection(0, -1); break;
+        case 'ArrowRight': case 'd': case 'D': setPlayerDirection(0, 1); break;
+        case 'j': case 'J': case ' ': dropSpark(); break;
+        case 'k': case 'K': activateFlash(); break;
       }
     });
-  }
 
-  // ==========================================
-  // BUCLE DE JUEGO PRINCIPAL
-  // ==========================================
-  function gameLoop(timestamp) {
-    if (!State.lastTime) State.lastTime = timestamp;
-    const dt = Math.min((timestamp - State.lastTime) / 1000, 0.08);
-    State.lastTime = timestamp;
+    // Controles táctiles D-Pad
+    dom.btnDpadUp.addEventListener('touchstart', (e) => { e.preventDefault(); setPlayerDirection(-1, 0); });
+    dom.btnDpadDown.addEventListener('touchstart', (e) => { e.preventDefault(); setPlayerDirection(1, 0); });
+    dom.btnDpadLeft.addEventListener('touchstart', (e) => { e.preventDefault(); setPlayerDirection(0, -1); });
+    dom.btnDpadRight.addEventListener('touchstart', (e) => { e.preventDefault(); setPlayerDirection(0, 1); });
 
-    if (State.state === 'PLAYING') {
-      // 1. Actualizar jugador
-      updatePlayer(dt);
+    dom.btnDpadUp.addEventListener('mousedown', () => setPlayerDirection(-1, 0));
+    dom.btnDpadDown.addEventListener('mousedown', () => setPlayerDirection(1, 0));
+    dom.btnDpadLeft.addEventListener('mousedown', () => setPlayerDirection(0, -1));
+    dom.btnDpadRight.addEventListener('mousedown', () => setPlayerDirection(0, 1));
 
-      // 2. Actualizar criaturas de la sombra
-      updateCreatures(dt);
+    dom.btnActionSpark.addEventListener('click', dropSpark);
+    dom.btnActionFlash.addEventListener('click', activateFlash);
 
-      // 3. Actualizar radio de luz creciente de faroles
-      State.lanterns.forEach(lan => {
-        if (lan.lit) {
-          if (lan.radius < CONFIG.LANTERN_MAX_LIGHT_RADIUS) {
-            lan.radius = Math.min(CONFIG.LANTERN_MAX_LIGHT_RADIUS, lan.radius + dt * 2.2);
-          }
-        }
-        if (lan.offTimer > 0) {
-          lan.offTimer -= dt;
-        }
-      });
+    // Swipes en canvas
+    let touchStartX = 0;
+    let touchStartY = 0;
+    dom.canvas.addEventListener('touchstart', (e) => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+    }, { passive: true });
 
-      // 4. Actualizar chispas temporales en el suelo
-      for (let i = State.sparks.length - 1; i >= 0; i--) {
-        const sp = State.sparks[i];
-        sp.timer -= dt;
-        if (sp.timer <= 0) {
-          State.sparks.splice(i, 1);
+    dom.canvas.addEventListener('touchend', (e) => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.hypot(dx, dy) > 25) {
+        if (Math.abs(dx) > Math.abs(dy)) {
+          setPlayerDirection(0, dx > 0 ? 1 : -1);
+        } else {
+          setPlayerDirection(dy > 0 ? 1 : -1, 0);
         }
       }
-
-      // 5. Recarga automática de chispas
-      if (State.sparkCharges < CONFIG.MAX_SPARKS) {
-        State.sparkRechargeTimer += dt;
-        if (State.sparkRechargeTimer >= CONFIG.SPARK_RECHARGE_TIME) {
-          State.sparkRechargeTimer = 0;
-          State.sparkCharges++;
-          updateHUD();
-        }
-      }
-
-      // 6. Temporizador de destello de emergencia activo
-      if (State.flashActiveTimer > 0) {
-        State.flashActiveTimer -= dt;
-      }
-
-      // 7. Puntos pasivos por mantener faroles iluminados
-      State.score += Math.floor(State.litLanternsCount * dt * 8);
-      dom.scoreVal.textContent = State.score.toLocaleString();
-    }
-
-    // Actualizar partículas
-    ParticlePool.update(dt);
-
-    // Dibujar escena
-    render();
-
-    requestAnimationFrame(gameLoop);
-  }
-
-  // ==========================================
-  // REDIMENSIÓN RESPONSIVA
-  // ==========================================
-  function handleResize() {
-    const container = dom.canvas.parentElement;
-    if (!container) return;
-
-    const rect = container.getBoundingClientRect();
-    const pad = 6;
-    const availW = Math.max(100, rect.width - pad);
-    const availH = Math.max(100, rect.height - pad);
-
-    // Relación de aspecto 15 columnas x 19 filas
-    const ratio = CONFIG.COLS / CONFIG.ROWS;
-    let targetW = availW;
-    let targetH = targetW / ratio;
-    if (targetH > availH) {
-      targetH = availH;
-      targetW = targetH * ratio;
-    }
-
-    targetW = Math.floor(targetW);
-    targetH = Math.floor(targetH);
-
-    State.boardW = targetW;
-    State.boardH = targetH;
-    State.cellSize = targetW / CONFIG.COLS;
-
-    const dpr = window.devicePixelRatio || 1;
-    dom.canvas.style.width = `${targetW}px`;
-    dom.canvas.style.height = `${targetH}px`;
-    dom.canvas.width = Math.round(targetW * dpr);
-    dom.canvas.height = Math.round(targetH * dpr);
-
-    State.ctx = dom.canvas.getContext('2d');
-    State.ctx.resetTransform();
-    State.ctx.scale(dpr, dpr);
-
-    if (State.grid) {
-      buildStaticMazeCache();
-    }
+    }, { passive: true });
   }
 
   function setupUI() {
-    window.addEventListener('resize', handleResize);
-
-    dom.btnStartEndless.addEventListener('click', () => {
-      playAudio('light_lantern');
-      startLevel(0);
+    dom.worldTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        dom.worldTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        const world = parseInt(tab.dataset.world, 10);
+        renderLevelSelector(world);
+      });
     });
 
-    // Pausa
     dom.btnPauseHeader.addEventListener('click', () => {
-      if (State.state !== 'PLAYING') return;
-      State.state = 'PAUSED';
-      dom.overlayPause.classList.remove('hidden');
-      playAudio('spark');
+      if (State.state === 'PLAYING') {
+        State.state = 'PAUSED';
+        stopBGM();
+        dom.overlayPause.classList.remove('hidden');
+      }
     });
 
     dom.btnResume.addEventListener('click', () => {
-      State.state = 'PLAYING';
       dom.overlayPause.classList.add('hidden');
-      playAudio('spark');
+      State.state = 'PLAYING';
+      startBGM();
     });
 
     dom.btnRestartLevel.addEventListener('click', () => {
-      startLevel(State.levelIdx);
+      dom.overlayPause.classList.add('hidden');
+      startLevel(State.currentLevelIdx);
     });
 
     dom.btnLevelSelect.addEventListener('click', () => {
       dom.overlayPause.classList.add('hidden');
-      renderLevelSelector();
       dom.startCard.classList.remove('hidden');
-      State.state = 'MENU';
+      renderLevelSelector(State.currentWorld);
     });
 
-    // Modal Resultados
     dom.btnNextLevel.addEventListener('click', () => {
-      if (State.levelIdx < CONFIG.LEVELS.length - 1) {
-        startLevel(State.levelIdx + 1);
-      }
+      dom.overlayResult.classList.add('hidden');
+      startLevel(State.currentLevelIdx + 1);
     });
 
     dom.btnRetryLevel.addEventListener('click', () => {
-      startLevel(State.levelIdx);
+      dom.overlayResult.classList.add('hidden');
+      startLevel(State.currentLevelIdx);
     });
 
     dom.btnExitToLevels.addEventListener('click', () => {
       dom.overlayResult.classList.add('hidden');
-      renderLevelSelector();
       dom.startCard.classList.remove('hidden');
-      State.state = 'MENU';
+      renderLevelSelector(State.currentWorld);
     });
 
-    // Mute / Unmute
+    // Modo Sin Fin (Noche Perpetua)
+    dom.btnStartEndless.addEventListener('click', () => {
+      const endlessMap = LumenLogic.generateEndlessMaze(Date.now());
+      CONFIG.LEVELS[0].map = endlessMap;
+      startLevel(0, false);
+      State.isEndless = true;
+    });
+
+    // Desafío Diario
+    dom.btnOpenDaily.addEventListener('click', () => {
+      dom.modalDaily.classList.remove('hidden');
+    });
+
+    dom.btnCloseDaily.addEventListener('click', () => {
+      dom.modalDaily.classList.add('hidden');
+    });
+
+    dom.btnPlayDaily.addEventListener('click', () => {
+      dom.modalDaily.classList.add('hidden');
+      const seed = parseInt(new Date().toISOString().slice(0, 10).replace(/-/g, ''), 10);
+      const dailyMap = LumenLogic.generateEndlessMaze(seed);
+      CONFIG.LEVELS[0].map = dailyMap;
+      startLevel(0, true);
+    });
+
+    // Logros y Opciones
+    dom.btnAchievementsToggle.addEventListener('click', () => {
+      dom.achList.innerHTML = '';
+      CONFIG.ACHIEVEMENTS.forEach(ach => {
+        const item = document.createElement('div');
+        const isUnlocked = !!State.achievements[ach.id];
+        item.className = `ach-item ${isUnlocked ? 'unlocked' : ''}`;
+        item.innerHTML = `
+          <span class="ach-icon">${ach.icon}</span>
+          <div style="display:flex; flex-direction:column;">
+            <span class="ach-title">${ach.title}</span>
+            <span class="ach-desc">${ach.desc}</span>
+          </div>
+          <span class="ach-status">${isUnlocked ? 'CONSEGUIDO' : 'BLOQUEADO'}</span>
+        `;
+        dom.achList.appendChild(item);
+      });
+      dom.modalAchievements.classList.remove('hidden');
+    });
+
+    dom.btnCloseAch.addEventListener('click', () => {
+      dom.modalAchievements.classList.add('hidden');
+    });
+
+    dom.btnOptionsToggle.addEventListener('click', () => {
+      dom.modalOptions.classList.remove('hidden');
+    });
+
+    dom.btnCloseOptions.addEventListener('click', () => {
+      State.options.sfx = dom.optSfx.checked;
+      State.options.bgm = dom.optBgm.checked;
+      State.options.vibration = dom.optVibration.checked;
+      State.options.contrast = dom.optContrast.checked;
+      saveStorage();
+      applyOptions();
+      dom.modalOptions.classList.add('hidden');
+    });
+
     dom.btnSoundToggle.addEventListener('click', () => {
       if (window.ArcadeAudio) {
-        const muted = window.ArcadeAudio.toggleMute();
+        window.ArcadeAudio.toggleMute();
+        const muted = window.ArcadeAudio.isMuted;
         dom.iconSoundOn.classList.toggle('hidden', muted);
         dom.iconSoundOff.classList.toggle('hidden', !muted);
       }
     });
 
-    if (window.ArcadeAudio?.isMuted) {
-      dom.iconSoundOn.classList.add('hidden');
-      dom.iconSoundOff.classList.remove('hidden');
+    window.addEventListener('resize', handleResize);
+  }
+
+  function handleResize() {
+    const canvas = dom.canvas;
+    const container = dom.container;
+    const rect = container.getBoundingClientRect();
+    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+
+    const availableH = rect.height - dom.header.offsetHeight - dom.subBar.offsetHeight - 130;
+    canvas.width = rect.width * dpr;
+    canvas.height = availableH * dpr;
+
+    State.cellW = (rect.width) / CONFIG.COLS;
+    State.cellH = (availableH) / CONFIG.ROWS;
+
+    State.ctx = canvas.getContext('2d');
+    State.ctx.scale(dpr, dpr);
+
+    // Inicializar canvas offscreen
+    if (!State.offscreenMazeCanvas) {
+      State.offscreenMazeCanvas = document.createElement('canvas');
+      State.offscreenLightCanvas = document.createElement('canvas');
     }
+    State.offscreenMazeCanvas.width = rect.width;
+    State.offscreenMazeCanvas.height = availableH;
+    State.offscreenMazeCtx = State.offscreenMazeCanvas.getContext('2d');
+
+    State.offscreenLightCanvas.width = rect.width;
+    State.offscreenLightCanvas.height = availableH;
+    State.offscreenLightCtx = State.offscreenLightCanvas.getContext('2d');
+
+    renderOffscreenMaze();
+  }
+
+  // ==========================================
+  // BUCLE DE SIMULACIÓN Y RENDERIZADO
+  // ==========================================
+  function gameLoop(time) {
+    if (!State.lastTime) State.lastTime = time;
+    const dt = Math.min((time - State.lastTime) * 0.001, 0.08);
+    State.lastTime = time;
+
+    // Métricas de FPS y Frame Time
+    State.frameCount++;
+    if (time - State.lastFpsUpdate > 500) {
+      State.fps = (State.frameCount * 1000) / (time - State.lastFpsUpdate);
+      State.frameTime = dt * 1000;
+      State.frameCount = 0;
+      State.lastFpsUpdate = time;
+
+      // Perfil de bajo consumo si FPS baja de 55 sostenido
+      if (State.fps < 55 && !State.lowSpecMode) {
+        State.lowSpecMode = true;
+      }
+    }
+
+    if (State.state === 'PLAYING') {
+      updatePlayerMovement(dt);
+      updateCreatures(dt);
+      updateWorldLogic(dt);
+    }
+
+    render(time);
+    requestAnimationFrame(gameLoop);
   }
 
   function init() {
+    // Modo de depuración (?debug=1)
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('debug') === '1') {
+      State.isDebug = true;
+      dom.debugOverlay.classList.remove('hidden');
+    }
+
+    loadStorage();
     handleResize();
     setupInputs();
     setupUI();
-    renderLevelSelector();
-
+    renderLevelSelector(1);
     requestAnimationFrame(gameLoop);
   }
 

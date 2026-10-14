@@ -9,7 +9,7 @@
 </head>
 <body>
   <div id="game-container">
-    <!-- Header estilo Neón 80s -->
+    <!-- Header estilo Neón 80s con alta legibilidad -->
     <header id="game-header">
       <a href="../../index.html" class="neon-btn btn-icon" id="btn-back" title="Volver al menú">
         <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none">
@@ -33,6 +33,12 @@
       </div>
 
       <div class="header-actions">
+        <button id="btn-achievements-toggle" class="neon-btn btn-icon" title="Logros">
+          🏆
+        </button>
+        <button id="btn-options-toggle" class="neon-btn btn-icon" title="Ajustes">
+          ⚙️
+        </button>
         <button id="btn-sound-toggle" class="neon-btn btn-icon" title="Sonido">
           <svg id="icon-sound-on" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -50,10 +56,10 @@
       </div>
     </header>
 
-    <!-- Sub-barra: Indicadores de Chispa y Destello de Emergencia -->
+    <!-- Sub-barra: Mundo, Nivel y Habilidades -->
     <div id="sub-bar">
       <div class="level-indicator">
-        <span id="level-display">Nivel 1: El Atrio Oscuro</span>
+        <span id="level-display">M1 • Nivel 1: El Atrio Oscuro</span>
       </div>
 
       <div class="abilities-bar">
@@ -71,14 +77,31 @@
       </div>
     </div>
 
+    <!-- Barra de Jefe de Mundo (Activa solo en niveles de jefe) -->
+    <div id="boss-banner" class="boss-banner hidden">
+      <div class="boss-header-row">
+        <span class="boss-icon">👹</span>
+        <span class="boss-name" id="boss-name">Espíritu de las Ramas</span>
+        <span class="boss-hp-label" id="boss-hp-text">PV: 6/6</span>
+      </div>
+      <div class="boss-hp-track">
+        <div class="boss-hp-fill" id="boss-hp-fill" style="width: 100%;"></div>
+      </div>
+      <div class="boss-attack-warn hidden" id="boss-attack-warn">
+        ⚠️ ¡ATAQUE DE SOMBRAS TELEGRAFIADO!
+      </div>
+    </div>
+
     <!-- Contenedor del Laberinto Canvas -->
     <main id="canvas-container">
       <canvas id="game-canvas"></canvas>
+      <div id="blackout-vignette" class="blackout-vignette hidden"></div>
+      <div id="debug-overlay" class="debug-overlay hidden"></div>
     </main>
 
     <!-- Zona de Controles Táctiles Inferiores -->
     <footer id="touch-controls">
-      <!-- D-Pad Virtual Táctil a la izquierda -->
+      <!-- D-Pad Virtual Táctil con buffer de giro -->
       <div class="dpad-container">
         <button class="dpad-btn dpad-up" id="btn-dpad-up" aria-label="Arriba">▲</button>
         <button class="dpad-btn dpad-left" id="btn-dpad-left" aria-label="Izquierda">◀</button>
@@ -87,7 +110,7 @@
         <button class="dpad-btn dpad-down" id="btn-dpad-down" aria-label="Abajo">▼</button>
       </div>
 
-      <!-- Botones de Acción Táctiles a la derecha -->
+      <!-- Botones de Acción Táctiles -->
       <div class="action-buttons-container">
         <button id="btn-action-spark" class="action-btn btn-spark" title="Soltar Chispa Temporal">
           <span class="btn-glyph">✨</span>
@@ -100,27 +123,69 @@
       </div>
     </footer>
 
-    <!-- Modal de Inicio y Selector de 12 Niveles -->
+    <!-- Modal de Inicio y Selector de 30 Niveles en 5 Mundos -->
     <div id="start-card" class="neon-modal">
-      <div class="modal-content neon-panel">
+      <div class="modal-content neon-panel map-panel">
         <div class="lantern-logo-wrapper">
           <div class="lantern-glow-icon">🏮</div>
         </div>
         <h1 class="neon-title">LUMEN</h1>
-        <p class="neon-subtitle">Enciende los faroles del laberinto. Las criaturas te persiguen en la penumbra pero huyen de la luz.</p>
+        <p class="neon-subtitle">La oscuridad avanza. Enciende los faroles, mantén su lumbre y ahuyenta a las 7 criaturas de sombra.</p>
 
-        <div class="levels-header">
-          <span>SELECCIONA NIVEL (12)</span>
+        <!-- Pestañas de Mundos -->
+        <div class="world-tabs">
+          <button class="world-tab active" data-world="1">M1: Bosque</button>
+          <button class="world-tab" data-world="2">M2: Cripta</button>
+          <button class="world-tab" data-world="3">M3: Mina</button>
+          <button class="world-tab" data-world="4">M4: Ciudad</button>
+          <button class="world-tab" data-world="5">M5: Abismo</button>
         </div>
+
+        <div class="world-banner" id="world-banner">
+          <span class="world-badge" id="world-badge">MUNDO 1: BOSQUE SOMBRÍO</span>
+          <span class="world-desc" id="world-desc">Niveles 1 al 6 • Regla: Niebla densa y ramas vivas</span>
+        </div>
+
+        <!-- Rejilla de Niveles del Mundo Seleccionado -->
         <div class="levels-grid-container">
           <div class="levels-grid" id="levels-grid">
-            <!-- Rellenado dinámicamente con los 12 niveles -->
+            <!-- Rellenado dinámicamente con los 6 niveles del mundo activo -->
           </div>
         </div>
 
-        <button id="btn-start-endless" class="neon-btn glow-btn btn-large" style="margin-top: 8px;">
-          NOCHE PERPETUA (MODO SIN FIN)
-        </button>
+        <div class="modal-footer-actions">
+          <button id="btn-open-daily" class="neon-btn btn-secondary">🎁 Desafío Diario</button>
+          <button id="btn-start-endless" class="neon-btn glow-btn">Noche Perpetua (Sin Fin)</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Elección de Mejoras entre Niveles (Upgrade Cards) -->
+    <div id="modal-upgrade" class="neon-modal hidden">
+      <div class="modal-content neon-panel">
+        <div class="lantern-glow-icon">✨</div>
+        <h2 class="neon-title">TALENTO DE LUZ</h2>
+        <p class="neon-subtitle">Elige una bendición para tu farolero antes de adentrarte en el siguiente nivel.</p>
+        <div class="upgrade-cards" id="upgrade-cards">
+          <!-- 3 cartas generadas dinámicamente -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Desafío Diario -->
+    <div id="modal-daily" class="neon-modal hidden">
+      <div class="modal-content neon-panel">
+        <div class="lantern-glow-icon">📅</div>
+        <h2 class="neon-title">DESAFÍO DIARIO</h2>
+        <p class="neon-subtitle">Un laberinto único cada 24 horas con semilla fija del día y +50% en puntos de luz.</p>
+        <div class="daily-box" id="daily-box">
+          <span style="font-size: 26px;">🏮 + ⚡ + ✨</span>
+          <p style="font-weight: 800; color: #ffea00; margin-top: 6px;">¡Comienza con destello listo y +1 chispa extra!</p>
+        </div>
+        <div class="modal-buttons" style="margin-top: 14px;">
+          <button id="btn-play-daily" class="neon-btn glow-btn btn-large">¡JUGAR DESAFÍO DE HOY!</button>
+          <button id="btn-close-daily" class="neon-btn btn-large">VOLVER</button>
+        </div>
       </div>
     </div>
 
@@ -136,12 +201,12 @@
       </div>
     </div>
 
-    <!-- Modal de Victoria / Muerte / Game Over -->
+    <!-- Modal de Victoria / Fin de Nivel / Game Over -->
     <div id="overlay-result" class="neon-modal hidden">
       <div class="modal-content neon-panel">
         <div id="result-icon" class="result-badge">🏮</div>
         <h2 id="result-title" class="neon-title">¡LABERINTO ILUMINADO!</h2>
-        <p id="result-subtitle" class="result-subtitle">Has encendido todos los faroles.</p>
+        <p id="result-subtitle" class="result-subtitle">Has encendido y mantenido los faroles.</p>
 
         <div class="result-stats">
           <div class="stat-row">
@@ -156,6 +221,11 @@
             <span>Récord personal:</span>
             <strong id="result-best-val">0</strong>
           </div>
+          <div class="stars-row" id="stars-row">
+            <span class="star-slot filled">★</span>
+            <span class="star-slot filled">★</span>
+            <span class="star-slot filled">★</span>
+          </div>
         </div>
 
         <div class="modal-buttons">
@@ -165,12 +235,55 @@
         </div>
       </div>
     </div>
+
+    <!-- Modal de Logros (10 Logros) -->
+    <div id="modal-achievements" class="neon-modal hidden">
+      <div class="modal-content neon-panel">
+        <h2 class="neon-title">🏆 LOGROS DE LA LUZ</h2>
+        <p class="neon-subtitle" style="margin-bottom: 12px;">Hazañas de supervivencia en la oscuridad</p>
+        <div class="ach-list" id="ach-list">
+          <!-- Rellenado dinámicamente -->
+        </div>
+        <div class="modal-buttons" style="margin-top: 14px;">
+          <button id="btn-close-ach" class="neon-btn glow-btn btn-large">CERRAR</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Modal de Opciones y Accesibilidad -->
+    <div id="modal-options" class="neon-modal hidden">
+      <div class="modal-content neon-panel">
+        <h2 class="neon-title">⚙️ AJUSTES Y ACCESIBILIDAD</h2>
+        <div class="options-group">
+          <label class="opt-row">
+            <span>Efectos de Sonido (SFX)</span>
+            <input type="checkbox" id="opt-sfx" checked>
+          </label>
+          <label class="opt-row">
+            <span>Música de Fondo (BGM)</span>
+            <input type="checkbox" id="opt-bgm" checked>
+          </label>
+          <label class="opt-row">
+            <span>Vibración Háptica</span>
+            <input type="checkbox" id="opt-vibration" checked>
+          </label>
+          <label class="opt-row">
+            <span>Modo Alto Contraste</span>
+            <input type="checkbox" id="opt-contrast">
+          </label>
+        </div>
+        <div class="modal-buttons" style="margin-top: 16px;">
+          <button id="btn-close-options" class="neon-btn glow-btn btn-large">GUARDAR Y CERRAR</button>
+        </div>
+      </div>
+    </div>
   </div>
 
   <!-- Scripts compartidos del Arcade -->
   <script src="../../shared/canvas.js"></script>
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
+  <script src="../../shared/juice.js"></script>
   <!-- Lógica y render de Lumen -->
   <script src="game.js"></script>
 </body>

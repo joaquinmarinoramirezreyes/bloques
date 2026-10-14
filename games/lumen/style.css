@@ -1,6 +1,6 @@
 /*
  * games/lumen/style.css
- * Estética de los 80s: Neón oscuro, resplandor fosfórico, scanlines leves y tipografía monoespaciada.
+ * Estética de los 80s: Neón oscuro, resplandor fosfórico, scanlines leves y tipografía arcade.
  */
 
 :root {
@@ -9,6 +9,7 @@
   --neon-gold: #ffaa00;
   --neon-amber: #ff6600;
   --neon-magenta: #ff007f;
+  --neon-emerald: #00ff88;
   --neon-border: rgba(0, 240, 255, 0.4);
   --neon-glow: rgba(0, 240, 255, 0.25);
 
@@ -61,7 +62,7 @@ html, body {
   background-size: 100% 4px;
   z-index: 20;
   pointer-events: none;
-  opacity: 0.6;
+  opacity: 0.5;
 }
 
 /* =========================================
@@ -72,7 +73,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: env(safe-area-inset-top, 8px) 10px 4px 10px;
-  background: rgba(5, 12, 22, 0.85);
+  background: rgba(5, 12, 22, 0.9);
   border-bottom: 1px solid var(--neon-border);
   box-shadow: 0 2px 10px rgba(0, 240, 255, 0.15);
   z-index: 30;
@@ -132,6 +133,7 @@ html, body {
   min-height: 44px;
   min-width: 44px;
   border-radius: 8px;
+  font-family: inherit;
 }
 
 .neon-btn:active {
@@ -143,6 +145,9 @@ html, body {
 .btn-icon {
   width: 40px;
   height: 40px;
+  min-width: 40px;
+  min-height: 40px;
+  font-size: 15px;
 }
 
 .glow-btn {
@@ -156,34 +161,40 @@ html, body {
 .btn-large {
   padding: 12px 20px;
   font-size: 14px;
+  font-weight: 800;
   width: 100%;
 }
 
+.btn-secondary {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: #c7d8ee;
+}
+
 /* =========================================
-   SUB-BARRA: HABILIDADES Y NIVEL
+   SUB-BARRA DE HABILIDADES
    ========================================= */
 #sub-bar {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 4px 10px;
-  background: rgba(2, 6, 14, 0.85);
-  border-bottom: 1px solid rgba(0, 240, 255, 0.15);
-  font-size: 11px;
-  min-height: 34px;
-  z-index: 30;
+  background: rgba(3, 7, 14, 0.9);
+  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  z-index: 25;
 }
 
 .level-indicator {
+  font-size: 11px;
   font-weight: 700;
-  color: var(--neon-cyan);
-  text-shadow: 0 0 4px var(--neon-cyan);
+  color: #a8d5ea;
+  letter-spacing: 0.5px;
 }
 
 .abilities-bar {
   display: flex;
+  gap: 10px;
   align-items: center;
-  gap: 12px;
 }
 
 .ability-slot {
@@ -194,77 +205,177 @@ html, body {
 
 .ability-label {
   font-size: 9px;
+  font-weight: 700;
   color: var(--text-muted);
 }
 
 .sparks-pills {
   display: flex;
-  gap: 4px;
+  gap: 3px;
 }
 
 .spark-pip {
   font-size: 12px;
   opacity: 0.3;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s ease;
 }
 
 .spark-pip.ready {
   opacity: 1;
-  filter: drop-shadow(0 0 4px var(--neon-gold));
+  text-shadow: 0 0 6px var(--neon-gold);
 }
 
 .flash-pip {
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   padding: 2px 6px;
   border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: #777;
 }
 
 .flash-pip.ready {
-  color: #ffea00;
-  border-color: #ffea00;
-  box-shadow: 0 0 6px rgba(255, 234, 0, 0.5);
+  background: rgba(0, 240, 255, 0.2);
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+  animation: pulse-flash 1.2s infinite alternate;
+}
+
+@keyframes pulse-flash {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
 }
 
 /* =========================================
-   CANVAS DE LABERINTO (RESPONSIVE)
+   BARRA DE JEFE DE MUNDO
+   ========================================= */
+.boss-banner {
+  background: linear-gradient(180deg, rgba(60, 10, 20, 0.9) 0%, rgba(20, 5, 10, 0.95) 100%);
+  border-bottom: 1px solid rgba(255, 0, 127, 0.6);
+  padding: 5px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  z-index: 26;
+}
+
+.boss-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 11px;
+  font-weight: 800;
+}
+
+.boss-icon {
+  font-size: 14px;
+}
+
+.boss-name {
+  color: #ff007f;
+  letter-spacing: 0.5px;
+}
+
+.boss-hp-label {
+  font-size: 10px;
+  color: #fff;
+}
+
+.boss-hp-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.boss-hp-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff007f, #ff6600);
+  border-radius: 3px;
+  transition: width 0.25s ease;
+  box-shadow: 0 0 8px rgba(255, 0, 127, 0.8);
+}
+
+.boss-attack-warn {
+  font-size: 9px;
+  font-weight: 900;
+  color: #ffea00;
+  text-align: center;
+  animation: pulse-boss-warn 0.8s infinite alternate;
+}
+
+@keyframes pulse-boss-warn {
+  from { opacity: 0.6; }
+  to { opacity: 1; transform: scale(1.02); }
+}
+
+/* =========================================
+   CANVAS DE LABERINTO Y APAGÓN
    ========================================= */
 #canvas-container {
   flex: 1;
   width: 100%;
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  overflow: hidden;
-  padding: 2px;
 }
 
 #game-canvas {
+  width: 100%;
+  height: 100%;
   display: block;
-  touch-action: none;
-  border: 1px solid rgba(0, 240, 255, 0.3);
-  box-shadow: 0 0 20px rgba(0, 0, 0, 0.8), inset 0 0 15px rgba(0, 240, 255, 0.1);
-  background: #020408;
+}
+
+.blackout-vignette {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(circle, transparent 35%, rgba(0, 0, 0, 0.85) 100%);
+  animation: pulse-blackout 1.5s infinite alternate;
+  z-index: 10;
+}
+
+@keyframes pulse-blackout {
+  from { opacity: 0.6; }
+  to { opacity: 0.95; }
+}
+
+.debug-overlay {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid #00f0ff;
+  color: #00f0ff;
+  font-size: 10px;
+  font-family: monospace;
+  padding: 4px 6px;
+  border-radius: 4px;
+  pointer-events: none;
+  z-index: 15;
 }
 
 /* =========================================
-   CONTROLES TÁCTILES INFERIORES
+   ZONA DE CONTROLES TÁCTILES INFERIORES
    ========================================= */
 #touch-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 6px 16px env(safe-area-inset-bottom, 10px) 16px;
-  background: rgba(3, 8, 16, 0.95);
+  padding: 6px 12px calc(env(safe-area-inset-bottom, 8px) + 6px) 12px;
+  background: rgba(3, 7, 14, 0.95);
   border-top: 1px solid var(--neon-border);
-  min-height: 120px;
   z-index: 30;
+  min-height: 120px;
 }
 
-/* D-PAD Virtual Táctil */
+/* D-Pad Virtual Táctil */
 .dpad-container {
   display: grid;
   grid-template-columns: repeat(3, 44px);
@@ -272,40 +383,40 @@ html, body {
   gap: 2px;
   width: 136px;
   height: 136px;
-  align-items: center;
-  justify-content: center;
 }
 
 .dpad-btn {
-  width: 44px;
-  height: 44px;
   background: rgba(0, 240, 255, 0.08);
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  border-radius: 6px;
+  border: 1px solid var(--neon-border);
+  border-radius: 8px;
   color: var(--neon-cyan);
   font-size: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  touch-action: none;
-  box-shadow: 0 0 4px rgba(0, 240, 255, 0.15);
+  box-shadow: 0 0 6px var(--neon-glow);
   transition: all 0.1s;
 }
 
-.dpad-btn:active, .dpad-btn.active {
+.dpad-btn:active {
   background: rgba(0, 240, 255, 0.35);
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
-  transform: scale(0.92);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.8);
+  transform: scale(0.94);
 }
 
-.dpad-up    { grid-column: 2; grid-row: 1; }
-.dpad-left  { grid-column: 1; grid-row: 2; }
-.dpad-center{ grid-column: 2; grid-row: 2; background: rgba(0, 240, 255, 0.03); border: none; cursor: default; }
+.dpad-up { grid-column: 2; grid-row: 1; }
+.dpad-left { grid-column: 1; grid-row: 2; }
+.dpad-center {
+  grid-column: 2; grid-row: 2;
+  background: rgba(0, 240, 255, 0.03);
+  border-color: rgba(0, 240, 255, 0.15);
+  pointer-events: none;
+}
 .dpad-right { grid-column: 3; grid-row: 2; }
-.dpad-down  { grid-column: 2; grid-row: 3; }
+.dpad-down { grid-column: 2; grid-row: 3; }
 
-/* Botones de Acción */
+/* Botones de Acción Táctiles */
 .action-buttons-container {
   display: flex;
   gap: 12px;
@@ -317,42 +428,41 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  width: 58px;
-  height: 58px;
+  width: 60px;
+  height: 60px;
+  min-width: 60px;
+  min-height: 60px;
   border-radius: 50%;
-  border: 2px solid;
+  background: rgba(0, 0, 0, 0.4);
   cursor: pointer;
-  touch-action: none;
-  transition: all 0.12s;
-  background: rgba(0, 0, 0, 0.6);
-}
-
-.action-btn:active {
-  transform: scale(0.92);
+  transition: all 0.1s;
+  font-family: inherit;
 }
 
 .btn-spark {
-  border-color: var(--neon-gold);
+  border: 2px solid var(--neon-gold);
   color: var(--neon-gold);
-  box-shadow: 0 0 10px rgba(255, 170, 0, 0.4);
+  box-shadow: 0 0 8px rgba(255, 170, 0, 0.4);
 }
 
 .btn-spark:active {
   background: rgba(255, 170, 0, 0.3);
+  transform: scale(0.92);
 }
 
 .btn-flash {
-  border-color: #ff3366;
-  color: #ff3366;
-  box-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
+  border: 2px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
 }
 
 .btn-flash:active {
-  background: rgba(255, 51, 102, 0.3);
+  background: rgba(0, 240, 255, 0.3);
+  transform: scale(0.92);
 }
 
 .btn-glyph {
-  font-size: 20px;
+  font-size: 18px;
   line-height: 1;
 }
 
@@ -364,90 +474,126 @@ html, body {
 }
 
 /* =========================================
-   MODALES Y SELECTOR DE NIVELES
+   MODALES NEÓN RETRO
    ========================================= */
 .neon-modal {
   position: absolute;
-  top: 0; left: 0; width: 100%; height: 100%;
-  background: rgba(2, 5, 12, 0.88);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  inset: 0;
+  background: rgba(1, 4, 10, 0.88);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  z-index: 50;
-  transition: opacity 0.25s ease;
+  z-index: 100;
+  transition: opacity 0.2s ease;
 }
 
 .neon-modal.hidden {
-  opacity: 0;
-  pointer-events: none;
+  display: none !important;
 }
 
 .neon-panel {
   width: 100%;
-  max-width: 360px;
-  max-height: 90vh;
-  overflow-y: auto;
-  background: #080d1a;
-  border: 2px solid var(--neon-cyan);
-  border-radius: 12px;
-  padding: 20px 16px;
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.3), inset 0 0 15px rgba(0, 240, 255, 0.1);
+  max-width: 380px;
+  background: linear-gradient(160deg, rgba(8, 20, 36, 0.95) 0%, rgba(2, 6, 14, 0.98) 100%);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 18px;
+  padding: 18px 14px;
   text-align: center;
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 12px;
-}
-
-.lantern-logo-wrapper {
-  margin: 0 auto;
-  width: 56px;
-  height: 56px;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255, 170, 0, 0.4) 0%, transparent 70%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 20px rgba(255, 170, 0, 0.5);
+  gap: 10px;
 }
 
 .lantern-glow-icon {
-  font-size: 30px;
+  font-size: 38px;
+  animation: float-lantern 2.5s ease-in-out infinite alternate;
+}
+
+@keyframes float-lantern {
+  from { transform: translateY(0px) scale(1); text-shadow: 0 0 10px rgba(255, 170, 0, 0.5); }
+  to { transform: translateY(-5px) scale(1.05); text-shadow: 0 0 20px rgba(255, 170, 0, 0.9); }
 }
 
 .neon-title {
-  font-size: 24px;
+  font-size: 20px;
   font-weight: 900;
   letter-spacing: 2px;
-  color: var(--neon-cyan);
-  text-shadow: 0 0 10px var(--neon-cyan);
+  color: #fff;
+  text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
 }
 
 .neon-subtitle {
-  font-size: 12px;
+  font-size: 11px;
   color: var(--text-muted);
   line-height: 1.4;
+  margin-bottom: 2px;
 }
 
-.levels-header {
-  font-size: 11px;
-  font-weight: 800;
-  letter-spacing: 1px;
+/* Pestañas de Mundos */
+.world-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+}
+
+.world-tab {
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid var(--neon-border);
+  border-radius: 6px;
+  padding: 6px 2px;
+  font-size: 9px;
+  font-weight: 700;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.world-tab.active {
+  background: var(--neon-cyan);
+  color: #000;
+  border-color: #fff;
+  font-weight: 900;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+}
+
+.world-banner {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--neon-border);
+  border-radius: 8px;
+  padding: 6px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  text-align: left;
+}
+
+.world-badge {
+  font-size: 10px;
+  font-weight: 900;
   color: var(--neon-gold);
+  letter-spacing: 0.5px;
 }
 
+.world-desc {
+  font-size: 9px;
+  color: #a8c5db;
+}
+
+/* Selector de Niveles */
 .levels-grid-container {
-  max-height: 220px;
+  max-height: 160px;
   overflow-y: auto;
   padding: 4px 2px;
 }
 
 .levels-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
 }
 
 .level-badge {
@@ -456,23 +602,27 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 240, 255, 0.05);
-  border: 1px solid rgba(0, 240, 255, 0.2);
+  background: rgba(0, 240, 255, 0.06);
+  border: 1px solid var(--neon-border);
   border-radius: 8px;
   cursor: pointer;
-  min-height: 48px;
+  transition: all 0.12s;
+  min-height: 44px;
   color: #fff;
-  transition: all 0.15s;
+}
+
+.level-badge:active {
+  transform: scale(0.94);
 }
 
 .level-badge.unlocked {
-  background: rgba(0, 240, 255, 0.12);
+  background: rgba(0, 240, 255, 0.15);
   border-color: var(--neon-cyan);
 }
 
 .level-badge.current {
   border-color: var(--neon-gold);
-  box-shadow: 0 0 10px rgba(255, 170, 0, 0.6);
+  box-shadow: 0 0 10px rgba(255, 170, 0, 0.7);
 }
 
 .level-badge.locked {
@@ -481,23 +631,90 @@ html, body {
 }
 
 .level-num {
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
 }
 
 .level-stars {
-  font-size: 9px;
+  font-size: 8px;
   color: var(--neon-gold);
 }
 
-/* Modal Resultados */
+.modal-footer-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.modal-footer-actions button {
+  flex: 1;
+  min-height: 42px;
+  font-size: 11px;
+}
+
+/* Modal de Mejoras (Upgrade Cards) */
+.upgrade-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.upgrade-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0, 240, 255, 0.08);
+  border: 1px solid var(--neon-cyan);
+  border-radius: 10px;
+  padding: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.upgrade-card:hover, .upgrade-card:active {
+  background: rgba(0, 240, 255, 0.25);
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  transform: scale(0.98);
+}
+
+.upgrade-icon {
+  font-size: 24px;
+}
+
+.upgrade-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.upgrade-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.upgrade-desc {
+  font-size: 10px;
+  color: #a8d5ea;
+}
+
+/* Modal Diario */
+.daily-box {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px dashed var(--neon-gold);
+  border-radius: 10px;
+  padding: 10px;
+}
+
+/* Modal de Resultados */
 .result-badge {
-  font-size: 40px;
-  margin: 0 auto;
+  font-size: 38px;
 }
 
 .result-subtitle {
-  font-size: 13px;
+  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -505,20 +722,30 @@ html, body {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  background: rgba(0, 20, 35, 0.5);
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid var(--neon-border);
+  border-radius: 10px;
   padding: 10px 14px;
-  border-radius: 8px;
-  border: 1px solid rgba(0, 240, 255, 0.15);
 }
 
 .stat-row {
   display: flex;
   justify-content: space-between;
-  font-size: 13px;
+  font-size: 12px;
 }
 
 .stat-row strong {
   color: var(--neon-cyan);
+  font-size: 14px;
+}
+
+.stars-row {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+  font-size: 22px;
+  color: var(--neon-gold);
+  margin-top: 4px;
 }
 
 .modal-buttons {
@@ -528,6 +755,105 @@ html, body {
   margin-top: 4px;
 }
 
-.hidden {
-  display: none !important;
+/* Logros */
+.ach-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+  text-align: left;
+}
+
+.ach-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid var(--neon-border);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.ach-item.unlocked {
+  border-color: var(--neon-gold);
+  background: rgba(255, 170, 0, 0.1);
+}
+
+.ach-icon {
+  font-size: 16px;
+}
+
+.ach-title {
+  font-size: 11px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.ach-desc {
+  font-size: 9px;
+  color: var(--text-muted);
+}
+
+.ach-status {
+  margin-left: auto;
+  font-size: 8px;
+  font-weight: 800;
+  color: #7b8fa7;
+}
+
+.ach-item.unlocked .ach-status {
+  color: var(--neon-gold);
+}
+
+/* Opciones & Accesibilidad */
+.options-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.opt-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 10px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--neon-border);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.opt-row input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+  accent-color: var(--neon-cyan);
+  cursor: pointer;
+}
+
+/* Alto Contraste */
+body.high-contrast {
+  background: #000 !important;
+}
+
+body.high-contrast #game-header,
+body.high-contrast #sub-bar,
+body.high-contrast #touch-controls {
+  background: #000 !important;
+  border-color: #fff !important;
+}
+
+body.high-contrast .hud-val,
+body.high-contrast .neon-title {
+  color: #ffff00 !important;
+  text-shadow: none !important;
+}
+
+body.high-contrast .glow-btn {
+  background: #ffff00 !important;
+  color: #000 !important;
+  font-weight: 900 !important;
 }
