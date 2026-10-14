@@ -168,6 +168,17 @@
   - **Pruebas Automatizadas**:
     - 10/10 pruebas unitarias y de integración superadas en `test_abismo_fase5.js`.
     - 46/46 pruebas superadas al 100% en toda la suite de pruebas del juego (Fases 1 a 5).
-
-
-
+  - **Adaptación y Optimización del Minimapa para Dispositivos Móviles**:
+    - **Diagnóstico del Desbordamiento**: En pantallas móviles estrechas (360px a 412px de ancho), la fila superior del HUD contenía la barra de vida/XP a la izquierda (170px) y cuatro insignias estadísticas en línea a la derecha (~245px), totalizando más de 430px de ancho necesario. Como `.hud-top-right` estaba alineado a la derecha, empujaba el contenedor del minimapa fuera del borde visible de la pantalla ("sale del rango").
+    - **Solución Responsive en CSS**:
+      - Regla `@media (max-width: 640px)` con contención estricta: `max-width: 100vw; box-sizing: border-box`.
+      - Soporte nativo para muescas (notches), Dynamic Island y barras de navegación inferiores mediante `env(safe-area-inset-*)`.
+      - Escalamiento elástico de barras de vida y experiencia mediante `clamp(100px, 36vw, 136px)`.
+      - Agrupación fluida con `flex-wrap: wrap` y compactación de badges de estadísticas a un ancho máximo de 145px, asegurando que el minimapa permanezca siempre 100% visible dentro del viewport en cualquier celular.
+    - **Minimapa Interactivo y Modal Expandido de Mapa (`#map-modal`)**:
+      - El contenedor del minimapa en el HUD funciona ahora como botón táctil interactivo con indicador visual (`🔍`).
+      - Al pulsar el minimapa (o presionar la tecla `M` en teclado), el juego se pausa de manera segura (`this.state = 'MAP_VIEW'`) y abre un modal central con el mapa ampliado de la cripta a alta resolución (280x280).
+      - Muestra el bioma actual, piso, iconos distintivos de cada sala (Inicio 🏛️, Combate ⚔️, Tesoro 💎, Tienda 🪙, Descanso 💚, Élite 💀, Jefe 👑) y posición en tiempo real del explorador con halo blanco/cian.
+      - Incluye leyenda detallada de colores/iconos y botones para reanudar el descenso o cerrar el mapa.
+    - **Pruebas Automatizadas**:
+      - 4/4 pruebas unitarias y de integración superadas en `test_abismo_mobile_map.js` (total 50/50 pruebas superadas al 100% en todo el proyecto).

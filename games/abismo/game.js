@@ -2711,11 +2711,15 @@
       this.ctx = canvasEl ? canvasEl.getContext('2d') : null;
     }
 
-    render(dungeon, currentRoom) {
-      if (!this.ctx || !dungeon) return;
-      const ctx = this.ctx;
-      const w = this.canvas.width;
-      const h = this.canvas.height;
+    render(dungeon, currentRoom, targetCanvas = null) {
+      const canvas = targetCanvas || this.canvas;
+      if (!canvas) return;
+      const ctx = canvas.getContext('2d');
+      if (!ctx || !dungeon) return;
+
+      const w = canvas.width;
+      const h = canvas.height;
+      const isExpanded = w >= 200;
 
       ctx.clearRect(0, 0, w, h);
 
@@ -2724,13 +2728,14 @@
       ctx.fillRect(0, 0, w, h);
 
       const gridSize = dungeon.gridSize || 4;
-      const cellSize = Math.floor((w - 12) / gridSize);
+      const margin = isExpanded ? 24 : 10;
+      const cellSize = Math.floor((Math.min(w, h) - margin * 2) / gridSize);
       const offsetX = Math.floor((w - cellSize * gridSize) / 2);
       const offsetY = Math.floor((h - cellSize * gridSize) / 2);
 
       // Dibujar enlaces de puertas entre salas mapeadas
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)';
-      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.45)';
+      ctx.lineWidth = isExpanded ? 3 : 1.5;
 
       for (let x = 0; x < gridSize; x++) {
         for (let y = 0; y < gridSize; y++) {
@@ -2767,45 +2772,99 @@
           const r = dungeon.grid[x][y];
           if (!r) continue;
 
-          const rx = offsetX + x * cellSize + 2;
-          const ry = offsetY + y * cellSize + 2;
-          const rSize = cellSize - 4;
+          const padding = isExpanded ? 4 : 2;
+          const rx = offsetX + x * cellSize + padding;
+          const ry = offsetY + y * cellSize + padding;
+          const rSize = cellSize - padding * 2;
 
           const isCurrent = (r === currentRoom);
 
           if (r.visited) {
             // Sala visitada
             let color = '#334155';
-            if (r.type === 'inicio') color = '#38bdf8';
-            else if (r.type === 'tesoro') color = '#fbbf24';
-            else if (r.type === 'descanso') color = '#4ade80';
-            else if (r.type === 'elite') color = '#f43f5e';
-            else if (r.type === 'combate') color = r.cleared ? '#1e293b' : '#e11d48';
+            let strokeColor = r.cleared ? 'rgba(255, 255, 255, 0.25)' : '#e11d48';
+            let icon = '';
+
+            if (r.type === 'inicio') {
+              color = '#0284c7';
+              icon = '🏛️';
+            } else if (r.type === 'jefe') {
+              color = '#7e22ce';
+              strokeColor = '#c084fc';
+              icon = '👑';
+            } else if (r.type === 'tesoro') {
+              color = '#d97706';
+              strokeColor = '#fcd34d';
+              icon = '💎';
+            } else if (r.type === 'tienda') {
+              color = '#0891b2';
+              strokeColor = '#67e8f9';
+              icon = '🪙';
+            } else if (r.type === 'descanso') {
+              color = '#15803d';
+              strokeColor = '#86efac';
+              icon = '💚';
+            } else if (r.type === 'elite') {
+              color = '#9f1239';
+              strokeColor = '#fda4af';
+              icon = '💀';
+            } else if (r.type === 'combate') {
+              color = r.cleared ? '#1e293b' : '#be123c';
+              icon = r.cleared ? '' : '⚔️';
+            }
 
             ctx.fillStyle = color;
             ctx.fillRect(rx, ry, rSize, rSize);
 
-            // Borde
-            ctx.strokeStyle = r.cleared ? 'rgba(255, 255, 255, 0.2)' : '#e11d48';
-            ctx.lineWidth = 1;
+            // Borde de sala
+            ctx.strokeStyle = strokeColor;
+            ctx.lineWidth = isExpanded ? 2 : 1;
             ctx.strokeRect(rx, ry, rSize, rSize);
+
+            // Icono en modal expandido o si hay espacio suficiente
+            if (isExpanded && icon) {
+              ctx.font = `${Math.floor(rSize * 0.48)}px sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText(icon, rx + rSize / 2, ry + rSize / 2);
+            }
           } else if (r.mapped) {
             // Sala adyacente descubierta (fog of war)
+            ctx.fillStyle = 'rgba(30, 41, 59, 0.4)';
+            ctx.fillRect(rx, ry, rSize, rSize);
             ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
             ctx.lineWidth = 1;
             ctx.strokeRect(rx, ry, rSize, rSize);
+
+            if (isExpanded) {
+              ctx.fillStyle = 'rgba(148, 163, 184, 0.5)';
+              ctx.font = `${Math.floor(rSize * 0.35)}px sans-serif`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              ctx.fillText('?', rx + rSize / 2, ry + rSize / 2);
+            }
           }
 
           // Indicador del jugador actual
           if (isCurrent) {
+            // Anillo pulsante / borde
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = isExpanded ? 2.5 : 1.5;
+            ctx.strokeRect(rx - 1, ry - 1, rSize + 2, rSize + 2);
+
+            // Marcador del jugador
+            const pRadius = isExpanded ? 5 : 3;
             ctx.fillStyle = '#ffffff';
             ctx.beginPath();
-            ctx.arc(rx + rSize / 2, ry + rSize / 2, 3, 0, Math.PI * 2);
+            ctx.arc(rx + rSize / 2, ry + rSize / 2, pRadius, 0, Math.PI * 2);
             ctx.fill();
 
+            // Glow exterior
             ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(rx - 1, ry - 1, rSize + 2, rSize + 2);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.arc(rx + rSize / 2, ry + rSize / 2, pRadius + 2, 0, Math.PI * 2);
+            ctx.stroke();
           }
         }
       }
@@ -3073,12 +3132,19 @@
       this.continueRunInfo = document.getElementById('continue-run-info');
       this.debugPanel = document.getElementById('debug-panel');
 
-      // Mini-mapa
+      // Mini-mapa y Modal de Mapa Expandido (Móvil y Escritorio)
+      this.minimapContainer = document.getElementById('minimap-container');
       const minimapCanvas = document.getElementById('minimap-canvas');
       this.minimap = new MiniMap(minimapCanvas);
 
+      this.mapModal = document.getElementById('map-modal');
+      this.mapModalCanvas = document.getElementById('map-modal-canvas');
+      this.mapModalFloorText = document.getElementById('map-modal-floor-text');
+      this.btnCloseMap = document.getElementById('btn-close-map');
+      this.btnMapResume = document.getElementById('btn-map-resume');
+
       // Estado del bucle y tiempo fijo
-      this.state = 'READY'; // READY, PLAYING, PAUSED, GAMEOVER, LEVELUP
+      this.state = 'READY'; // READY, PLAYING, PAUSED, GAMEOVER, LEVELUP, MAP_VIEW
       this.lastTimestamp = 0;
       this.accumulator = 0;
       this.hitStopTimer = 0;
@@ -3228,6 +3294,9 @@
       }
 
       this.minimap.render(this.dungeon, this.currentRoom);
+      if (this.state === 'MAP_VIEW' && this.mapModalCanvas) {
+        this.minimap.render(this.dungeon, this.currentRoom, this.mapModalCanvas);
+      }
     }
 
     spawnWave(waveIndex) {
@@ -3400,6 +3469,37 @@
         card.addEventListener('click', onSelectCard);
         card.addEventListener('touchend', onSelectCard);
       });
+
+      // Abrir / Cerrar modal de mapa expandido (Móvil y Escritorio)
+      if (this.minimapContainer) {
+        const handleOpenMap = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.openMapModal();
+        };
+        this.minimapContainer.addEventListener('click', handleOpenMap);
+        this.minimapContainer.addEventListener('touchend', handleOpenMap);
+      }
+
+      if (this.btnCloseMap) {
+        const handleCloseMap = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closeMapModal();
+        };
+        this.btnCloseMap.addEventListener('click', handleCloseMap);
+        this.btnCloseMap.addEventListener('touchend', handleCloseMap);
+      }
+
+      if (this.btnMapResume) {
+        const handleCloseMap = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          this.closeMapModal();
+        };
+        this.btnMapResume.addEventListener('click', handleCloseMap);
+        this.btnMapResume.addEventListener('touchend', handleCloseMap);
+      }
     }
 
     resizeCanvas() {
@@ -3429,6 +3529,7 @@
       if (this.levelUpModal) this.levelUpModal.classList.add('hidden');
       if (this.metaModal) this.metaModal.classList.add('hidden');
       if (this.achievementsModal) this.achievementsModal.classList.add('hidden');
+      if (this.mapModal) this.mapModal.classList.add('hidden');
 
       this.floor = 1;
       this.bossesKilled = 0;
@@ -3514,6 +3615,7 @@
       if (this.levelUpModal) this.levelUpModal.classList.add('hidden');
       if (this.metaModal) this.metaModal.classList.add('hidden');
       if (this.achievementsModal) this.achievementsModal.classList.add('hidden');
+      if (this.mapModal) this.mapModal.classList.add('hidden');
 
       this.initDungeon();
       this.lastTimestamp = performance.now();
@@ -3532,8 +3634,41 @@
       }
     }
 
+    openMapModal() {
+      if (this.state !== 'PLAYING') return;
+      this.state = 'MAP_VIEW';
+      if (this.audioHelper) this.audioHelper.stopAmbientMusic();
+      if (this.mapModalFloorText) {
+        const biomeName = this.dungeon && this.dungeon.currentBiome ? this.dungeon.currentBiome.name : 'Cripta';
+        this.mapModalFloorText.textContent = `Piso ${this.floor || 1} — ${biomeName}`;
+      }
+      if (this.mapModal) {
+        this.mapModal.classList.remove('hidden');
+      }
+      if (this.mapModalCanvas && this.minimap) {
+        this.minimap.render(this.dungeon, this.currentRoom, this.mapModalCanvas);
+      }
+      if (this.audio && this.audio.playTone) this.audio.playTone(320, 'sine', 0.08, 0.06);
+    }
+
+    closeMapModal() {
+      if (this.state !== 'MAP_VIEW') return;
+      if (this.mapModal) {
+        this.mapModal.classList.add('hidden');
+      }
+      this.state = 'PLAYING';
+      this.lastTimestamp = performance.now();
+      if (CFG.AMBIENT_MUSIC_ENABLED && this.audioHelper) {
+        this.audioHelper.startAmbientMusic();
+      }
+    }
+
     togglePause() {
       if (this.state === 'READY' || this.state === 'GAMEOVER' || this.state === 'LEVELUP') return;
+      if (this.state === 'MAP_VIEW') {
+        this.closeMapModal();
+        return;
+      }
       if (this.state === 'PLAYING') {
         this.state = 'PAUSED';
         if (this.audioHelper) this.audioHelper.stopAmbientMusic();
@@ -3555,7 +3690,17 @@
       this.keys[e.code] = true;
 
       if (e.code === 'KeyP' || e.code === 'Escape') {
+        if (this.state === 'MAP_VIEW') {
+          this.closeMapModal();
+          return;
+        }
         this.togglePause();
+      } else if (e.code === 'KeyM') {
+        if (this.state === 'MAP_VIEW') {
+          this.closeMapModal();
+        } else if (this.state === 'PLAYING') {
+          this.openMapModal();
+        }
       } else if (e.code === 'Space') {
         this.activateSpecialAbility();
       }
@@ -3833,6 +3978,9 @@
           this.showWaveBanner('¡SALA DESPEJADA! PUERTAS ABIERTAS', '✨', true);
           if (this.audio && this.audio.playClear) this.audio.playClear();
           this.minimap.render(this.dungeon, this.currentRoom);
+          if (this.state === 'MAP_VIEW' && this.mapModalCanvas) {
+            this.minimap.render(this.dungeon, this.currentRoom, this.mapModalCanvas);
+          }
         }
       }
     }
@@ -4337,6 +4485,7 @@
 
     handlePlayerDeath() {
       this.state = 'GAMEOVER';
+      if (this.mapModal) this.mapModal.classList.add('hidden');
 
       if (this.audioHelper) {
         this.audioHelper.stopAmbientMusic();

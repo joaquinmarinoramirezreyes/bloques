@@ -93,9 +93,10 @@
               </div>
             </div>
 
-            <!-- Mini-Mapa Conexo -->
-            <div class="minimap-container" id="minimap-container" title="Mini-Mapa de la Mazmorra">
+            <!-- Mini-Mapa Conexo (Toca para ampliar en móvil) -->
+            <div class="minimap-container" id="minimap-container" title="Toca para ampliar el mapa" role="button" tabindex="0" aria-label="Abrir mapa de la cripta">
               <canvas id="minimap-canvas" width="76" height="76"></canvas>
+              <span class="minimap-zoom-hint" title="Ampliar mapa">🔍</span>
             </div>
           </div>
         </div>
@@ -310,6 +311,41 @@
 
           <div class="modal-actions">
             <button id="btn-close-achievements" class="arcade-btn-primary" type="button">VOLVER</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Mapa Expandido de la Cripta (Fase 5 Móvil) -->
+      <div class="overlay-modal hidden" id="map-modal">
+        <div class="modal-card map-modal-card">
+          <div class="map-modal-header">
+            <div class="map-modal-title-group">
+              <span class="map-modal-icon">🗺️</span>
+              <div>
+                <h3 class="map-modal-title">MAPA DE LA CRIPTA</h3>
+                <span class="map-modal-subtitle" id="map-modal-floor-text">PISO 1</span>
+              </div>
+            </div>
+            <button class="map-modal-close-btn" id="btn-close-map" type="button" aria-label="Cerrar mapa">✕</button>
+          </div>
+
+          <div class="map-modal-canvas-wrapper">
+            <canvas id="map-modal-canvas" width="280" height="280"></canvas>
+          </div>
+
+          <div class="map-legend-grid">
+            <div class="map-legend-item"><span class="legend-chip legend-player"></span> Jugador</div>
+            <div class="map-legend-item"><span class="legend-chip legend-boss">👑</span> Jefe / Portal</div>
+            <div class="map-legend-item"><span class="legend-chip legend-treasure">💎</span> Tesoro</div>
+            <div class="map-legend-item"><span class="legend-chip legend-shop">🪙</span> Mercader</div>
+            <div class="map-legend-item"><span class="legend-chip legend-rest">💚</span> Santuario</div>
+            <div class="map-legend-item"><span class="legend-chip legend-combat">⚔️</span> Combate</div>
+          </div>
+
+          <div class="modal-actions">
+            <button id="btn-map-resume" class="arcade-btn-primary" type="button">
+              CONTINUAR EXPLORACIÓN
+            </button>
           </div>
         </div>
       </div>
