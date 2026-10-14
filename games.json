@@ -52,5 +52,14 @@
     "color": "#f97316",
     "badge": "CARRERAS",
     "icon": "derrape"
+  },
+  {
+    "id": "abismo",
+    "name": "Abismo",
+    "folder": "games/abismo",
+    "description": "Roguelike cenital de acción en criptas infinitas con auto-ataque, sinergias y progresión permanente.",
+    "color": "#e11d48",
+    "badge": "ROGUELIKE",
+    "icon": "abismo"
   }
 ]

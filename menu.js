@@ -60,6 +60,15 @@
       color: "#f97316",
       badge: "CARRERAS",
       icon: "derrape"
+    },
+    {
+      id: "abismo",
+      name: "Abismo",
+      folder: "games/abismo",
+      description: "Roguelike cenital de acción en criptas infinitas con auto-ataque, sinergias y progresión permanente.",
+      color: "#e11d48",
+      badge: "ROGUELIKE",
+      icon: "abismo"
     }
   ];
 
@@ -97,6 +106,13 @@
       return `
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
           <path d="M6 3c0-1.1.9-2 2-2h8c1.1 0 2 .9 2 2v2h1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1v4h1a1 1 0 0 1 1 1v4a1 1 0 0 1-1 1h-1v1c0 1.1-.9 2-2 2h-1v-2H9v2H8c-1.1 0-2-.9-2-2v-1H5a1 1 0 0 1-1-1v-4a1 1 0 0 1 1-1h1v-4H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h1V3zm3 4h6V5H9v2zm0 8h6V9H9v6z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'abismo') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M11 2v4H9v2h2v7.17l-3.59-3.58L6 13.17 12 19.17l6-6-1.41-1.42L13 15.17V8h2V6h-2V2h-2zM4 20h16v2H4v-2z"/>
         </svg>
       `;
     }

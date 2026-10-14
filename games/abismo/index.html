@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Abismo | Sala Arcade</title>
+  <link rel="stylesheet" href="../../shared/theme.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="game-layout">
+    <!-- Barra superior arcade -->
+    <header class="game-header">
+      <a href="../../index.html" class="nav-btn" aria-label="Volver al menú principal">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+        <span class="nav-text">ARCADE</span>
+      </a>
+
+      <div class="header-titles">
+        <h1 class="game-title">ABISMO</h1>
+        <span class="game-badge">ROGUELIKE</span>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-sound" class="icon-btn" aria-label="Silenciar sonido">
+          <span class="icon">🔊</span>
+        </button>
+        <button id="btn-pause" class="icon-btn" aria-label="Pausar juego">
+          <span class="icon">⏸</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Contenedor del lienzo de juego -->
+    <main class="board-wrapper" id="board-wrapper">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- HUD en vivo durante la partida -->
+      <div class="hud-overlay" id="hud-overlay">
+        <!-- Panel superior con Barra de Vida, Info de Sala y Mini-Mapa -->
+        <div class="hud-top">
+          <!-- Columna Izquierda: Vida y Sala -->
+          <div class="hud-top-left">
+            <!-- Barra de Vida -->
+            <div class="hp-container">
+              <div class="hp-label-row">
+                <span class="hp-label">VIDA</span>
+                <span class="hp-text" id="hud-hp-text">100 / 100</span>
+              </div>
+              <div class="hp-bar-track" id="hud-hp-track">
+                <div class="hp-bar-fill" id="hud-hp-fill"></div>
+              </div>
+            </div>
+
+            <!-- Barra de Experiencia (Fase 3) -->
+            <div class="xp-container" id="hud-xp-container">
+              <div class="xp-label-row">
+                <span class="xp-badge" id="hud-level-badge">NV. 1</span>
+                <span class="xp-text" id="hud-xp-text">0 / 28 XP</span>
+              </div>
+              <div class="xp-bar-track">
+                <div class="xp-bar-fill" id="hud-xp-fill"></div>
+              </div>
+            </div>
+
+            <!-- Indicador de Sala Actual -->
+            <div class="room-badge" id="hud-room-badge">
+              <span class="room-badge-icon" id="hud-room-icon">🏛️</span>
+              <span class="room-badge-name" id="hud-room-name">Entrada a la Cripta</span>
+            </div>
+          </div>
+
+          <!-- Columna Derecha: Contadores y Mini-mapa -->
+          <div class="hud-top-right">
+            <div class="hud-stats-row">
+              <div class="stat-badge floor-badge" title="Piso actual">
+                <span class="stat-icon">🚩</span>
+                <span class="stat-val" id="hud-floor-val">PISO 1</span>
+              </div>
+              <div class="stat-badge gold-badge" title="Oro recolectado">
+                <span class="stat-icon">🪙</span>
+                <span class="stat-val" id="hud-gold-val">0</span>
+              </div>
+              <div class="stat-badge" title="Enemigos derrotados">
+                <span class="stat-icon">💀</span>
+                <span class="stat-val" id="hud-kills-val">0</span>
+              </div>
+              <div class="stat-badge" title="Enemigos activos">
+                <span class="stat-icon">👁️</span>
+                <span class="stat-val" id="hud-enemies-val">0</span>
+              </div>
+            </div>
+
+            <!-- Mini-Mapa Conexo -->
+            <div class="minimap-container" id="minimap-container" title="Mini-Mapa de la Mazmorra">
+              <canvas id="minimap-canvas" width="76" height="76"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- Barra de Salud del Jefe (Fase 4) -->
+        <div class="boss-hud-container hidden" id="boss-hud-container">
+          <div class="boss-hud-header">
+            <span class="boss-icon" id="boss-icon">👑</span>
+            <span class="boss-name" id="boss-name">SEÑOR DEL ABISMO</span>
+            <span class="boss-hp-pct" id="boss-hp-pct">100%</span>
+          </div>
+          <div class="boss-bar-track">
+            <div class="boss-bar-fill" id="boss-hp-fill"></div>
+          </div>
+        </div>
+
+        <!-- Banner animado de oleada o despeje -->
+        <div class="wave-banner-container">
+          <div class="wave-banner hidden" id="wave-banner">
+            <span class="wave-banner-icon" id="wave-banner-icon">⚔️</span>
+            <span class="wave-banner-text" id="wave-banner-text">¡OLEADA 1/2!</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Zona de Joystick Virtual (Mitad Izquierda de la Pantalla) -->
+      <div class="joystick-zone" id="joystick-zone">
+        <div class="joystick-base" id="joystick-base">
+          <div class="joystick-knob" id="joystick-knob"></div>
+        </div>
+      </div>
+
+      <!-- Botón de Habilidad Especial (Lado Derecho) -->
+      <div class="special-action-zone">
+        <button id="btn-action-special" class="special-action-btn" aria-label="Activar habilidad especial">
+          <span class="special-icon">💥</span>
+          <span class="special-lbl">ESTALLIDO</span>
+          <div class="special-cooldown-overlay" id="special-cooldown-overlay"></div>
+          <span class="special-cooldown-text hidden" id="special-cooldown-text">0.0</span>
+        </button>
+      </div>
+
+      <!-- Modal de inicio (Fases 1 a 4) -->
+      <div class="overlay-modal" id="start-modal">
+        <div class="modal-card">
+          <div class="abismo-crest-icon">🗡️</div>
+          <h2 class="modal-title">ABISMO</h2>
+          <p class="modal-subtitle">Roguelike Cenital en Criptas Infinitas</p>
+
+          <!-- Selector de Personaje (Fase 4) -->
+          <div class="character-select-section">
+            <span class="char-select-title">SELECCIONA TU EXPLORADOR</span>
+            <div class="character-selector-grid" id="character-selector-grid">
+              <button type="button" class="char-card active" data-char="peregrino">
+                <span class="char-card-icon">🗡️</span>
+                <span class="char-card-name">Peregrino</span>
+                <span class="char-card-style">Dardo Espectral</span>
+              </button>
+              <button type="button" class="char-card" data-char="hechicera">
+                <span class="char-card-icon">🩸</span>
+                <span class="char-card-name">Hechicera</span>
+                <span class="char-card-style">Orbes Giratorios</span>
+              </button>
+              <button type="button" class="char-card" data-char="centinela">
+                <span class="char-card-icon">🛡️</span>
+                <span class="char-card-name">Centinela</span>
+                <span class="char-card-style">Onda de Vacío</span>
+              </button>
+              <button type="button" class="char-card" data-char="sombra">
+                <span class="char-card-icon">👤</span>
+                <span class="char-card-name">Sombra</span>
+                <span class="char-card-style">Navajas Críticas</span>
+              </button>
+              <button type="button" class="char-card" data-char="piromante">
+                <span class="char-card-icon">🔥</span>
+                <span class="char-card-name">Piromante</span>
+                <span class="char-card-style">Anillo Ígneo</span>
+              </button>
+            </div>
+            <div class="character-preview-desc" id="character-preview-desc">
+              <strong>Peregrino Abisal:</strong> Equilibrado (100 HP, Dardo Espectral). Ataca al enemigo más cercano con alta precisión.
+            </div>
+          </div>
+
+          <div class="instructions-box">
+            <div class="instruction-row">
+              <span class="inst-icon">🎯</span>
+              <span class="inst-text"><strong>Auto-Ataque:</strong> Tu explorador ataca automáticamente al enemigo más cercano según su estilo de arma.</span>
+            </div>
+            <div class="instruction-row">
+              <span class="inst-icon">📱</span>
+              <span class="inst-text"><strong>Móvil:</strong> Desliza en la izquierda para moverte. Pulsa el botón rojo para la habilidad especial.</span>
+            </div>
+            <div class="instruction-row">
+              <span class="inst-icon">💻</span>
+              <span class="inst-text"><strong>Teclado:</strong> WASD o Flechas para moverte. Espacio para la habilidad especial.</span>
+            </div>
+          </div>
+
+          <div class="start-actions-stack">
+            <button id="btn-continue-run" class="arcade-btn-accent hidden">
+              ⚡ CONTINUAR DESCENSO (<span id="continue-run-info">Piso 1</span>)
+            </button>
+            <button id="btn-start-game" class="arcade-btn-primary">
+              DESCENDER AL ABISMO
+            </button>
+            <div class="start-secondary-actions">
+              <button id="btn-open-meta" class="meta-nav-btn" type="button">
+                ✨ ALTAR DEL ABISMO (<span id="start-essence-val">0</span>)
+              </button>
+              <button id="btn-open-achievements" class="meta-nav-btn" type="button">
+                🏆 LOGROS Y RÉCORD
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de pausa -->
+      <div class="overlay-modal hidden" id="pause-modal">
+        <div class="modal-card">
+          <h2 class="modal-title">PAUSA</h2>
+          <p class="modal-subtitle">Descenso en pausa</p>
+          <div class="modal-actions">
+            <button id="btn-resume" class="arcade-btn-primary">REANUDAR</button>
+            <button id="btn-restart" class="arcade-btn-secondary">REINICIAR SALA</button>
+            <a href="../../index.html" class="arcade-btn-danger">SALIR AL MENÚ</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Subida de Nivel (Fase 3: Elección de 3 Mejoras) -->
+      <div class="overlay-modal hidden" id="levelup-modal">
+        <div class="modal-card modal-card-levelup">
+          <div class="levelup-header">
+            <span class="levelup-icon-anim">✨</span>
+            <h2 class="modal-title levelup-title" id="levelup-title">¡SUBIDA DE NIVEL!</h2>
+            <p class="modal-subtitle" id="levelup-subtitle">Elige una bendición arcana para potenciarte:</p>
+          </div>
+
+          <div class="upgrade-cards-grid" id="upgrade-cards-grid">
+            <!-- 3 cartas generadas dinámicamente -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal del Altar del Abismo: Meta-Progresión Permanente (Fase 5) -->
+      <div class="overlay-modal hidden" id="meta-modal">
+        <div class="modal-card modal-card-meta">
+          <div class="meta-header">
+            <div class="abismo-crest-icon">✨</div>
+            <h2 class="modal-title">ALTAR DEL ABISMO</h2>
+            <p class="modal-subtitle">Gasta tu esencia arcana en bendiciones permanentes</p>
+            <div class="meta-essence-badge">
+              <span class="essence-sparkle">✨</span>
+              <span class="essence-label">Esencia Disponible:</span>
+              <span class="essence-val" id="meta-essence-val">0</span>
+            </div>
+          </div>
+
+          <div class="meta-upgrades-grid" id="meta-upgrades-grid">
+            <!-- Mejoras permanentes generadas dinámicamente -->
+          </div>
+
+          <div class="meta-modal-footer">
+            <button id="btn-close-meta" class="arcade-btn-primary" type="button">VOLVER</button>
+            <button id="btn-reset-meta" class="arcade-btn-danger-outline" type="button">REINICIAR PROGRESO</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Logros y Récords (Fase 5) -->
+      <div class="overlay-modal hidden" id="achievements-modal">
+        <div class="modal-card modal-card-achievements">
+          <div class="achievements-header">
+            <div class="abismo-crest-icon">🏆</div>
+            <h2 class="modal-title">LOGROS Y RÉCORDS</h2>
+            <p class="modal-subtitle">Hazañas alcanzadas en las profundidades de la cripta</p>
+          </div>
+
+          <div class="achievements-stats-grid">
+            <div class="ach-stat-card">
+              <span class="ach-stat-icon">🚩</span>
+              <span class="ach-stat-label">Piso Más Profundo</span>
+              <span class="ach-stat-val" id="ach-stat-max-floor">PISO 1</span>
+            </div>
+            <div class="ach-stat-card">
+              <span class="ach-stat-icon">🎮</span>
+              <span class="ach-stat-label">Descensos Totales</span>
+              <span class="ach-stat-val" id="ach-stat-runs">0</span>
+            </div>
+            <div class="ach-stat-card">
+              <span class="ach-stat-icon">💀</span>
+              <span class="ach-stat-label">Sombras Purgadas</span>
+              <span class="ach-stat-val" id="ach-stat-kills">0</span>
+            </div>
+            <div class="ach-stat-card">
+              <span class="ach-stat-icon">👑</span>
+              <span class="ach-stat-label">Jefes Vencidos</span>
+              <span class="ach-stat-val" id="ach-stat-bosses">0</span>
+            </div>
+            <div class="ach-stat-card">
+              <span class="ach-stat-icon">✨</span>
+              <span class="ach-stat-label">Esencia Cosechada</span>
+              <span class="ach-stat-val" id="ach-stat-essence">0</span>
+            </div>
+          </div>
+
+          <div class="achievements-list-grid" id="achievements-list-grid">
+            <!-- Tarjetas de logros generadas dinámicamente -->
+          </div>
+
+          <div class="modal-actions">
+            <button id="btn-close-achievements" class="arcade-btn-primary" type="button">VOLVER</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Game Over (Fase 5) -->
+      <div class="overlay-modal hidden" id="gameover-modal">
+        <div class="modal-card">
+          <div class="abismo-crest-icon">💀</div>
+          <h2 class="modal-title danger-title">HAS SUCUMBIDO</h2>
+          <p class="modal-subtitle">Las sombras del abismo reclamaron tu alma</p>
+
+          <div class="results-stats">
+            <div class="result-row">
+              <span class="result-label">Profundidad Alcanzada</span>
+              <span class="result-val highlight" id="res-floor">PISO 1</span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Sombras Eliminadas</span>
+              <span class="result-val highlight" id="res-kills">0</span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Esencia Cosechada</span>
+              <span class="result-val essence-earned" id="res-essence-earned">+0 ✨</span>
+            </div>
+            <div class="result-row">
+              <span class="result-label">Esencia Total Acumulada</span>
+              <span class="result-val" id="res-essence-total">0 ✨</span>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button id="btn-gameover-altar" class="arcade-btn-accent">
+              ✨ ALTAR DE MEJORAS
+            </button>
+            <button id="btn-gameover-restart" class="arcade-btn-primary">
+              INTENTAR DE NUEVO
+            </button>
+            <a href="../../index.html" class="arcade-btn-secondary">
+              MENÚ PRINCIPAL
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pantalla / Panel de Depuración Oculta (?debug=1) (Fase 5) -->
+      <div class="debug-panel hidden" id="debug-panel">
+        <div class="debug-header">
+          <span class="debug-title">⚙️ DEBUG CONSOLE</span>
+          <span class="debug-fps" id="debug-fps">FPS: 60</span>
+        </div>
+        <div class="debug-stats">
+          <div>Entidades: <span id="dbg-entities">0</span></div>
+          <div>Enemigos: <span id="dbg-enemies">0</span> | Balas: <span id="dbg-bullets">0</span></div>
+          <div>Partículas: <span id="dbg-particles">0</span> | Botín: <span id="dbg-loot">0</span></div>
+          <div>Piso: <span id="dbg-floor">1</span> | Sala: <span id="dbg-room">0,0</span></div>
+        </div>
+        <div class="debug-actions-grid">
+          <button id="dbg-btn-gold" type="button">+100 Oro</button>
+          <button id="dbg-btn-essence" type="button">+100 Esencia</button>
+          <button id="dbg-btn-level" type="button">+1 Nivel</button>
+          <button id="dbg-btn-god" type="button">Modo Dios</button>
+          <button id="dbg-btn-clear" type="button">Limpiar Sala</button>
+          <button id="dbg-btn-floor" type="button">Saltar Piso</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Scripts compartidos y módulos del juego -->
+  <script src="../../shared/storage.js"></script>
+  <script src="../../shared/canvas.js"></script>
+  <script src="../../shared/audio.js"></script>
+  <script src="config.js"></script>
+  <script src="spatial_hash.js"></script>
+  <script src="data/personajes.js"></script>
+  <script src="data/enemigos.js"></script>
+  <script src="data/mejoras.js"></script>
+  <script src="data/salas.js"></script>
+  <script src="data/meta.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>
