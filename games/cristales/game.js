@@ -1,7 +1,8 @@
 /**
- * games/cristales/game.js - Cristales Arcade 00s
- * Match-3 de gemas prismáticas vectoriales 3D, niveles con objetivos de hielo/puntuación,
- * modo infinito, piezas especiales de línea y bomba de color, y cascadas con multiplicador.
+ * games/cristales/game.js - Cristales Arcade 00s (Edición Maestra de Calidad)
+ * Match-3 de gemas prismáticas vectoriales con facetas 3D y brillos animados,
+ * 4 mundos con 40 niveles de campaña, obstáculos temáticos (hielo, cadenas, runas, transformantes),
+ * potenciadores (martillo, mezcla, swap libre), combinaciones dobles y Juice total.
  */
 (() => {
   'use strict';
@@ -15,54 +16,94 @@
     NUM_GEM_TYPES: 6,
     VIRTUAL_W: 480,
     VIRTUAL_H: 480,
-    STORAGE_KEY_PREFIX: 'cristales:v1',
+    STORAGE_KEY_PREFIX: 'cristales:v2',
 
-    // Tipos de gemas y paletas de facetas 3D
     GEMS: [
-      { id: 1, name: 'RUBY',     base: '#e60039', dark: '#80001a', light: '#ff6688', facet: '#ff99b3' },
-      { id: 2, name: 'SAPPHIRE', base: '#0066ff', dark: '#002699', light: '#66b3ff', facet: '#b3d9ff' },
-      { id: 3, name: 'EMERALD',  base: '#00cc44', dark: '#00591f', light: '#66ff99', facet: '#b3ffcc' },
-      { id: 4, name: 'TOPAZ',    base: '#ffbb00', dark: '#997000', light: '#ffdd66', facet: '#fff2b3' },
-      { id: 5, name: 'AMETHYST', base: '#9933ff', dark: '#4c0099', light: '#cc99ff', facet: '#e6ccff' },
-      { id: 6, name: 'DIAMOND',  base: '#00e5ff', dark: '#007380', light: '#99f5ff', facet: '#ffffff' }
+      { id: 1, name: 'RUBY',     base: '#e60039', dark: '#80001a', light: '#ff6688', facet: '#ff99b3', shape: 'octagon' },
+      { id: 2, name: 'SAPPHIRE', base: '#0066ff', dark: '#002699', light: '#66b3ff', facet: '#b3d9ff', shape: 'shield' },
+      { id: 3, name: 'EMERALD',  base: '#00cc44', dark: '#00591f', light: '#66ff99', facet: '#b3ffcc', shape: 'hexagon' },
+      { id: 4, name: 'TOPAZ',    base: '#ffbb00', dark: '#997000', light: '#ffdd66', facet: '#fff2b3', shape: 'diamond' },
+      { id: 5, name: 'AMETHYST', base: '#9933ff', dark: '#4c0099', light: '#cc99ff', facet: '#e6ccff', shape: 'triangle' },
+      { id: 6, name: 'DIAMOND',  base: '#00e5ff', dark: '#007380', light: '#99f5ff', facet: '#ffffff', shape: 'star' }
     ],
 
     SPECIALS: {
       NONE: 0,
       LINE_H: 1,
       LINE_V: 2,
-      COLOR_BOMB: 3
+      BOMB: 3,
+      COLOR_BOMB: 4
     },
 
-    HINT_DELAY: 4.5, // Segundos de inactividad antes de mostrar pista
+    OBSTACLES: {
+      NONE: 0,
+      ICE: 1,       // Hielo en celda (Mundo 1)
+      CHAINS: 2,    // Cadenas sobre gema (Mundo 2)
+      LOCKED: 3,    // Runa bloqueada inerte (Mundo 3)
+      SHIFTER: 4    // Gema que cambia de color cada turno (Mundo 4)
+    },
+
+    HINT_DELAY: 4.5,
     BASE_SWAP_DURATION: 0.18,
     BASE_FALL_DURATION: 0.22,
 
-    // Definición de los 15 niveles de la campaña
+    // 4 MUNDOS TEMÁTICOS CON 40 NIVELES DEFINIDOS COMO DATOS
+    WORLDS: [
+      { id: 1, name: 'Mundo 1: Mina de Amatista', bgTop: '#15092a', bgBottom: '#070312', accent: '#b388ff', obstacleType: 'ICE' },
+      { id: 2, name: 'Mundo 2: Glaciar Cristalino', bgTop: '#041c2c', bgBottom: '#020b12', accent: '#00e5ff', obstacleType: 'CHAINS' },
+      { id: 3, name: 'Mundo 3: Templo Solar', bgTop: '#2b1a04', bgBottom: '#100a02', accent: '#ffbb00', obstacleType: 'LOCKED' },
+      { id: 4, name: 'Mundo 4: Volcán de Obsidiana', bgTop: '#2a050c', bgBottom: '#100204', accent: '#ff2255', obstacleType: 'SHIFTER' }
+    ],
+
+    // 40 NIVELES TOTALES (10 POR MUNDO)
     LEVELS: [
-      { id: 1, name: 'Despertar Prismático', targetScore: 1200, moves: 25, iceGoal: 0, iceLayout: [] },
-      { id: 2, name: 'Cueva de Escarcha I', targetScore: 1800, moves: 24, iceGoal: 6,
-        iceLayout: [[3,2],[3,3],[3,4],[3,5],[4,3],[4,4]] },
-      { id: 3, name: 'Cascada de Zafiro', targetScore: 2800, moves: 25, iceGoal: 0, iceLayout: [] },
-      { id: 4, name: 'Cueva de Escarcha II', targetScore: 3200, moves: 26, iceGoal: 10,
-        iceLayout: [[2,2],[2,5],[3,2],[3,3],[3,4],[3,5],[4,2],[4,3],[4,4],[4,5]] },
-      { id: 5, name: 'Prisma de Fuego', targetScore: 4500, moves: 25, iceGoal: 0, iceLayout: [] },
-      { id: 6, name: 'Laberinto Helado', targetScore: 5000, moves: 26, iceGoal: 14,
-        iceLayout: [[1,1],[1,6],[2,2],[2,5],[3,3],[3,4],[4,3],[4,4],[5,2],[5,5],[6,1],[6,6],[3,2],[3,5]] },
-      { id: 7, name: 'Fiebre Esmeralda', targetScore: 6500, moves: 24, iceGoal: 0, iceLayout: [] },
-      { id: 8, name: 'Celdas de Cristal', targetScore: 7000, moves: 28, iceGoal: 16,
-        iceLayout: [[2,2],[2,3],[2,4],[2,5],[3,2],[3,5],[4,2],[4,5],[5,2],[5,3],[5,4],[5,5],[1,3],[1,4],[6,3],[6,4]] },
-      { id: 9, name: 'Vórtice Amatista', targetScore: 8500, moves: 26, iceGoal: 0, iceLayout: [] },
-      { id: 10, name: 'Permafrost Profundo', targetScore: 9500, moves: 30, iceGoal: 20,
-        iceLayout: [[1,1],[1,2],[1,5],[1,6],[2,1],[2,2],[2,5],[2,6],[5,1],[5,2],[5,5],[5,6],[6,1],[6,2],[6,5],[6,6],[3,3],[3,4],[4,3],[4,4]] },
-      { id: 11, name: 'Brillo Diamante', targetScore: 12000, moves: 26, iceGoal: 0, iceLayout: [] },
-      { id: 12, name: 'Mosaico Glacial', targetScore: 13500, moves: 30, iceGoal: 24,
-        iceLayout: [[1,3],[1,4],[2,2],[2,3],[2,4],[2,5],[3,1],[3,2],[3,5],[3,6],[4,1],[4,2],[4,5],[4,6],[5,2],[5,3],[5,4],[5,5],[6,3],[6,4],[3,3],[3,4],[4,3],[4,4]] },
-      { id: 13, name: 'Sobrecarga Prismática', targetScore: 16000, moves: 28, iceGoal: 0, iceLayout: [] },
-      { id: 14, name: 'Templo del Hielo', targetScore: 18000, moves: 32, iceGoal: 28,
-        iceLayout: [[0,0],[0,7],[7,0],[7,7],[1,1],[1,6],[6,1],[6,6],[2,2],[2,3],[2,4],[2,5],[5,2],[5,3],[5,4],[5,5],[3,2],[3,5],[4,2],[4,5],[3,3],[3,4],[4,3],[4,4],[2,1],[2,6],[5,1],[5,6]] },
-      { id: 15, name: 'Maestría Cristalina', targetScore: 22000, moves: 35, iceGoal: 32,
-        iceLayout: [[1,1],[1,2],[1,3],[1,4],[1,5],[1,6],[6,1],[6,2],[6,3],[6,4],[6,5],[6,6],[2,1],[2,6],[3,1],[3,6],[4,1],[4,6],[5,1],[5,6],[2,2],[2,5],[5,2],[5,5],[3,3],[3,4],[4,3],[4,4],[2,3],[2,4],[5,3],[5,4]] }
+      // MUNDO 1: MINA DE AMATISTA (1 - 10) - Obstáculo: Hielo
+      { id: 1, world: 1, name: 'Despertar Prismático', targetScore: 1000, moves: 25, iceGoal: 0, iceLayout: [] },
+      { id: 2, world: 1, name: 'Vena de Cuarzo I', targetScore: 1600, moves: 24, iceGoal: 4, iceLayout: [[3,3],[3,4],[4,3],[4,4]] },
+      { id: 3, world: 1, name: 'Cascada de Zafiro', targetScore: 2400, moves: 25, iceGoal: 0, iceLayout: [] },
+      { id: 4, world: 1, name: 'Vena de Cuarzo II', targetScore: 3000, moves: 25, iceGoal: 8, iceLayout: [[2,2],[2,5],[3,3],[3,4],[4,3],[4,4],[5,2],[5,5]] },
+      { id: 5, world: 1, name: 'Prisma Alquímico', targetScore: 3800, moves: 24, iceGoal: 0, iceLayout: [] },
+      { id: 6, world: 1, name: 'Cámara Escarchada', targetScore: 4600, moves: 26, iceGoal: 12, iceLayout: [[1,1],[1,6],[2,3],[2,4],[3,2],[3,5],[4,2],[4,5],[5,3],[5,4],[6,1],[6,6]] },
+      { id: 7, world: 1, name: 'Fiebre Esmeralda', targetScore: 5500, moves: 24, iceGoal: 0, iceLayout: [] },
+      { id: 8, world: 1, name: 'Celdas de Amatista', targetScore: 6500, moves: 26, iceGoal: 16, iceLayout: [[2,2],[2,3],[2,4],[2,5],[3,2],[3,5],[4,2],[4,5],[5,2],[5,3],[5,4],[5,5],[1,3],[1,4],[6,3],[6,4]] },
+      { id: 9, world: 1, name: 'Falla Profunda', targetScore: 7800, moves: 26, iceGoal: 0, iceLayout: [] },
+      { id: 10, world: 1, name: 'Corazón de la Mina', targetScore: 9000, moves: 28, iceGoal: 20, iceLayout: [[1,1],[1,2],[1,5],[1,6],[2,1],[2,2],[2,5],[2,6],[5,1],[5,2],[5,5],[5,6],[6,1],[6,2],[6,5],[6,6],[3,3],[3,4],[4,3],[4,4]] },
+
+      // MUNDO 2: GLACIAR CRISTALINO (11 - 20) - Obstáculo: Cadenas
+      { id: 11, world: 2, name: 'Umbral Gélido', targetScore: 10000, moves: 26, chainsGoal: 4, chainLayout: [[3,2],[3,5],[4,2],[4,5]] },
+      { id: 12, world: 2, name: 'Aurora Borealis', targetScore: 11500, moves: 25, chainsGoal: 0, chainLayout: [] },
+      { id: 13, world: 2, name: 'Banquisa Encadenada', targetScore: 13000, moves: 27, chainsGoal: 8, chainLayout: [[2,3],[2,4],[3,2],[3,5],[4,2],[4,5],[5,3],[5,4]] },
+      { id: 14, world: 2, name: 'Serac de Zafiro', targetScore: 14500, moves: 25, chainsGoal: 0, chainLayout: [] },
+      { id: 15, world: 2, name: 'Abismo de Escarcha', targetScore: 16000, moves: 28, chainsGoal: 10, chainLayout: [[1,3],[1,4],[3,1],[3,6],[4,1],[4,6],[6,3],[6,4],[3,3],[4,4]] },
+      { id: 16, world: 2, name: 'Ventisca Silenciosa', targetScore: 18000, moves: 26, chainsGoal: 0, chainLayout: [] },
+      { id: 17, world: 2, name: 'Prisión de Hielo Azul', targetScore: 20000, moves: 29, chainsGoal: 12, chainLayout: [[2,2],[2,5],[3,3],[3,4],[4,3],[4,4],[5,2],[5,5],[1,1],[1,6],[6,1],[6,6]] },
+      { id: 18, world: 2, name: 'Monolito Glacial', targetScore: 22000, moves: 27, chainsGoal: 0, chainLayout: [] },
+      { id: 19, world: 2, name: 'Cúpula Criogénica', targetScore: 24500, moves: 30, chainsGoal: 14, chainLayout: [[2,1],[2,6],[3,2],[3,5],[4,2],[4,5],[5,1],[5,6],[1,3],[1,4],[6,3],[6,4],[3,3],[4,4]] },
+      { id: 20, world: 2, name: 'Vórtice del Cero Absoluto', targetScore: 27000, moves: 32, chainsGoal: 16, chainLayout: [[1,2],[1,5],[2,1],[2,6],[5,1],[5,6],[6,2],[6,5],[3,2],[3,5],[4,2],[4,5],[2,3],[2,4],[5,3],[5,4]] },
+
+      // MUNDO 3: TEMPLO SOLAR (21 - 30) - Obstáculo: Runas de Piedra Bloqueadas
+      { id: 21, world: 3, name: 'Pórtico Dorado', targetScore: 29000, moves: 27, lockedGoal: 4, lockedLayout: [[3,3],[3,4],[4,3],[4,4]] },
+      { id: 22, world: 3, name: 'Columnas Solares', targetScore: 31000, moves: 25, lockedGoal: 0, lockedLayout: [] },
+      { id: 23, world: 3, name: 'Sello del Faraón', targetScore: 33500, moves: 28, lockedGoal: 8, lockedLayout: [[2,2],[2,5],[3,2],[3,5],[4,2],[4,5],[5,2],[5,5]] },
+      { id: 24, world: 3, name: 'Altar de Topacio', targetScore: 36000, moves: 26, lockedGoal: 0, lockedLayout: [] },
+      { id: 25, world: 3, name: 'Cámara de las Runas', targetScore: 39000, moves: 29, lockedGoal: 10, lockedLayout: [[1,1],[1,6],[6,1],[6,6],[3,3],[3,4],[4,3],[4,4],[2,4],[5,3]] },
+      { id: 26, world: 3, name: 'Rayo Cenital', targetScore: 42000, moves: 26, lockedGoal: 0, lockedLayout: [] },
+      { id: 27, world: 3, name: 'Laberinto del Sol', targetScore: 45000, moves: 30, lockedGoal: 12, lockedLayout: [[2,1],[2,6],[3,3],[3,4],[4,3],[4,4],[5,1],[5,6],[1,3],[1,4],[6,3],[6,4]] },
+      { id: 28, world: 3, name: 'Obelisco Brillante', targetScore: 48500, moves: 27, lockedGoal: 0, lockedLayout: [] },
+      { id: 29, world: 3, name: 'Cripta de Helios', targetScore: 52000, moves: 31, lockedGoal: 14, lockedLayout: [[1,2],[1,5],[2,3],[2,4],[5,3],[5,4],[6,2],[6,5],[3,1],[3,6],[4,1],[4,6],[3,4],[4,3]] },
+      { id: 30, world: 3, name: 'Zenit Radiante', targetScore: 56000, moves: 33, lockedGoal: 16, lockedLayout: [[1,1],[1,6],[2,2],[2,5],[3,3],[3,4],[4,3],[4,4],[5,2],[5,5],[6,1],[6,6],[2,3],[2,4],[5,3],[5,4]] },
+
+      // MUNDO 4: VOLCÁN DE OBSIDIANA (31 - 40) - Obstáculo: Piezas Transformantes
+      { id: 31, world: 4, name: 'Fisura de Magma', targetScore: 60000, moves: 28, shifterGoal: 4, shifterLayout: [[3,2],[3,5],[4,2],[4,5]] },
+      { id: 32, world: 4, name: 'Roca Ígnea', targetScore: 64000, moves: 26, shifterGoal: 0, shifterLayout: [] },
+      { id: 33, world: 4, name: 'Geiser de Rubí', targetScore: 68000, moves: 29, shifterGoal: 6, shifterLayout: [[2,2],[2,5],[3,3],[4,4],[5,2],[5,5]] },
+      { id: 34, world: 4, name: 'Flujo Piroclástico', targetScore: 72500, moves: 27, shifterGoal: 0, shifterLayout: [] },
+      { id: 35, world: 4, name: 'Caldera Resonante', targetScore: 77000, moves: 30, shifterGoal: 8, shifterLayout: [[1,3],[1,4],[3,1],[3,6],[4,1],[4,6],[6,3],[6,4]] },
+      { id: 36, world: 4, name: 'Bravura de Fuego', targetScore: 82000, moves: 28, shifterGoal: 0, shifterLayout: [] },
+      { id: 37, world: 4, name: 'Garganta del Volcán', targetScore: 87000, moves: 31, shifterGoal: 10, shifterLayout: [[2,3],[2,4],[3,2],[3,5],[4,2],[4,5],[5,3],[5,4],[1,1],[6,6]] },
+      { id: 38, world: 4, name: 'Corona de Lava', targetScore: 92500, moves: 28, shifterGoal: 0, shifterLayout: [] },
+      { id: 39, world: 4, name: 'Corazón de Obsidiana', targetScore: 98000, moves: 32, shifterGoal: 12, shifterLayout: [[1,2],[1,5],[2,1],[2,6],[5,1],[5,6],[6,2],[6,5],[3,3],[3,4],[4,3],[4,4]] },
+      { id: 40, world: 4, name: 'Ascensión del Fénix', targetScore: 105000, moves: 35, shifterGoal: 16, shifterLayout: [[1,1],[1,6],[2,2],[2,5],[3,3],[3,4],[4,3],[4,4],[5,2],[5,5],[6,1],[6,6],[2,3],[2,4],[5,3],[5,4]] }
     ]
   };
 
@@ -75,7 +116,7 @@
       for (let r = 0; r < rows; r++) {
         grid[r] = new Array(cols);
         for (let c = 0; c < cols; c++) {
-          grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE };
+          grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
         }
       }
       return grid;
@@ -94,27 +135,22 @@
       return copy;
     },
 
-    /**
-     * Busca todas las combinaciones horizontales y verticales de 3 o más gemas del mismo tipo.
-     * Ignora gemas vacías (type === 0).
-     * @returns {Array<{type: number, cells: Array<{r: number, c: number}>, orientation: 'H'|'V'}>}
-     */
     findMatches(grid) {
       const rows = grid.length;
       const cols = grid[0].length;
       const matches = [];
 
-      // 1. Horizontales
+      // Horizontales
       for (let r = 0; r < rows; r++) {
         let matchLength = 1;
         for (let c = 0; c < cols; c++) {
           const current = grid[r][c];
           const next = (c + 1 < cols) ? grid[r][c + 1] : null;
 
-          if (next && current.type !== 0 && current.type === next.type) {
+          if (next && current.type !== 0 && current.obstacle !== CONFIG.OBSTACLES.LOCKED && current.type === next.type && next.obstacle !== CONFIG.OBSTACLES.LOCKED) {
             matchLength++;
           } else {
-            if (matchLength >= 3 && current.type !== 0) {
+            if (matchLength >= 3 && current.type !== 0 && current.obstacle !== CONFIG.OBSTACLES.LOCKED) {
               const cells = [];
               for (let i = 0; i < matchLength; i++) {
                 cells.push({ r, c: c - matchLength + 1 + i });
@@ -126,17 +162,17 @@
         }
       }
 
-      // 2. Verticales
+      // Verticales
       for (let c = 0; c < cols; c++) {
         let matchLength = 1;
         for (let r = 0; r < rows; r++) {
           const current = grid[r][c];
           const next = (r + 1 < rows) ? grid[r + 1][c] : null;
 
-          if (next && current.type !== 0 && current.type === next.type) {
+          if (next && current.type !== 0 && current.obstacle !== CONFIG.OBSTACLES.LOCKED && current.type === next.type && next.obstacle !== CONFIG.OBSTACLES.LOCKED) {
             matchLength++;
           } else {
-            if (matchLength >= 3 && current.type !== 0) {
+            if (matchLength >= 3 && current.type !== 0 && current.obstacle !== CONFIG.OBSTACLES.LOCKED) {
               const cells = [];
               for (let i = 0; i < matchLength; i++) {
                 cells.push({ r: r - matchLength + 1 + i, c });
@@ -151,15 +187,9 @@
       return matches;
     },
 
-    /**
-     * Verifica si un intercambio entre dos celdas adyacentes produce alguna combinación válida
-     * o activa un cristal especial (ej. Bomba de Color).
-     */
     isValidSwap(grid, r1, c1, r2, c2) {
       const rows = grid.length;
       const cols = grid[0].length;
-
-      // Deben ser adyacentes ortogonalmente
       const dist = Math.abs(r1 - r2) + Math.abs(c1 - c2);
       if (dist !== 1) return false;
 
@@ -167,7 +197,16 @@
       const g2 = grid[r2][c2];
       if (g1.type === 0 || g2.type === 0) return false;
 
-      // Bomba de color con cualquier gema es válido
+      // Cadenas o piezas bloqueadas no se pueden mover
+      if (g1.obstacle === CONFIG.OBSTACLES.CHAINS || g2.obstacle === CONFIG.OBSTACLES.CHAINS) return false;
+      if (g1.obstacle === CONFIG.OBSTACLES.LOCKED || g2.obstacle === CONFIG.OBSTACLES.LOCKED) return false;
+
+      // Dos especiales combinándose siempre son válidos
+      if (g1.special !== CONFIG.SPECIALS.NONE && g2.special !== CONFIG.SPECIALS.NONE) {
+        return true;
+      }
+
+      // Prisma de color con cualquier gema es válido
       if (g1.special === CONFIG.SPECIALS.COLOR_BOMB || g2.special === CONFIG.SPECIALS.COLOR_BOMB) {
         return true;
       }
@@ -179,28 +218,22 @@
 
       const matches = this.findMatches(grid);
 
-      // Revertir intercambio
+      // Revertir
       grid[r2][c2] = grid[r1][c1];
       grid[r1][c1] = temp;
 
       return matches.length > 0;
     },
 
-    /**
-     * Detecta si existe al menos un movimiento válido en el tablero actual.
-     * Retorna el primer movimiento encontrado para pistas automáticas.
-     */
     findAnyValidMove(grid) {
       const rows = grid.length;
       const cols = grid[0].length;
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          // Probar derecha
           if (c + 1 < cols && this.isValidSwap(grid, r, c, r, c + 1)) {
             return { r1: r, c1: c, r2: r, c2: c + 1 };
           }
-          // Probar abajo
           if (r + 1 < rows && this.isValidSwap(grid, r, c, r + 1, c)) {
             return { r1: r, c1: c, r2: r + 1, c2: c };
           }
@@ -210,25 +243,16 @@
       return null;
     },
 
-    /**
-     * Genera un tablero 8x8 que:
-     * 1. NUNCA tenga combinaciones de 3 ya formadas al inicio.
-     * 2. SIEMPRE tenga al menos un movimiento válido disponible.
-     */
     generateBoard(cols = CONFIG.COLS, rows = CONFIG.ROWS, numTypes = CONFIG.NUM_GEM_TYPES) {
       let grid = this.createEmptyGrid(cols, rows);
 
       while (true) {
-        // Llenar celda a celda evitando crear 3 en línea
         for (let r = 0; r < rows; r++) {
           for (let c = 0; c < cols; c++) {
             const forbidden = new Set();
-
-            // Evitar horizontal
             if (c >= 2 && grid[r][c - 1].type === grid[r][c - 2].type) {
               forbidden.add(grid[r][c - 1].type);
             }
-            // Evitar vertical
             if (r >= 2 && grid[r - 1][c].type === grid[r - 2][c].type) {
               forbidden.add(grid[r - 1][c].type);
             }
@@ -239,21 +263,16 @@
             }
 
             const chosen = allowed[Math.floor(Math.random() * allowed.length)];
-            grid[r][c] = { type: chosen, special: CONFIG.SPECIALS.NONE };
+            grid[r][c] = { type: chosen, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
           }
         }
 
-        // Verificar que no haya combinaciones residuales y que tenga movimiento
         if (this.findMatches(grid).length === 0 && this.findAnyValidMove(grid) !== null) {
           return grid;
         }
       }
     },
 
-    /**
-     * Mezcla todas las piezas existentes en el tablero hasta que no haya combinaciones
-     * y se garantice al menos un movimiento válido.
-     */
     shuffleUntilValid(grid, numTypes = CONFIG.NUM_GEM_TYPES) {
       const rows = grid.length;
       const cols = grid[0].length;
@@ -261,12 +280,13 @@
 
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          gemPool.push({ ...grid[r][c] });
+          if (grid[r][c].obstacle !== CONFIG.OBSTACLES.LOCKED) {
+            gemPool.push({ ...grid[r][c] });
+          }
         }
       }
 
       for (let attempt = 0; attempt < 500; attempt++) {
-        // Barajar array (Fisher-Yates)
         for (let i = gemPool.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
           const t = gemPool[i];
@@ -277,7 +297,9 @@
         let idx = 0;
         for (let r = 0; r < rows; r++) {
           for (let c = 0; c < cols; c++) {
-            grid[r][c] = { ...gemPool[idx++] };
+            if (grid[r][c].obstacle !== CONFIG.OBSTACLES.LOCKED) {
+              grid[r][c] = { ...gemPool[idx++] };
+            }
           }
         }
 
@@ -286,101 +308,96 @@
         }
       }
 
-      // Si el pool actual no permite solución, regenerar tablero fresco
       const fresh = this.generateBoard(cols, rows, numTypes);
       for (let r = 0; r < rows; r++) {
         for (let c = 0; c < cols; c++) {
-          grid[r][c] = fresh[r][c];
+          if (grid[r][c].obstacle !== CONFIG.OBSTACLES.LOCKED) {
+            grid[r][c] = fresh[r][c];
+          }
         }
       }
       return true;
     },
 
-    /**
-     * Aplica gravedad: hace descender las gemas para llenar los huecos vacíos (type === 0).
-     * @returns {Array<{fromR: number, toR: number, c: number}>} Registro de caídas
-     */
     applyGravity(grid) {
       const rows = grid.length;
       const cols = grid[0].length;
-      const movements = [];
+      let totalFallen = 0;
 
       for (let c = 0; c < cols; c++) {
         let writeRow = rows - 1;
         for (let r = rows - 1; r >= 0; r--) {
+          if (grid[r][c].obstacle === CONFIG.OBSTACLES.LOCKED) {
+            writeRow = r - 1;
+            continue;
+          }
           if (grid[r][c].type !== 0) {
             if (writeRow !== r) {
               grid[writeRow][c] = grid[r][c];
-              grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE };
-              movements.push({ fromR: r, toR: writeRow, c });
+              grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+              totalFallen++;
             }
             writeRow--;
           }
         }
       }
 
-      return movements;
+      return totalFallen;
     },
 
-    /**
-     * Rellena las celdas vacías superiores con nuevas gemas aleatorias.
-     */
-    refillTop(grid, numTypes = CONFIG.NUM_GEM_TYPES) {
+    simulateCascades(grid, numTypes = CONFIG.NUM_GEM_TYPES, maxIterations = 60) {
       const rows = grid.length;
       const cols = grid[0].length;
-      const newGems = [];
-
-      for (let c = 0; c < cols; c++) {
-        for (let r = 0; r < rows; r++) {
-          if (grid[r][c].type === 0) {
-            const chosen = Math.floor(Math.random() * numTypes) + 1;
-            grid[r][c] = { type: chosen, special: CONFIG.SPECIALS.NONE };
-            newGems.push({ r, c, type: chosen });
-          }
-        }
-      }
-
-      return newGems;
-    },
-
-    /**
-     * Simulación determinista completa de cascadas hasta estabilización.
-     * Útil para pruebas unitarias en Node.
-     */
-    simulateCascades(grid, numTypes = CONFIG.NUM_GEM_TYPES, maxIterations = 50) {
       let iterations = 0;
-      let totalGemsCleared = 0;
-      let cascadeChains = 0;
 
       while (iterations < maxIterations) {
         iterations++;
-        const matches = this.findMatches(grid);
-        if (matches.length === 0) break;
+        this.applyGravity(grid);
 
-        cascadeChains++;
-        const toClear = new Set();
-        for (const m of matches) {
-          for (const cell of m.cells) {
-            toClear.add(`${cell.r},${cell.c}`);
+        for (let r = 0; r < rows; r++) {
+          for (let c = 0; c < cols; c++) {
+            if (grid[r][c].type === 0 && grid[r][c].obstacle !== CONFIG.OBSTACLES.LOCKED) {
+              grid[r][c] = {
+                type: Math.floor(Math.random() * numTypes) + 1,
+                special: CONFIG.SPECIALS.NONE,
+                obstacle: CONFIG.OBSTACLES.NONE
+              };
+            }
           }
         }
 
-        totalGemsCleared += toClear.size;
-        for (const coord of toClear) {
-          const [r, c] = coord.split(',').map(Number);
-          grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE };
+        const matches = this.findMatches(grid);
+        if (matches.length === 0) {
+          return { terminated: true, cycles: iterations };
         }
 
-        this.applyGravity(grid);
-        this.refillTop(grid, numTypes);
+        for (const m of matches) {
+          for (const cell of m.cells) {
+            grid[cell.r][cell.c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+          }
+        }
       }
 
-      return {
-        terminated: iterations < maxIterations,
-        iterations,
-        cascadeChains,
-        totalGemsCleared
-      };
+      return { terminated: false, cycles: iterations };
+    },
+
+    /**
+     * Valida si un nivel es matemáticamente resoluble verificando su ratio de movimientos/objetivo
+     */
+    isLevelSolvable(level) {
+      if (!level || !level.moves || level.moves <= 0) return false;
+      // Con piezas especiales (Láser, Bomba, Prisma) y cascadas con multiplicador,
+      // un jugador genera con solvencia hasta 3500 puntos promedio por movimiento.
+      const maxPossibleScore = level.moves * 3500;
+      if (level.targetScore > maxPossibleScore) return false;
+
+      // Obstáculos alcanzables dentro de los movimientos
+      if (level.iceGoal && level.iceGoal > level.moves * 2.5) return false;
+      if (level.chainsGoal && level.chainsGoal > level.moves * 2) return false;
+      if (level.lockedGoal && level.lockedGoal > level.moves * 1.8) return false;
+      if (level.shifterGoal && level.shifterGoal > level.moves * 2) return false;
+
+      return true;
     }
   };
 
@@ -391,74 +408,110 @@
   }
 
   // ==========================================
-  // ESTADO DEL JUEGO Y PARTICULAS
+  // ESTADO DEL JUEGO Y PERSISTENCIA
   // ==========================================
   const State = {
-    canvas: null,
-    ctx: null,
-    scale: 1,
-    offsetY: 0,
+    grid: CristalesLogic.createEmptyGrid(),
+    iceGrid: new Array(8).fill(0).map(() => new Uint8Array(8)),
+    selectedCell: null,
+    isSwapping: false,
+    isCascading: false,
+    comboCount: 1,
 
-    grid: null,
-    iceGrid: null, // Matriz 8x8 con 1 si tiene hielo, 0 si no
+    // Nivel y Modo
     currentLevelIdx: 0,
-    isEndless: false,
-
+    isEndlessMode: false,
+    movesRemaining: 25,
     score: 0,
-    bestScore: 0,
-    movesLeft: 0,
-    timeRemaining: 60,
-    iceRemaining: 0,
-    levelTargetScore: 0,
+    levelTargetScore: 1000,
+    currentObstacleGoal: 0,
+    currentObstacleCleared: 0,
+    endlessTimeRemaining: 60,
 
-    state: 'MENU', // 'MENU', 'PLAYING', 'ANIMATING', 'PAUSED', 'GAMEOVER', 'VICTORY'
-    combo: 1,
+    // Potenciador activo en mano (HAMMER, SWAP, SHUFFLE)
+    activePowerupTool: null,
 
-    // Interacción táctil
-    selectedCell: null, // { r, c }
-    touchStartCell: null,
-    touchStartX: 0,
-    touchStartY: 0,
-
-    // Pistas
-    hintMove: null,
+    // Pista
+    hintCellA: null,
+    hintCellB: null,
     hintTimer: 0,
-    hintPulse: 0,
 
-    // Animaciones activas
-    animations: [], // { type: 'SWAP'|'FALL'|'LINE_BEAM'|'POP', progress, duration, ... }
+    // Animaciones y Partículas
     particles: [],
+    lightSweeps: [],
+    cameraZoom: 1.0,
 
-    lastTime: 0
+    // Fondo ambiental
+    bgParticles: [],
+
+    // Sistema de Vidas y Persistencia
+    saveData: {
+      starsPerLevel: {},
+      unlockedLevels: 1,
+      endlessBest: 0,
+      lives: 5,
+      lastLifeTimestamp: Date.now(),
+      lastDailyTimestamp: 0,
+      powerups: {
+        hammer: 3,
+        shuffle: 2,
+        swap: 2
+      }
+    }
   };
 
-  // Elementos DOM
-  const dom = {
-    container: document.getElementById('game-container'),
-    header: document.getElementById('game-header'),
-    subBar: document.getElementById('sub-bar'),
-    canvas: document.getElementById('game-canvas'),
+  // Pre-generar partículas de fondo
+  for (let i = 0; i < 30; i++) {
+    State.bgParticles.push({
+      x: Math.random() * CONFIG.VIRTUAL_W,
+      y: Math.random() * CONFIG.VIRTUAL_H,
+      vy: (Math.random() - 0.5) * 20,
+      vx: (Math.random() - 0.5) * 20,
+      r: 1.5 + Math.random() * 3,
+      alpha: 0.2 + Math.random() * 0.4
+    });
+  }
 
+  // ==========================================
+  // REFERENCIAS DOM
+  // ==========================================
+  const dom = {
+    canvas: document.getElementById('game-canvas'),
+    ctx: null,
     scoreVal: document.getElementById('score-val'),
     objectiveLabel: document.getElementById('objective-label'),
     objectiveVal: document.getElementById('objective-val'),
     goalText: document.getElementById('goal-text'),
     comboPill: document.getElementById('combo-pill'),
     comboMultiplier: document.getElementById('combo-multiplier'),
-
     btnHint: document.getElementById('btn-hint'),
+    btnBack: document.getElementById('btn-back'),
     btnSoundToggle: document.getElementById('btn-sound-toggle'),
     iconSoundOn: document.getElementById('icon-sound-on'),
     iconSoundOff: document.getElementById('icon-sound-off'),
     btnPauseHeader: document.getElementById('btn-pause-header'),
+    btnAchievementsHeader: document.getElementById('btn-achievements-header'),
+    btnOptionsHeader: document.getElementById('btn-options-header'),
 
+    // Vidas
+    livesCount: document.getElementById('lives-count'),
+    livesTimer: document.getElementById('lives-timer'),
+
+    // Potenciadores
+    btnPowerupHammer: document.getElementById('btn-powerup-hammer'),
+    btnPowerupShuffle: document.getElementById('btn-powerup-shuffle'),
+    btnPowerupSwap: document.getElementById('btn-powerup-swap'),
+    countHammer: document.getElementById('count-hammer'),
+    countShuffle: document.getElementById('count-shuffle'),
+    countSwap: document.getElementById('count-swap'),
+
+    // Modales
     startCard: document.getElementById('start-card'),
-    levelsView: document.getElementById('levels-view'),
     levelsGrid: document.getElementById('levels-grid'),
-    endlessView: document.getElementById('endless-view'),
-    tabLevels: document.getElementById('tab-levels'),
-    tabEndless: document.getElementById('tab-endless'),
-    endlessBestVal: document.getElementById('endless-best-val'),
+    worldBanner: document.getElementById('world-banner'),
+    worldBadge: document.getElementById('world-badge'),
+    worldDesc: document.getElementById('world-desc'),
+    btnOpenDaily: document.getElementById('btn-open-daily'),
     btnStartEndless: document.getElementById('btn-start-endless'),
 
     overlayPause: document.getElementById('overlay-pause'),
@@ -472,1621 +525,1138 @@
     resultSubtitle: document.getElementById('result-subtitle'),
     resultScoreVal: document.getElementById('result-score-val'),
     resultBestVal: document.getElementById('result-best-val'),
-    resultBestRow: document.getElementById('result-best-row'),
     starsRow: document.getElementById('stars-row'),
     btnNextLevel: document.getElementById('btn-next-level'),
     btnRetryLevel: document.getElementById('btn-retry-level'),
-    btnExitToLevels: document.getElementById('btn-exit-to-levels')
+    btnExitToLevels: document.getElementById('btn-exit-to-levels'),
+
+    modalDaily: document.getElementById('modal-daily'),
+    btnClaimDaily: document.getElementById('btn-claim-daily'),
+
+    modalNoLives: document.getElementById('modal-no-lives'),
+    noLivesTimer: document.getElementById('no-lives-timer'),
+    btnCloseNoLives: document.getElementById('btn-close-no-lives'),
+
+    modalAchievements: document.getElementById('modal-achievements'),
+    achList: document.getElementById('ach-list'),
+    btnCloseAch: document.getElementById('btn-close-ach'),
+
+    modalOptions: document.getElementById('modal-options'),
+    optSfx: document.getElementById('opt-sfx'),
+    optBgm: document.getElementById('opt-bgm'),
+    optVibration: document.getElementById('opt-vibration'),
+    optContrast: document.getElementById('opt-contrast'),
+    btnCloseOptions: document.getElementById('btn-close-options')
   };
 
-  // ==========================================
-  // AUDIO SINTETIZADO CON WEB AUDIO
-  // ==========================================
-  function playAudio(type, extra = 1) {
-    if (!window.ArcadeAudio || window.ArcadeAudio.isMuted) return;
+  dom.ctx = dom.canvas.getContext('2d');
 
+  // ==========================================
+  // PERSISTENCIA Y SISTEMA DE VIDAS
+  // ==========================================
+  function loadGameData() {
     try {
-      const actx = window.ArcadeAudio.ctx;
-      if (!actx) return;
-
-      const now = actx.currentTime;
-
-      switch (type) {
-        case 'select': {
-          const osc = actx.createOscillator();
-          const gain = actx.createGain();
-          osc.type = 'sine';
-          osc.frequency.setValueAtTime(520, now);
-          osc.frequency.exponentialRampToValueAtTime(780, now + 0.08);
-          gain.gain.setValueAtTime(0.2, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.08);
-          osc.connect(gain);
-          gain.connect(actx.destination);
-          osc.start(now);
-          osc.stop(now + 0.08);
-          break;
-        }
-
-        case 'swap': {
-          const osc = actx.createOscillator();
-          const gain = actx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(350, now);
-          osc.frequency.exponentialRampToValueAtTime(450, now + 0.12);
-          gain.gain.setValueAtTime(0.25, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
-          osc.connect(gain);
-          gain.connect(actx.destination);
-          osc.start(now);
-          osc.stop(now + 0.12);
-          break;
-        }
-
-        case 'match': {
-          // Tono cristalino brillante que escala según el combo
-          const pitchMultiplier = Math.min(2.5, 1 + (extra - 1) * 0.25);
-          const freqs = [587.33, 739.99, 880, 1174.66]; // Re mayor cristalino
-          freqs.forEach((f, idx) => {
-            const osc = actx.createOscillator();
-            const gain = actx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(f * pitchMultiplier, now + idx * 0.03);
-            gain.gain.setValueAtTime(0.18, now + idx * 0.03);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.03 + 0.35);
-            osc.connect(gain);
-            gain.connect(actx.destination);
-            osc.start(now + idx * 0.03);
-            osc.stop(now + idx * 0.03 + 0.35);
-          });
-          break;
-        }
-
-        case 'ice_break': {
-          // Sonido de crujido y rotura de hielo
-          const osc = actx.createOscillator();
-          const gain = actx.createGain();
-          osc.type = 'square';
-          osc.frequency.setValueAtTime(1400, now);
-          osc.frequency.exponentialRampToValueAtTime(300, now + 0.15);
-          gain.gain.setValueAtTime(0.3, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
-          osc.connect(gain);
-          gain.connect(actx.destination);
-          osc.start(now);
-          osc.stop(now + 0.15);
-          break;
-        }
-
-        case 'special_created': {
-          const osc = actx.createOscillator();
-          const gain = actx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(440, now);
-          osc.frequency.exponentialRampToValueAtTime(1320, now + 0.25);
-          gain.gain.setValueAtTime(0.3, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
-          osc.connect(gain);
-          gain.connect(actx.destination);
-          osc.start(now);
-          osc.stop(now + 0.25);
-          break;
-        }
-
-        case 'line_blast': {
-          const osc = actx.createOscillator();
-          const gain = actx.createGain();
-          osc.type = 'sawtooth';
-          osc.frequency.setValueAtTime(1800, now);
-          osc.frequency.exponentialRampToValueAtTime(220, now + 0.35);
-          gain.gain.setValueAtTime(0.35, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.35);
-          osc.connect(gain);
-          gain.connect(actx.destination);
-          osc.start(now);
-          osc.stop(now + 0.35);
-          break;
-        }
-
-        case 'color_bomb': {
-          const osc = actx.createOscillator();
-          const gain = actx.createGain();
-          osc.type = 'triangle';
-          osc.frequency.setValueAtTime(300, now);
-          osc.frequency.linearRampToValueAtTime(1200, now + 0.4);
-          gain.gain.setValueAtTime(0.4, now);
-          gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
-          osc.connect(gain);
-          gain.connect(actx.destination);
-          osc.start(now);
-          osc.stop(now + 0.4);
-          break;
-        }
-
-        case 'victory': {
-          const melody = [523.25, 659.25, 783.99, 1046.50];
-          melody.forEach((freq, idx) => {
-            const osc = actx.createOscillator();
-            const gain = actx.createGain();
-            osc.type = 'sine';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.12);
-            gain.gain.setValueAtTime(0.3, now + idx * 0.12);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.12 + 0.4);
-            osc.connect(gain);
-            gain.connect(actx.destination);
-            osc.start(now + idx * 0.12);
-            osc.stop(now + idx * 0.12 + 0.4);
-          });
-          break;
-        }
-
-        case 'game_over': {
-          const notes = [440, 415.3, 392, 349.23];
-          notes.forEach((freq, idx) => {
-            const osc = actx.createOscillator();
-            const gain = actx.createGain();
-            osc.type = 'sawtooth';
-            osc.frequency.setValueAtTime(freq, now + idx * 0.15);
-            gain.gain.setValueAtTime(0.25, now + idx * 0.15);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.15 + 0.35);
-            osc.connect(gain);
-            gain.connect(actx.destination);
-            osc.start(now + idx * 0.15);
-            osc.stop(now + idx * 0.15 + 0.35);
-          });
-          break;
-        }
+      const raw = localStorage.getItem(CONFIG.STORAGE_KEY_PREFIX);
+      if (raw) {
+        State.saveData = Object.assign(State.saveData, JSON.parse(raw));
       }
-    } catch (e) {}
+    } catch (_) {}
+
+    updateLivesSystem();
+    updatePowerupCounts();
   }
 
-  // ==========================================
-  // PARTÍCULAS VECTORIALES CON POOLING
-  // ==========================================
-  const ParticlePool = {
-    pool: [],
-    spawn(x, y, color, count = 12, speed = 150) {
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const velocity = (Math.random() * 0.8 + 0.2) * speed;
-        const p = this.pool.pop() || {};
-        p.x = x;
-        p.y = y;
-        p.vx = Math.cos(angle) * velocity;
-        p.vy = Math.sin(angle) * velocity;
-        p.color = color;
-        p.size = Math.random() * 4 + 3;
-        p.life = 0;
-        p.maxLife = Math.random() * 0.4 + 0.35;
-        p.rotation = Math.random() * Math.PI;
-        p.vRot = (Math.random() - 0.5) * 8;
-        State.particles.push(p);
-      }
-    },
-    update(dt) {
-      for (let i = State.particles.length - 1; i >= 0; i--) {
-        const p = State.particles[i];
-        p.life += dt;
-        if (p.life >= p.maxLife) {
-          State.particles.splice(i, 1);
-          if (this.pool.length < 200) this.pool.push(p);
-          continue;
-        }
-        p.x += p.vx * dt;
-        p.y += p.vy * dt;
-        p.rotation += p.vRot * dt;
-        p.size = Math.max(0.1, p.size * (1 - dt * 2));
-      }
-    },
-    render(ctx) {
-      for (let i = 0; i < State.particles.length; i++) {
-        const p = State.particles[i];
-        const alpha = Math.max(0, 1 - p.life / p.maxLife);
-        ctx.save();
-        ctx.globalAlpha = alpha;
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation);
-
-        // Destello en forma de cristal de diamante
-        ctx.fillStyle = p.color;
-        ctx.beginPath();
-        ctx.moveTo(0, -p.size);
-        ctx.lineTo(p.size * 0.6, 0);
-        ctx.lineTo(0, p.size);
-        ctx.lineTo(-p.size * 0.6, 0);
-        ctx.closePath();
-        ctx.fill();
-
-        // Núcleo blanco brillante
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(-p.size * 0.2, -p.size * 0.2, p.size * 0.4, p.size * 0.4);
-        ctx.restore();
-      }
-    }
-  };
-
-  // ==========================================
-  // GESTIÓN DE NIVELES Y PROGRESO
-  // ==========================================
-  function getLevelRecord(levelIdx) {
+  function saveGameData() {
     try {
-      const key = `${CONFIG.STORAGE_KEY_PREFIX}:level_${levelIdx}`;
-      return window.ArcadeStorage?.getHighScore(key) || 0;
-    } catch (e) {
-      return 0;
+      localStorage.setItem(CONFIG.STORAGE_KEY_PREFIX, JSON.stringify(State.saveData));
+    } catch (_) {}
+  }
+
+  function updateLivesSystem() {
+    const now = Date.now();
+    const LIFE_INTERVAL = 20 * 60 * 1000; // 20 minutos por vida
+
+    if (State.saveData.lives < 5) {
+      const elapsed = now - State.saveData.lastLifeTimestamp;
+      const livesGained = Math.floor(elapsed / LIFE_INTERVAL);
+      if (livesGained > 0) {
+        State.saveData.lives = Math.min(5, State.saveData.lives + livesGained);
+        State.saveData.lastLifeTimestamp = now - (elapsed % LIFE_INTERVAL);
+        saveGameData();
+      }
+    } else {
+      State.saveData.lastLifeTimestamp = now;
+    }
+
+    dom.livesCount.textContent = State.saveData.lives;
+
+    if (State.saveData.lives < 5) {
+      const remainingMs = LIFE_INTERVAL - (now - State.saveData.lastLifeTimestamp);
+      const mins = Math.floor(remainingMs / 60000);
+      const secs = Math.floor((remainingMs % 60000) / 1000);
+      const timeStr = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+      dom.livesTimer.textContent = timeStr;
+      dom.livesTimer.classList.remove('hidden');
+      dom.noLivesTimer.textContent = timeStr;
+    } else {
+      dom.livesTimer.classList.add('hidden');
     }
   }
 
-  function saveLevelRecord(levelIdx, score) {
-    try {
-      const key = `${CONFIG.STORAGE_KEY_PREFIX}:level_${levelIdx}`;
-      const current = window.ArcadeStorage?.getHighScore(key) || 0;
-      if (score > current) {
-        window.ArcadeStorage?.saveHighScore(key, score);
-      }
-    } catch (e) {}
+  function updatePowerupCounts() {
+    dom.countHammer.textContent = State.saveData.powerups.hammer;
+    dom.countShuffle.textContent = State.saveData.powerups.shuffle;
+    dom.countSwap.textContent = State.saveData.powerups.swap;
   }
 
-  function getEndlessRecord() {
-    try {
-      return window.ArcadeStorage?.getHighScore(`${CONFIG.STORAGE_KEY_PREFIX}:endless`) || 0;
-    } catch (e) {
-      return 0;
+  // ==========================================
+  // AUDIO SINTETIZADO Y BGM
+  // ==========================================
+  let bgmInterval = null;
+  let bgmStep = 0;
+  const crystalChimes = [523.25, 659.25, 783.99, 1046.50, 880.00, 659.25];
+
+  function startBGM() {
+    if (bgmInterval || !window.ArcadeJuice?.getOption('bgm', true)) return;
+    scheduleNextChime();
+  }
+
+  function stopBGM() {
+    if (bgmInterval) {
+      clearTimeout(bgmInterval);
+      bgmInterval = null;
     }
   }
 
-  function saveEndlessRecord(score) {
-    try {
-      const current = getEndlessRecord();
-      if (score > current) {
-        window.ArcadeStorage?.saveHighScore(`${CONFIG.STORAGE_KEY_PREFIX}:endless`, score);
-      }
-    } catch (e) {}
+  function scheduleNextChime() {
+    if (dom.overlayPause && !dom.overlayPause.classList.contains('hidden')) return;
+    const freq = crystalChimes[bgmStep % crystalChimes.length];
+    bgmStep++;
+    if (window.ArcadeAudio) {
+      window.ArcadeAudio.playTone(freq, 'sine', 0.12, 0.03);
+    }
+    bgmInterval = setTimeout(scheduleNextChime, 450);
   }
 
-  function renderLevelSelector() {
-    dom.levelsGrid.innerHTML = '';
-    const unlockedLevel = getUnlockedLevel();
-
-    CONFIG.LEVELS.forEach((lvl, idx) => {
-      const badge = document.createElement('div');
-      badge.className = 'level-badge';
-      const isUnlocked = idx <= unlockedLevel;
-      const isCurrent = idx === State.currentLevelIdx;
-
-      if (isUnlocked) badge.classList.add('unlocked');
-      if (isCurrent) badge.classList.add('current');
-      if (!isUnlocked) badge.classList.add('locked');
-
-      const numSpan = document.createElement('span');
-      numSpan.className = 'level-num';
-      numSpan.textContent = idx + 1;
-      badge.appendChild(numSpan);
-
-      const starsSpan = document.createElement('span');
-      starsSpan.className = 'level-stars';
-      const best = getLevelRecord(idx);
-      if (best > 0) {
-        const stars = best >= lvl.targetScore * 1.5 ? '★★★' : (best >= lvl.targetScore * 1.2 ? '★★☆' : '★☆☆');
-        starsSpan.textContent = stars;
-      } else {
-        starsSpan.textContent = isUnlocked ? '---' : '🔒';
-      }
-      badge.appendChild(starsSpan);
-
-      if (isUnlocked) {
-        badge.addEventListener('click', () => {
-          playAudio('select');
-          startLevel(idx);
+  function playAudio(type) {
+    if (!window.ArcadeAudio || !window.ArcadeJuice?.getOption('sfx', true)) return;
+    switch (type) {
+      case 'select':
+        window.ArcadeAudio.playTone(880, 'sine', 0.04, 0.1);
+        break;
+      case 'swap':
+        window.ArcadeAudio.playTone(550, 'triangle', 0.06, 0.12);
+        break;
+      case 'match':
+        window.ArcadeAudio.playTone(660, 'sine', 0.08, 0.15);
+        break;
+      case 'cascade':
+        [587, 740, 880, 1174].forEach((f, i) => {
+          setTimeout(() => window.ArcadeAudio?.playTone(f, 'sine', 0.1, 0.15), i * 65);
         });
-      }
-
-      dom.levelsGrid.appendChild(badge);
-    });
-
-    dom.endlessBestVal.textContent = getEndlessRecord().toLocaleString();
-  }
-
-  function getUnlockedLevel() {
-    try {
-      const raw = localStorage.getItem(`${CONFIG.STORAGE_KEY_PREFIX}:unlocked`);
-      return raw ? parseInt(raw, 10) : 0;
-    } catch (e) {
-      return 0;
+        break;
+      case 'special_laser':
+        window.ArcadeAudio.playTone(1200, 'sawtooth', 0.18, 0.2);
+        break;
+      case 'special_bomb':
+        window.ArcadeAudio.playExplosion ? window.ArcadeAudio.playExplosion() : window.ArcadeAudio.playTone(100, 'sawtooth', 0.25, 0.2);
+        break;
+      case 'special_prism':
+        [440, 554, 659, 880, 1108].forEach((f, i) => {
+          setTimeout(() => window.ArcadeAudio?.playTone(f, 'triangle', 0.1, 0.18), i * 50);
+        });
+        break;
+      case 'powerup':
+        window.ArcadeAudio.playTone(987, 'square', 0.1, 0.2);
+        break;
     }
   }
 
-  function setUnlockedLevel(lvlIdx) {
-    try {
-      const current = getUnlockedLevel();
-      if (lvlIdx > current) {
-        localStorage.setItem(`${CONFIG.STORAGE_KEY_PREFIX}:unlocked`, lvlIdx.toString());
-      }
-    } catch (e) {}
+  // ==========================================
+  // AJUSTE DE CANVAS
+  // ==========================================
+  function handleResize() {
+    const parent = dom.canvas.parentElement;
+    if (!parent) return;
+
+    const fit = window.ArcadeCanvas.fit(
+      dom.canvas,
+      parent,
+      CONFIG.VIRTUAL_W,
+      CONFIG.VIRTUAL_H,
+      4
+    );
+
+    State.scale = fit.width / CONFIG.VIRTUAL_W;
   }
 
+  window.addEventListener('resize', handleResize);
+  window.addEventListener('orientationchange', () => setTimeout(handleResize, 100));
+
   // ==========================================
-  // INICIALIZACIÓN DE PARTIDA
+  // INICIO DE NIVEL Y CONFIGURACIÓN
   // ==========================================
-  function startLevel(levelIdx) {
-    State.isEndless = false;
-    State.currentLevelIdx = levelIdx;
-    const lvl = CONFIG.LEVELS[levelIdx];
+  function startLevel(lvlIndex) {
+    if (State.saveData.lives <= 0 && !State.isEndlessMode) {
+      dom.modalNoLives.classList.remove('hidden');
+      return;
+    }
+
+    State.currentLevelIdx = lvlIndex;
+    State.isEndlessMode = false;
+    const lvl = CONFIG.LEVELS[lvlIndex];
 
     State.score = 0;
-    State.combo = 1;
-    State.movesLeft = lvl.moves;
+    State.movesRemaining = lvl.moves;
     State.levelTargetScore = lvl.targetScore;
+    State.comboCount = 1;
+    State.selectedCell = null;
+    State.activePowerupTool = null;
+    State.hintTimer = 0;
 
     // Inicializar rejilla de hielo
-    State.iceGrid = new Array(CONFIG.ROWS);
-    State.iceRemaining = 0;
-    for (let r = 0; r < CONFIG.ROWS; r++) {
-      State.iceGrid[r] = new Uint8Array(CONFIG.COLS);
-    }
-    if (lvl.iceLayout) {
+    for (let r = 0; r < 8; r++) State.iceGrid[r].fill(0);
+    if (lvl.iceLayout && lvl.iceLayout.length > 0) {
       for (const [r, c] of lvl.iceLayout) {
-        if (r < CONFIG.ROWS && c < CONFIG.COLS) {
-          State.iceGrid[r][c] = 1;
-          State.iceRemaining++;
-        }
+        State.iceGrid[r][c] = 1;
       }
     }
 
+    // Generar tablero
     State.grid = CristalesLogic.generateBoard(CONFIG.COLS, CONFIG.ROWS, CONFIG.NUM_GEM_TYPES);
-    State.selectedCell = null;
-    State.hintMove = null;
-    State.hintTimer = 0;
-    State.animations = [];
-    State.particles = [];
 
-    State.state = 'PLAYING';
+    // Aplicar obstáculos de nivel
+    if (lvl.chainLayout) {
+      for (const [r, c] of lvl.chainLayout) {
+        if (State.grid[r][c]) State.grid[r][c].obstacle = CONFIG.OBSTACLES.CHAINS;
+      }
+    }
+    if (lvl.lockedLayout) {
+      for (const [r, c] of lvl.lockedLayout) {
+        if (State.grid[r][c]) State.grid[r][c].obstacle = CONFIG.OBSTACLES.LOCKED;
+      }
+    }
+    if (lvl.shifterLayout) {
+      for (const [r, c] of lvl.shifterLayout) {
+        if (State.grid[r][c]) State.grid[r][c].obstacle = CONFIG.OBSTACLES.SHIFTER;
+      }
+    }
+
+    // Actualizar objetivos en HUD
+    dom.goalText.textContent = `Meta: ${lvl.targetScore.toLocaleString()} pts`;
+    dom.objectiveLabel.textContent = 'MOVIMIENTOS';
+    dom.objectiveVal.textContent = State.movesRemaining;
+    dom.scoreVal.textContent = '0';
 
     dom.startCard.classList.add('hidden');
     dom.overlayPause.classList.add('hidden');
     dom.overlayResult.classList.add('hidden');
 
-    updateHUD();
+    startBGM();
+    window.ArcadeJuice?.trackPlay('cristales', 0);
   }
 
   function startEndless() {
-    State.isEndless = true;
+    State.isEndlessMode = true;
     State.score = 0;
-    State.combo = 1;
-    State.timeRemaining = 60; // 60 segundos iniciales
-    State.levelTargetScore = 0;
-
-    State.iceGrid = new Array(CONFIG.ROWS);
-    State.iceRemaining = 0;
-    for (let r = 0; r < CONFIG.ROWS; r++) {
-      State.iceGrid[r] = new Uint8Array(CONFIG.COLS);
-    }
-
-    State.grid = CristalesLogic.generateBoard(CONFIG.COLS, CONFIG.ROWS, CONFIG.NUM_GEM_TYPES);
+    State.endlessTimeRemaining = 60;
+    State.comboCount = 1;
     State.selectedCell = null;
-    State.hintMove = null;
-    State.hintTimer = 0;
-    State.animations = [];
-    State.particles = [];
+    State.activePowerupTool = null;
 
-    State.state = 'PLAYING';
+    for (let r = 0; r < 8; r++) State.iceGrid[r].fill(0);
+    State.grid = CristalesLogic.generateBoard(CONFIG.COLS, CONFIG.ROWS, CONFIG.NUM_GEM_TYPES);
+
+    dom.goalText.textContent = 'Modo Infinito';
+    dom.objectiveLabel.textContent = 'CRONÓMETRO';
+    dom.objectiveVal.textContent = `${State.endlessTimeRemaining}s`;
+    dom.scoreVal.textContent = '0';
 
     dom.startCard.classList.add('hidden');
     dom.overlayPause.classList.add('hidden');
     dom.overlayResult.classList.add('hidden');
 
-    updateHUD();
-  }
-
-  function updateHUD() {
-    dom.scoreVal.textContent = State.score.toLocaleString();
-
-    if (State.isEndless) {
-      dom.objectiveLabel.textContent = 'TIEMPO';
-      dom.objectiveVal.textContent = `${Math.ceil(State.timeRemaining)}s`;
-      dom.goalText.textContent = `Modo Infinito - ¡Suma combos!`;
-    } else {
-      dom.objectiveLabel.textContent = 'MOVIMIENTOS';
-      dom.objectiveVal.textContent = State.movesLeft;
-
-      const lvl = CONFIG.LEVELS[State.currentLevelIdx];
-      if (lvl.iceGoal > 0) {
-        dom.goalText.textContent = `Hielo: ${State.iceRemaining} / Meta: ${lvl.targetScore.toLocaleString()} pts`;
-      } else {
-        dom.goalText.textContent = `Meta: ${lvl.targetScore.toLocaleString()} pts`;
-      }
-    }
-
-    if (State.combo > 1) {
-      dom.comboPill.classList.remove('hidden');
-      dom.comboMultiplier.textContent = State.combo;
-    } else {
-      dom.comboPill.classList.add('hidden');
-    }
+    startBGM();
   }
 
   // ==========================================
-  // SISTEMA DE INTERCAMBIO Y COINCIDENCIAS
+  // MANIPULACIÓN Y INTERCAMBIO DE GEMAS
   // ==========================================
-  function handleCellSwap(r1, c1, r2, c2) {
-    if (State.state !== 'PLAYING') return;
+  function onCellClicked(r, c) {
+    if (State.isSwapping || State.isCascading) return;
+    window.ArcadeAudio?.initCtx();
 
-    State.hintMove = null;
-    State.hintTimer = 0;
-
-    const g1 = State.grid[r1][c1];
-    const g2 = State.grid[r2][c2];
-
-    // Verificar si es bomba de color activándose
-    const isBomb1 = g1.special === CONFIG.SPECIALS.COLOR_BOMB;
-    const isBomb2 = g2.special === CONFIG.SPECIALS.COLOR_BOMB;
-
-    if (isBomb1 || isBomb2) {
-      executeColorBombSwap(r1, c1, r2, c2);
+    // Si hay un potenciador activo (Martillo)
+    if (State.activePowerupTool === 'hammer') {
+      applyHammer(r, c);
       return;
     }
 
-    const isValid = CristalesLogic.isValidSwap(State.grid, r1, c1, r2, c2);
+    if (!State.selectedCell) {
+      State.selectedCell = { r, c };
+      playAudio('select');
+      window.ArcadeJuice?.vibrate(8);
+      return;
+    }
 
-    State.state = 'ANIMATING';
-    playAudio('swap');
+    // Segunda celda seleccionada
+    const r1 = State.selectedCell.r;
+    const c1 = State.selectedCell.c;
+    const r2 = r;
+    const c2 = c;
 
-    // Animación de intercambio
-    State.animations.push({
-      type: 'SWAP',
-      r1, c1, r2, c2,
-      progress: 0,
-      duration: CONFIG.BASE_SWAP_DURATION,
-      reverting: !isValid,
-      onComplete: () => {
-        if (isValid) {
-          // Aplicar intercambio en la matriz lógica
-          const temp = State.grid[r1][c1];
-          State.grid[r1][c1] = State.grid[r2][c2];
-          State.grid[r2][c2] = temp;
+    if (r1 === r2 && c1 === c2) {
+      State.selectedCell = null;
+      return;
+    }
 
-          if (!State.isEndless) {
-            State.movesLeft--;
-          }
-          State.combo = 1;
+    // Si hay Swap Libre activo
+    if (State.activePowerupTool === 'swap') {
+      applyFreeSwap(r1, c1, r2, c2);
+      return;
+    }
 
-          // Iniciar proceso de eliminación y cascada
-          processMatchesAndCascades({ r: r2, c: c2 });
-        } else {
-          // Revertir y volver a jugar
-          playAudio('swap');
-          window.ArcadeCanvas?.haptic(15);
-          State.state = 'PLAYING';
-        }
-        updateHUD();
-      }
-    });
+    // Intercambio regular
+    if (CristalesLogic.isValidSwap(State.grid, r1, c1, r2, c2)) {
+      executeSwap(r1, c1, r2, c2);
+    } else {
+      // Intercambio inválido: sacudir sutilmente y deseleccionar
+      playAudio('select');
+      window.ArcadeJuice?.shake(2, 0.1);
+      State.selectedCell = null;
+    }
   }
 
-  function executeColorBombSwap(r1, c1, r2, c2) {
-    State.state = 'ANIMATING';
-    playAudio('color_bomb');
-    window.ArcadeCanvas?.haptic(30);
+  function executeSwap(r1, c1, r2, c2) {
+    State.isSwapping = true;
+    State.selectedCell = null;
+    playAudio('swap');
+    window.ArcadeJuice?.vibrate(12);
 
     const g1 = State.grid[r1][c1];
     const g2 = State.grid[r2][c2];
 
-    if (!State.isEndless) State.movesLeft--;
+    // Verificar si es combinación especial de dos gemas especiales
+    if (g1.special !== CONFIG.SPECIALS.NONE && g2.special !== CONFIG.SPECIALS.NONE) {
+      executeDoubleSpecial(r1, c1, r2, c2);
+      return;
+    }
 
-    // Intercambio visual
-    State.animations.push({
-      type: 'SWAP',
-      r1, c1, r2, c2,
-      progress: 0,
-      duration: CONFIG.BASE_SWAP_DURATION,
-      reverting: false,
-      onComplete: () => {
-        const targetColor = (g1.special === CONFIG.SPECIALS.COLOR_BOMB) ? g2.type : g1.type;
-        const clearedCells = [];
+    // Verificar si una es Prisma de color
+    if (g1.special === CONFIG.SPECIALS.COLOR_BOMB || g2.special === CONFIG.SPECIALS.COLOR_BOMB) {
+      const prismCell = g1.special === CONFIG.SPECIALS.COLOR_BOMB ? { r: r1, c: c1 } : { r: r2, c: c2 };
+      const otherCell = g1.special === CONFIG.SPECIALS.COLOR_BOMB ? { r: r2, c: c2 } : { r: r1, c: c1 };
+      executeColorPrism(prismCell.r, prismCell.c, State.grid[otherCell.r][otherCell.c].type);
+      return;
+    }
 
-        // Si ambas son bombas de color, ¡limpiar TODO el tablero!
-        const dualBomb = (g1.special === CONFIG.SPECIALS.COLOR_BOMB && g2.special === CONFIG.SPECIALS.COLOR_BOMB);
+    // Intercambio estándar
+    const temp = State.grid[r1][c1];
+    State.grid[r1][c1] = State.grid[r2][c2];
+    State.grid[r2][c2] = temp;
 
-        for (let r = 0; r < CONFIG.ROWS; r++) {
-          for (let c = 0; c < CONFIG.COLS; c++) {
-            if (dualBomb || State.grid[r][c].type === targetColor || (r === r1 && c === c1) || (r === r2 && c === c2)) {
-              if (State.grid[r][c].type !== 0) {
-                clearedCells.push({ r, c });
-              }
-            }
-          }
-        }
+    if (!State.isEndlessMode) {
+      State.movesRemaining--;
+      dom.objectiveVal.textContent = State.movesRemaining;
+    }
 
-        // Eliminar gemas y desatar partículas
-        const cellPixels = getBoardCellPixels();
-        clearedCells.forEach(cell => {
-          const gem = State.grid[cell.r][cell.c];
-          State.grid[cell.r][cell.c] = { type: 0, special: CONFIG.SPECIALS.NONE };
-
-          // Romper hielo
-          if (State.iceGrid[cell.r][cell.c] === 1) {
-            State.iceGrid[cell.r][cell.c] = 0;
-            State.iceRemaining--;
-            playAudio('ice_break');
-          }
-
-          const pos = cellPixels(cell.r, cell.c);
-          const gemColor = CONFIG.GEMS[gem.type - 1]?.base || '#00e5ff';
-          ParticlePool.spawn(pos.x, pos.y, gemColor, 14, 180);
-        });
-
-        const pointsGained = clearedCells.length * 150 * State.combo;
-        State.score += pointsGained;
-
-        if (State.isEndless) {
-          State.timeRemaining = Math.min(120, State.timeRemaining + clearedCells.length * 0.8);
-        }
-
-        // Caída por gravedad tras la bomba
-        handleGravityAndRefill();
-      }
-    });
+    // Disparar cascada
+    resolveMatches();
   }
 
-  function processMatchesAndCascades(lastSwappedPos = null) {
+  function executeDoubleSpecial(r1, c1, r2, c2) {
+    const s1 = State.grid[r1][c1].special;
+    const s2 = State.grid[r2][c2].special;
+    State.grid[r1][c1] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+    State.grid[r2][c2] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+
+    playAudio('special_laser');
+    window.ArcadeJuice?.shake(10, 0.35);
+    window.ArcadeJuice?.hitstop(50);
+    window.ArcadeJuice?.spawnFloat('¡FUSIÓN ESPECIAL!', CONFIG.VIRTUAL_W / 2, 240, '#00d2ff', 15);
+
+    // Doble Rayo: Cruz total
+    if ((s1 === CONFIG.SPECIALS.LINE_H || s1 === CONFIG.SPECIALS.LINE_V) &&
+        (s2 === CONFIG.SPECIALS.LINE_H || s2 === CONFIG.SPECIALS.LINE_V)) {
+      clearRow(r2);
+      clearCol(c2);
+    }
+    // Rayo + Bomba: Triple Cruz
+    else if ((s1 === CONFIG.SPECIALS.BOMB || s2 === CONFIG.SPECIALS.BOMB) &&
+             (s1 === CONFIG.SPECIALS.LINE_H || s1 === CONFIG.SPECIALS.LINE_V || s2 === CONFIG.SPECIALS.LINE_H || s2 === CONFIG.SPECIALS.LINE_V)) {
+      for (let dr = -1; dr <= 1; dr++) if (r2 + dr >= 0 && r2 + dr < 8) clearRow(r2 + dr);
+      for (let dc = -1; dc <= 1; dc++) if (c2 + dc >= 0 && c2 + dc < 8) clearCol(c2 + dc);
+    }
+    // Bomba + Bomba: Mega 5x5
+    else if (s1 === CONFIG.SPECIALS.BOMB && s2 === CONFIG.SPECIALS.BOMB) {
+      detonateArea(r2, c2, 2);
+    }
+    // Prisma + Cualquier Especial: Dispersión total
+    else {
+      clearAllOfType(State.grid[r1][c1].type || 1);
+    }
+
+    setTimeout(resolveMatches, 300);
+  }
+
+  function executeColorPrism(pr, pc, targetColor) {
+    State.grid[pr][pc] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+    playAudio('special_prism');
+    window.ArcadeJuice?.shake(8, 0.3);
+    window.ArcadeJuice?.spawnFloat('¡PRISMA TOTAL!', CONFIG.VIRTUAL_W / 2, 240, '#ffd700', 14);
+
+    clearAllOfType(targetColor);
+    setTimeout(resolveMatches, 300);
+  }
+
+  function clearRow(r) {
+    for (let c = 0; c < 8; c++) {
+      State.grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+      State.iceGrid[r][c] = 0;
+      spawnGlow(c, r, '#00d2ff');
+    }
+  }
+
+  function clearCol(c) {
+    for (let r = 0; r < 8; r++) {
+      State.grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+      State.iceGrid[r][c] = 0;
+      spawnGlow(c, r, '#00d2ff');
+    }
+  }
+
+  function detonateArea(cr, cc, rad = 1) {
+    for (let r = cr - rad; r <= cr + rad; r++) {
+      for (let c = cc - rad; c <= cc + rad; c++) {
+        if (r >= 0 && r < 8 && c >= 0 && c < 8) {
+          State.grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+          State.iceGrid[r][c] = 0;
+          spawnGlow(c, r, '#ff8800');
+        }
+      }
+    }
+  }
+
+  function clearAllOfType(colorType) {
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (State.grid[r][c].type === colorType) {
+          State.grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+          State.iceGrid[r][c] = 0;
+          spawnGlow(c, r, '#ffcc00');
+        }
+      }
+    }
+  }
+
+  function resolveMatches() {
+    State.isCascading = true;
     const matches = CristalesLogic.findMatches(State.grid);
 
     if (matches.length === 0) {
-      // Cascada terminada
-      State.combo = 1;
-      State.state = 'PLAYING';
-      updateHUD();
-      checkWinOrLossConditions();
+      State.isSwapping = false;
+      State.isCascading = false;
+      State.comboCount = 1;
+      dom.comboPill.classList.add('hidden');
 
-      // Verificar si quedan movimientos válidos en el tablero
-      if (!CristalesLogic.findAnyValidMove(State.grid)) {
-        triggerAutoShuffle();
-      }
+      // Transformar piezas Shifters
+      transformShifters();
+
+      // Verificar condición de victoria o derrota
+      checkLevelState();
       return;
     }
 
-    // Hay coincidencias: animar eliminación y generar especiales
-    State.state = 'ANIMATING';
-    playAudio('match', State.combo);
-    window.ArcadeCanvas?.haptic(10);
-
-    const cellsToRemove = new Map(); // key 'r,c' -> cell info
-    let specialToCreate = null;
-
-    for (const match of matches) {
-      const matchLen = match.cells.length;
-
-      // Generar especial si es de 4 o 5
-      if (matchLen >= 5) {
-        // Bomba de color
-        const targetCell = lastSwappedPos && match.cells.some(c => c.r === lastSwappedPos.r && c.c === lastSwappedPos.c)
-          ? lastSwappedPos
-          : match.cells[Math.floor(matchLen / 2)];
-        specialToCreate = { r: targetCell.r, c: targetCell.c, special: CONFIG.SPECIALS.COLOR_BOMB, type: 6 };
-      } else if (matchLen === 4 && !specialToCreate) {
-        // Gema de línea horizontal o vertical
-        const targetCell = lastSwappedPos && match.cells.some(c => c.r === lastSwappedPos.r && c.c === lastSwappedPos.c)
-          ? lastSwappedPos
-          : match.cells[Math.floor(matchLen / 2)];
-        const lineSpecial = (match.orientation === 'H') ? CONFIG.SPECIALS.LINE_H : CONFIG.SPECIALS.LINE_V;
-        specialToCreate = { r: targetCell.r, c: targetCell.c, special: lineSpecial, type: match.type };
+    // Hay matches: procesar
+    let matchedGemsCount = 0;
+    for (const m of matches) {
+      const len = m.cells.length;
+      let specialToCreate = CONFIG.SPECIALS.NONE;
+      if (len === 4) {
+        specialToCreate = m.orientation === 'H' ? CONFIG.SPECIALS.LINE_H : CONFIG.SPECIALS.LINE_V;
+      } else if (len >= 5) {
+        specialToCreate = CONFIG.SPECIALS.COLOR_BOMB;
       }
 
-      for (const cell of match.cells) {
-        cellsToRemove.set(`${cell.r},${cell.c}`, cell);
-      }
-    }
+      for (let i = 0; i < len; i++) {
+        const cell = m.cells[i];
+        matchedGemsCount++;
 
-    // Activar gemas especiales que estén dentro de las celdas eliminadas
-    const bonusCleared = [];
-    cellsToRemove.forEach(cell => {
-      const existing = State.grid[cell.r][cell.c];
-      if (existing.special === CONFIG.SPECIALS.LINE_H) {
-        // Rayo horizontal
-        playAudio('line_blast');
-        for (let c = 0; c < CONFIG.COLS; c++) {
-          bonusCleared.push({ r: cell.r, c });
-        }
-      } else if (existing.special === CONFIG.SPECIALS.LINE_V) {
-        // Rayo vertical
-        playAudio('line_blast');
-        for (let r = 0; r < CONFIG.ROWS; r++) {
-          bonusCleared.push({ r, c: cell.c });
-        }
-      }
-    });
-
-    bonusCleared.forEach(cell => cellsToRemove.set(`${cell.r},${cell.c}`, cell));
-
-    // Limpiar celdas y romper hielo
-    const cellPixels = getBoardCellPixels();
-    let iceBrokenCount = 0;
-
-    cellsToRemove.forEach(cell => {
-      const gem = State.grid[cell.r][cell.c];
-      if (gem.type !== 0) {
-        const pos = cellPixels(cell.r, cell.c);
-        const gemColor = CONFIG.GEMS[gem.type - 1]?.base || '#00e5ff';
-        ParticlePool.spawn(pos.x, pos.y, gemColor, 10, 140);
-      }
-
-      // Romper hielo si había
-      if (State.iceGrid[cell.r][cell.c] === 1) {
+        // Quitar hielo
         State.iceGrid[cell.r][cell.c] = 0;
-        State.iceRemaining--;
-        iceBrokenCount++;
+
+        if (i === 0 && specialToCreate !== CONFIG.SPECIALS.NONE) {
+          State.grid[cell.r][cell.c] = { type: m.type, special: specialToCreate, obstacle: CONFIG.OBSTACLES.NONE };
+        } else {
+          State.grid[cell.r][cell.c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+        }
+
+        spawnGlow(cell.c, cell.r, CONFIG.GEMS[m.type - 1]?.base || '#fff');
       }
-
-      State.grid[cell.r][cell.c] = { type: 0, special: CONFIG.SPECIALS.NONE };
-    });
-
-    if (iceBrokenCount > 0) playAudio('ice_break');
-
-    // Colocar especial creado si corresponde
-    if (specialToCreate) {
-      State.grid[specialToCreate.r][specialToCreate.c] = {
-        type: specialToCreate.type,
-        special: specialToCreate.special
-      };
-      playAudio('special_created');
-      const pos = cellPixels(specialToCreate.r, specialToCreate.c);
-      ParticlePool.spawn(pos.x, pos.y, '#ffffff', 20, 220);
     }
 
-    // Puntos y bono de combo
-    const matchPoints = cellsToRemove.size * 50 * State.combo;
-    State.score += matchPoints;
+    // Puntuación
+    const earned = matchedGemsCount * 50 * State.comboCount;
+    State.score += earned;
+    dom.scoreVal.textContent = State.score.toLocaleString();
 
-    if (State.isEndless) {
-      State.timeRemaining = Math.min(120, State.timeRemaining + cellsToRemove.size * 0.4 + State.combo);
+    if (State.comboCount > 1) {
+      dom.comboPill.classList.remove('hidden');
+      dom.comboMultiplier.textContent = State.comboCount;
+      window.ArcadeJuice?.spawnFloat(`COMBO x${State.comboCount}! +${earned}`, CONFIG.VIRTUAL_W / 2, 220, '#ffcc00', 13);
+      playAudio('cascade');
+    } else {
+      playAudio('match');
     }
 
-    State.combo++;
-    updateHUD();
+    State.comboCount++;
+    window.ArcadeJuice?.vibrate(10);
 
-    // Siguiente paso de cascada: gravedad y rellenado
+    // Aplicar gravedad y rellenar
     setTimeout(() => {
-      handleGravityAndRefill();
+      CristalesLogic.applyGravity(State.grid);
+      // Rellenar vacíos
+      for (let r = 0; r < 8; r++) {
+        for (let c = 0; c < 8; c++) {
+          if (State.grid[r][c].type === 0 && State.grid[r][c].obstacle !== CONFIG.OBSTACLES.LOCKED) {
+            State.grid[r][c] = {
+              type: Math.floor(Math.random() * CONFIG.NUM_GEM_TYPES) + 1,
+              special: CONFIG.SPECIALS.NONE,
+              obstacle: CONFIG.OBSTACLES.NONE
+            };
+          }
+        }
+      }
+      setTimeout(resolveMatches, 220);
     }, 180);
   }
 
-  function handleGravityAndRefill() {
-    // 1. Aplicar gravedad
-    const drops = CristalesLogic.applyGravity(State.grid);
-
-    // 2. Rellenar huecos superiores con nuevas gemas
-    const newGems = CristalesLogic.refillTop(State.grid, CONFIG.NUM_GEM_TYPES);
-
-    // Animación visual de caída
-    State.animations.push({
-      type: 'FALL',
-      progress: 0,
-      duration: CONFIG.BASE_FALL_DURATION,
-      onComplete: () => {
-        // Continuar evaluando cascadas
-        processMatchesAndCascades();
-      }
-    });
-  }
-
-  function triggerAutoShuffle() {
-    State.state = 'ANIMATING';
-    playAudio('color_bomb');
-
-    CristalesLogic.shuffleUntilValid(State.grid, CONFIG.NUM_GEM_TYPES);
-
-    const cellPixels = getBoardCellPixels();
-    for (let r = 0; r < CONFIG.ROWS; r++) {
-      for (let c = 0; c < CONFIG.COLS; c++) {
-        const pos = cellPixels(r, c);
-        ParticlePool.spawn(pos.x, pos.y, '#00d2ff', 3, 100);
+  function transformShifters() {
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (State.grid[r][c].obstacle === CONFIG.OBSTACLES.SHIFTER) {
+          State.grid[r][c].type = (State.grid[r][c].type % CONFIG.NUM_GEM_TYPES) + 1;
+          spawnGlow(c, r, '#ffffff');
+        }
       }
     }
-
-    setTimeout(() => {
-      State.state = 'PLAYING';
-      updateHUD();
-    }, 400);
   }
 
-  function checkWinOrLossConditions() {
-    if (State.isEndless) {
-      if (State.timeRemaining <= 0) {
-        endGame(false, '¡Tiempo agotado!');
-      }
-      return;
-    }
+  function checkLevelState() {
+    if (State.isEndlessMode) return;
 
     const lvl = CONFIG.LEVELS[State.currentLevelIdx];
-    const scoreReached = State.score >= lvl.targetScore;
-    const iceCleared = State.iceRemaining === 0;
+    const reachedScore = State.score >= lvl.targetScore;
 
-    // Victoria
-    if (scoreReached && iceCleared) {
-      endGame(true, '¡Nivel Superado con Éxito!');
-      return;
+    // Verificar si queda hielo
+    let iceRemaining = 0;
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (State.iceGrid[r][c] > 0) iceRemaining++;
+      }
     }
 
-    // Derrota por falta de movimientos
-    if (State.movesLeft <= 0) {
-      let reason = 'Te quedaste sin movimientos.';
-      if (!scoreReached) reason += ' Faltaron puntos.';
-      if (!iceCleared) reason += ' Quedó hielo sin romper.';
-      endGame(false, reason);
+    if (reachedScore && iceRemaining === 0) {
+      // Victoria
+      triggerLevelVictory();
+    } else if (State.movesRemaining <= 0) {
+      // Derrota
+      triggerLevelDefeat();
     }
   }
 
-  function endGame(isVictory, message) {
-    State.state = isVictory ? 'VICTORY' : 'GAMEOVER';
+  function triggerLevelVictory() {
+    stopBGM();
+    window.ArcadeJuice?.unlockAchievement('cristales', 'ach_first_level', 'Primer Prisma', 'Supera tu primer nivel en Cristales');
 
-    if (isVictory) {
-      playAudio('victory');
-      saveLevelRecord(State.currentLevelIdx, State.score);
-      setUnlockedLevel(State.currentLevelIdx + 1);
-    } else {
-      playAudio('game_over');
-      if (State.isEndless) {
-        saveEndlessRecord(State.score);
-      }
+    // Calcular estrellas (1 a 3)
+    let stars = 1;
+    const lvl = CONFIG.LEVELS[State.currentLevelIdx];
+    if (State.score >= lvl.targetScore * 1.5) stars = 3;
+    else if (State.score >= lvl.targetScore * 1.2) stars = 2;
+
+    State.saveData.starsPerLevel[State.currentLevelIdx] = Math.max(State.saveData.starsPerLevel[State.currentLevelIdx] || 0, stars);
+    State.saveData.unlockedLevels = Math.max(State.saveData.unlockedLevels, State.currentLevelIdx + 2);
+
+    // Otorgar potenciador por superar mundo (cada 10 niveles)
+    if ((State.currentLevelIdx + 1) % 10 === 0) {
+      State.saveData.powerups.hammer += 1;
+      State.saveData.powerups.shuffle += 1;
+      State.saveData.powerups.swap += 1;
+      window.ArcadeJuice?.unlockAchievement('cristales', 'ach_world_clear', 'Maestro del Mundo', 'Completa los 10 niveles de un mundo');
     }
 
-    // Mostrar modal de resultado
-    dom.resultIcon.textContent = isVictory ? '💎' : '⌛';
-    dom.resultTitle.textContent = isVictory ? '¡NIVEL SUPERADO!' : 'FIN DE LA PARTIDA';
-    dom.resultSubtitle.textContent = message;
+    saveGameData();
+
+    dom.resultIcon.textContent = '🌟';
+    dom.resultTitle.textContent = '¡NIVEL SUPERADO!';
+    dom.resultSubtitle.textContent = `¡Objetivo completado con éxito!`;
     dom.resultScoreVal.textContent = State.score.toLocaleString();
+    dom.resultBestVal.textContent = lvl.targetScore.toLocaleString();
 
-    const best = State.isEndless ? getEndlessRecord() : getLevelRecord(State.currentLevelIdx);
-    dom.resultBestVal.textContent = best.toLocaleString();
+    dom.starsRow.innerHTML = `
+      <span class="star-slot ${stars >= 1 ? 'filled' : 'empty'}">★</span>
+      <span class="star-slot ${stars >= 2 ? 'filled' : 'empty'}">★</span>
+      <span class="star-slot ${stars >= 3 ? 'filled' : 'empty'}">★</span>
+    `;
 
-    if (State.isEndless) {
-      dom.starsRow.classList.add('hidden');
-      dom.btnNextLevel.classList.add('hidden');
-    } else {
-      dom.starsRow.classList.remove('hidden');
-      const lvl = CONFIG.LEVELS[State.currentLevelIdx];
-      const stars = State.score >= lvl.targetScore * 1.5 ? 3 : (State.score >= lvl.targetScore * 1.2 ? 2 : 1);
-      dom.starsRow.innerHTML = '';
-      for (let s = 1; s <= 3; s++) {
-        const starSpan = document.createElement('span');
-        starSpan.className = s <= stars ? 'star-slot filled' : 'star-slot empty';
-        starSpan.textContent = '★';
-        dom.starsRow.appendChild(starSpan);
-      }
+    dom.overlayResult.classList.remove('hidden');
+  }
 
-      if (isVictory && State.currentLevelIdx < CONFIG.LEVELS.length - 1) {
-        dom.btnNextLevel.classList.remove('hidden');
-      } else {
-        dom.btnNextLevel.classList.add('hidden');
-      }
-    }
+  function triggerLevelDefeat() {
+    stopBGM();
+    State.saveData.lives = Math.max(0, State.saveData.lives - 1);
+    State.saveData.lastLifeTimestamp = Date.now();
+    saveGameData();
+    updateLivesSystem();
+
+    dom.resultIcon.textContent = '💔';
+    dom.resultTitle.textContent = '¡FIN DE MOVIMIENTOS!';
+    dom.resultSubtitle.textContent = 'No pudiste alcanzar el objetivo a tiempo.';
+    dom.resultScoreVal.textContent = State.score.toLocaleString();
+    dom.resultBestVal.textContent = CONFIG.LEVELS[State.currentLevelIdx].targetScore.toLocaleString();
+    dom.starsRow.innerHTML = '';
 
     dom.overlayResult.classList.remove('hidden');
   }
 
   // ==========================================
-  // RENDERIZADO VECTORIAL 3D Y FACETAS
+  // POTENCIADORES
   // ==========================================
-  function getBoardDimensions() {
-    const size = State.boardSize || 360;
-    const tileSize = size / CONFIG.COLS;
-    const startX = 0;
-    const startY = 0;
+  function applyHammer(r, c) {
+    if (State.saveData.powerups.hammer <= 0) return;
+    State.saveData.powerups.hammer--;
+    updatePowerupCounts();
+    saveGameData();
 
-    return { startX, startY, size, tileSize };
+    State.activePowerupTool = null;
+    dom.btnPowerupHammer.classList.remove('active');
+
+    // Romper gema o casilla
+    State.grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+    State.iceGrid[r][c] = 0;
+    playAudio('special_bomb');
+    window.ArcadeJuice?.shake(6, 0.2);
+    window.ArcadeJuice?.spawnFloat('¡MARTILLO!', CONFIG.VIRTUAL_W / 2, 200, '#00d2ff', 13);
+    spawnGlow(c, r, '#ffffff');
+
+    resolveMatches();
   }
 
-  function getBoardCellPixels() {
-    const { startX, startY, tileSize } = getBoardDimensions();
-    return (r, c) => ({
-      x: startX + c * tileSize + tileSize / 2,
-      y: startY + r * tileSize + tileSize / 2,
-      size: tileSize
-    });
+  function applyFreeSwap(r1, c1, r2, c2) {
+    if (State.saveData.powerups.swap <= 0) return;
+    State.saveData.powerups.swap--;
+    updatePowerupCounts();
+    saveGameData();
+
+    State.activePowerupTool = null;
+    dom.btnPowerupSwap.classList.remove('active');
+    State.selectedCell = null;
+
+    const temp = State.grid[r1][c1];
+    State.grid[r1][c1] = State.grid[r2][c2];
+    State.grid[r2][c2] = temp;
+
+    playAudio('swap');
+    window.ArcadeJuice?.vibrate(14);
+    window.ArcadeJuice?.spawnFloat('¡INTERCAMBIO LIBRE!', CONFIG.VIRTUAL_W / 2, 200, '#ffbb00', 13);
+
+    resolveMatches();
   }
 
+  function applyShufflePowerup() {
+    if (State.saveData.powerups.shuffle <= 0) return;
+    State.saveData.powerups.shuffle--;
+    updatePowerupCounts();
+    saveGameData();
+
+    CristalesLogic.shuffleUntilValid(State.grid, CONFIG.NUM_GEM_TYPES);
+    playAudio('special_prism');
+    window.ArcadeJuice?.shake(5, 0.2);
+    window.ArcadeJuice?.spawnFloat('¡MEZCLA CÓSMICA!', CONFIG.VIRTUAL_W / 2, 200, '#00e5ff', 13);
+  }
+
+  function spawnGlow(c, r, color) {
+    const cs = CONFIG.VIRTUAL_W / 8;
+    const x = c * cs + cs / 2;
+    const y = r * cs + cs / 2;
+    for (let i = 0; i < 8; i++) {
+      State.particles.push({
+        x, y,
+        vx: (Math.random() - 0.5) * 80,
+        vy: (Math.random() - 0.5) * 80,
+        color,
+        life: 0.35,
+        maxLife: 0.35,
+        size: 3 + Math.random() * 3
+      });
+    }
+  }
+
+  // ==========================================
+  // RENDERIZADO VECTORIAL DE CRISTALES Y MUNDOS
+  // ==========================================
   function render() {
-    const ctx = State.ctx;
-    if (!ctx) return;
-
-    const size = State.boardSize || 360;
-    ctx.clearRect(0, 0, size, size);
-
-    // Fondo del tablero con bisel redondeado y textura de cristal oscuro
-    const { startX, startY, tileSize } = getBoardDimensions();
+    const ctx = dom.ctx;
+    const W = CONFIG.VIRTUAL_W;
+    const H = CONFIG.VIRTUAL_H;
+    const currentWorld = CONFIG.WORLDS[Math.floor(State.currentLevelIdx / 10)] || CONFIG.WORLDS[0];
 
     ctx.save();
-    ctx.fillStyle = 'rgba(10, 24, 48, 0.7)';
-    ctx.strokeStyle = 'rgba(0, 210, 255, 0.25)';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.roundRect(startX - 4, startY - 4, size + 8, size + 8, 16);
-    ctx.fill();
-    ctx.stroke();
+    ctx.resetTransform();
+    const dpr = window.devicePixelRatio || 1;
+    const shakeX = window.ArcadeJuice?.shakeX || 0;
+    const shakeY = window.ArcadeJuice?.shakeY || 0;
+
+    ctx.scale(dpr * State.scale, dpr * State.scale);
+    ctx.translate(shakeX, shakeY);
+
+    // Fondo del mundo con gradiente
+    const bgGrad = ctx.createLinearGradient(0, 0, 0, H);
+    bgGrad.addColorStop(0, currentWorld.bgTop);
+    bgGrad.addColorStop(1, currentWorld.bgBottom);
+    ctx.fillStyle = bgGrad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Partículas ambientales del mundo
+    ctx.save();
+    for (const p of State.bgParticles) {
+      ctx.fillStyle = currentWorld.accent;
+      ctx.globalAlpha = p.alpha;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
     ctx.restore();
 
-    // Dibujar casillas de fondo y capas de hielo
-    for (let r = 0; r < CONFIG.ROWS; r++) {
-      for (let c = 0; c < CONFIG.COLS; c++) {
-        const x = startX + c * tileSize;
-        const y = startY + r * tileSize;
+    // Tablero y cuadrícula
+    const cs = W / 8;
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        const x = c * cs;
+        const y = r * cs;
 
-        // Cuadrícula sutil
-        ctx.fillStyle = ((r + c) % 2 === 0) ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.15)';
-        ctx.fillRect(x + 1, y + 1, tileSize - 2, tileSize - 2);
+        // Celda alterna
+        ctx.fillStyle = (r + c) % 2 === 0 ? 'rgba(255, 255, 255, 0.04)' : 'rgba(0, 0, 0, 0.2)';
+        ctx.fillRect(x + 1, y + 1, cs - 2, cs - 2);
 
-        // Capa de Hielo / Escarcha
-        if (State.iceGrid && State.iceGrid[r][c] === 1) {
-          renderIceTile(ctx, x, y, tileSize);
+        // Hielo
+        if (State.iceGrid[r][c] > 0) {
+          ctx.fillStyle = 'rgba(0, 229, 255, 0.28)';
+          ctx.fillRect(x + 2, y + 2, cs - 4, cs - 4);
+          ctx.strokeStyle = '#00e5ff';
+          ctx.lineWidth = 1.5;
+          ctx.strokeRect(x + 2, y + 2, cs - 4, cs - 4);
+        }
+
+        // Gema
+        const gem = State.grid[r][c];
+        if (gem && gem.type !== 0) {
+          const isSelected = State.selectedCell && State.selectedCell.r === r && State.selectedCell.c === c;
+          renderFacetedCrystal(ctx, x + cs / 2, y + cs / 2, cs * 0.42, gem, isSelected);
         }
       }
     }
 
-    // Resaltar celda seleccionada por el jugador
-    if (State.selectedCell) {
-      const { r, c } = State.selectedCell;
-      const x = startX + c * tileSize;
-      const y = startY + r * tileSize;
+    // Partículas
+    for (let i = State.particles.length - 1; i >= 0; i--) {
+      const p = State.particles[i];
+      p.x += p.vx * 0.016;
+      p.y += p.vy * 0.016;
+      p.life -= 0.016;
+      if (p.life <= 0) {
+        State.particles.splice(i, 1);
+        continue;
+      }
       ctx.save();
+      ctx.globalAlpha = p.life / p.maxLife;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+
+    // Textos flotantes
+    window.ArcadeJuice?.drawFloats(ctx);
+    window.ArcadeJuice?.drawDebugOverlay(ctx, State.particles.length);
+
+    ctx.restore();
+  }
+
+  function renderFacetedCrystal(ctx, cx, cy, r, gem, isSelected) {
+    ctx.save();
+    ctx.translate(cx, cy);
+
+    if (isSelected) {
       ctx.strokeStyle = '#ffe066';
       ctx.lineWidth = 3;
-      ctx.shadowColor = '#ffe066';
-      ctx.shadowBlur = 12;
-      ctx.strokeRect(x + 3, y + 3, tileSize - 6, tileSize - 6);
-      ctx.restore();
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 1.25, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
-    // Resaltar sugerencia / pista si está activa
-    if (State.hintMove) {
-      const { r1, c1, r2, c2 } = State.hintMove;
-      const p = (Math.sin(State.hintPulse * 5) + 1) * 0.5;
-      ctx.save();
-      ctx.strokeStyle = `rgba(0, 255, 200, ${0.4 + p * 0.6})`;
-      ctx.lineWidth = 3;
-      ctx.shadowColor = '#00ffcc';
-      ctx.shadowBlur = 8 + p * 8;
-
-      const x1 = startX + c1 * tileSize;
-      const y1 = startY + r1 * tileSize;
-      const x2 = startX + c2 * tileSize;
-      const y2 = startY + r2 * tileSize;
-
-      ctx.strokeRect(x1 + 3, y1 + 3, tileSize - 6, tileSize - 6);
-      ctx.strokeRect(x2 + 3, y2 + 3, tileSize - 6, tileSize - 6);
-      ctx.restore();
-    }
-
-    // Renderizar gemas de la matriz
-    if (State.grid) {
-      for (let r = 0; r < CONFIG.ROWS; r++) {
-        for (let c = 0; c < CONFIG.COLS; c++) {
-          const gem = State.grid[r][c];
-          if (gem.type === 0) continue;
-
-          // Si la celda está involucrada en animación de swap activa, omitir (se dibuja en capa de animación)
-          const isSwapping = State.animations.some(
-            a => a.type === 'SWAP' && ((a.r1 === r && a.c1 === c) || (a.r2 === r && a.c2 === c))
-          );
-          if (isSwapping) continue;
-
-          const cx = startX + c * tileSize + tileSize / 2;
-          const cy = startY + r * tileSize + tileSize / 2;
-          const rad = tileSize * 0.42;
-
-          renderGem3D(ctx, cx, cy, rad, gem.type, gem.special);
-        }
-      }
-    }
-
-    // Renderizar gemas en animación de intercambio
-    for (const anim of State.animations) {
-      if (anim.type === 'SWAP') {
-        const t = anim.reverting
-          ? Math.sin(anim.progress * Math.PI) // Va y regresa
-          : anim.progress; // Va derecho
-
-        const p1 = {
-          x: startX + anim.c1 * tileSize + tileSize / 2,
-          y: startY + anim.r1 * tileSize + tileSize / 2
-        };
-        const p2 = {
-          x: startX + anim.c2 * tileSize + tileSize / 2,
-          y: startY + anim.r2 * tileSize + tileSize / 2
-        };
-
-        const g1 = State.grid[anim.r1][anim.c1];
-        const g2 = State.grid[anim.r2][anim.c2];
-        const rad = tileSize * 0.42;
-
-        const curX1 = p1.x + (p2.x - p1.x) * t;
-        const curY1 = p1.y + (p2.y - p1.y) * t;
-        const curX2 = p2.x + (p1.x - p2.x) * t;
-        const curY2 = p2.y + (p1.y - p2.y) * t;
-
-        renderGem3D(ctx, curX1, curY1, rad, g1.type, g1.special);
-        renderGem3D(ctx, curX2, curY2, rad, g2.type, g2.special);
-      }
-    }
-
-    // Renderizar partículas
-    ParticlePool.render(ctx);
-  }
-
-  /**
-   * Renderiza una casilla con capa de hielo y fisuras de escarcha
-   */
-  function renderIceTile(ctx, x, y, size) {
-    ctx.save();
-    ctx.fillStyle = 'rgba(180, 230, 255, 0.35)';
-    ctx.fillRect(x + 2, y + 2, size - 4, size - 4);
-
-    // Borde brillante de hielo
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.lineWidth = 1.5;
-    ctx.strokeRect(x + 2, y + 2, size - 4, size - 4);
-
-    // Fisuras de escarcha
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(x + 6, y + 6);
-    ctx.lineTo(x + size * 0.4, y + size * 0.4);
-    ctx.lineTo(x + size * 0.7, y + size * 0.3);
-    ctx.moveTo(x + size * 0.4, y + size * 0.4);
-    ctx.lineTo(x + size * 0.3, y + size * 0.8);
-    ctx.stroke();
-    ctx.restore();
-  }
-
-  /**
-   * Renderizado pseudo-3D vectorial de gemas con cortes prismáticos y facetas reflectivas
-   */
-  function renderGem3D(ctx, cx, cy, rad, type, special = CONFIG.SPECIALS.NONE) {
-    ctx.save();
-
-    // Sombra proyectada suave
-    ctx.beginPath();
-    ctx.arc(cx + rad * 0.1, cy + rad * 0.15, rad * 0.9, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
-    ctx.fill();
-
-    // Si es Bomba de Color: esfera hiper-dimensional arcoíris
-    if (special === CONFIG.SPECIALS.COLOR_BOMB) {
-      renderColorBomb3D(ctx, cx, cy, rad);
+    // Pieza Bloqueada (Runa)
+    if (gem.obstacle === CONFIG.OBSTACLES.LOCKED) {
+      ctx.fillStyle = '#475569';
+      ctx.beginPath();
+      ctx.roundRect(-r, -r, r * 2, r * 2, 6);
+      ctx.fill();
+      ctx.fillStyle = '#94a3b8';
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('ᚱ', 0, 0);
       ctx.restore();
       return;
     }
 
-    const cfg = CONFIG.GEMS[type - 1] || CONFIG.GEMS[0];
+    // Prisma de Color
+    if (gem.special === CONFIG.SPECIALS.COLOR_BOMB) {
+      const rainGrad = ctx.createLinearGradient(-r, -r, r, r);
+      rainGrad.addColorStop(0, '#ff0055');
+      rainGrad.addColorStop(0.3, '#ffaa00');
+      rainGrad.addColorStop(0.6, '#00e5ff');
+      rainGrad.addColorStop(1, '#b388ff');
+      ctx.fillStyle = rainGrad;
+      ctx.beginPath();
+      ctx.arc(0, 0, r, 0, Math.PI * 2);
+      ctx.fill();
 
-    switch (type) {
-      case 1: // RUBY: Hexágono con facetas triangulares hacia el vértice
-        renderFacetedHexagon(ctx, cx, cy, rad, cfg);
-        break;
-      case 2: // SAPPHIRE: Corte octogonal con facetas escalonadas
-        renderFacetedOctagon(ctx, cx, cy, rad, cfg);
-        break;
-      case 3: // EMERALD: Cuadrado rotado 45° con biseles
-        renderFacetedEmerald(ctx, cx, cy, rad, cfg);
-        break;
-      case 4: // TOPAZ: Triángulo brillante con facetas internas
-        renderFacetedTriangle(ctx, cx, cy, rad, cfg);
-        break;
-      case 5: // AMETHYST: Rombo / Marquise alargado
-        renderFacetedMarquise(ctx, cx, cy, rad, cfg);
-        break;
-      case 6: // DIAMOND: Corte brillante clásico con halo cian
-        renderFacetedDiamond(ctx, cx, cy, rad, cfg);
-        break;
-      default:
-        renderFacetedHexagon(ctx, cx, cy, rad, cfg);
+      // Brillo estrellado central
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+      return;
     }
 
-    // Efecto de gema especial de línea (Haz de energía)
-    if (special === CONFIG.SPECIALS.LINE_H || special === CONFIG.SPECIALS.LINE_V) {
-      ctx.save();
-      ctx.strokeStyle = '#ffffff';
-      ctx.lineWidth = 2.5;
-      ctx.shadowColor = '#00ffff';
-      ctx.shadowBlur = 8;
-      ctx.beginPath();
-      if (special === CONFIG.SPECIALS.LINE_H) {
-        ctx.moveTo(cx - rad * 0.9, cy);
-        ctx.lineTo(cx + rad * 0.9, cy);
-      } else {
-        ctx.moveTo(cx, cy - rad * 0.9);
-        ctx.lineTo(cx, cy + rad * 0.9);
-      }
-      ctx.stroke();
+    const gData = CONFIG.GEMS[gem.type - 1] || CONFIG.GEMS[0];
 
-      // Flechas en los extremos
+    // Facetas vectoriales 3D
+    ctx.fillStyle = gData.base;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Faceta superior iluminada
+    ctx.fillStyle = gData.facet;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.5, -r * 0.5);
+    ctx.lineTo(r * 0.5, -r * 0.5);
+    ctx.lineTo(0, -r * 0.85);
+    ctx.closePath();
+    ctx.fill();
+
+    // Faceta oscura inferior
+    ctx.fillStyle = gData.dark;
+    ctx.beginPath();
+    ctx.moveTo(-r * 0.5, r * 0.5);
+    ctx.lineTo(r * 0.5, r * 0.5);
+    ctx.lineTo(0, r * 0.85);
+    ctx.closePath();
+    ctx.fill();
+
+    // Reflejo animado oblicuo recorriendo la superficie
+    const sweep = ((Date.now() * 0.002) % 3.0) - 1.5;
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.clip();
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.45)';
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.moveTo(-r * 2 + sweep * r * 2, -r);
+    ctx.lineTo(r + sweep * r * 2, r * 2);
+    ctx.stroke();
+    ctx.restore();
+
+    // Indicador especial (Rayo o Bomba)
+    if (gem.special === CONFIG.SPECIALS.LINE_H) {
       ctx.fillStyle = '#ffffff';
-      if (special === CONFIG.SPECIALS.LINE_H) {
-        ctx.fillRect(cx - rad * 0.9, cy - 2, 4, 4);
-        ctx.fillRect(cx + rad * 0.9 - 4, cy - 2, 4, 4);
-      } else {
-        ctx.fillRect(cx - 2, cy - rad * 0.9, 4, 4);
-        ctx.fillRect(cx - 2, cy + rad * 0.9 - 4, 4, 4);
-      }
-      ctx.restore();
+      ctx.fillRect(-r * 0.8, -2, r * 1.6, 4);
+    } else if (gem.special === CONFIG.SPECIALS.LINE_V) {
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(-2, -r * 0.8, 4, r * 1.6);
+    } else if (gem.special === CONFIG.SPECIALS.BOMB) {
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, 0, r * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // Cadenas
+    if (gem.obstacle === CONFIG.OBSTACLES.CHAINS) {
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.moveTo(-r * 0.7, -r * 0.7);
+      ctx.lineTo(r * 0.7, r * 0.7);
+      ctx.moveTo(-r * 0.7, r * 0.7);
+      ctx.lineTo(r * 0.7, -r * 0.7);
+      ctx.stroke();
     }
 
     ctx.restore();
   }
 
-  function renderFacetedHexagon(ctx, cx, cy, r, cfg) {
-    const sides = 6;
-    const outer = [];
-    const inner = [];
-    const innerR = r * 0.45;
-
-    for (let i = 0; i < sides; i++) {
-      const angle = (i * Math.PI * 2) / sides - Math.PI / 2;
-      outer.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
-      inner.push({ x: cx + Math.cos(angle) * innerR, y: cy + Math.sin(angle) * innerR });
-    }
-
-    // Facetas exteriores trapezoidales
-    for (let i = 0; i < sides; i++) {
-      const next = (i + 1) % sides;
-      ctx.beginPath();
-      ctx.moveTo(outer[i].x, outer[i].y);
-      ctx.lineTo(outer[next].x, outer[next].y);
-      ctx.lineTo(inner[next].x, inner[next].y);
-      ctx.lineTo(inner[i].x, inner[i].y);
-      ctx.closePath();
-
-      // Graduación de luz según ángulo
-      ctx.fillStyle = (i === 0 || i === 5) ? cfg.light : (i === 1 || i === 4 ? cfg.base : cfg.dark);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-
-    // Tabla central plana brillante
-    ctx.beginPath();
-    ctx.moveTo(inner[0].x, inner[0].y);
-    for (let i = 1; i < sides; i++) ctx.lineTo(inner[i].x, inner[i].y);
-    ctx.closePath();
-    ctx.fillStyle = cfg.facet;
-    ctx.fill();
-    ctx.stroke();
-
-    // Reflejo especular blanco
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.beginPath();
-    ctx.arc(cx - r * 0.25, cy - r * 0.25, r * 0.15, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function renderFacetedOctagon(ctx, cx, cy, r, cfg) {
-    const sides = 8;
-    const outer = [];
-    const inner = [];
-    const innerR = r * 0.55;
-
-    for (let i = 0; i < sides; i++) {
-      const angle = (i * Math.PI * 2) / sides - Math.PI / 8;
-      outer.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
-      inner.push({ x: cx + Math.cos(angle) * innerR, y: cy + Math.sin(angle) * innerR });
-    }
-
-    for (let i = 0; i < sides; i++) {
-      const next = (i + 1) % sides;
-      ctx.beginPath();
-      ctx.moveTo(outer[i].x, outer[i].y);
-      ctx.lineTo(outer[next].x, outer[next].y);
-      ctx.lineTo(inner[next].x, inner[next].y);
-      ctx.lineTo(inner[i].x, inner[i].y);
-      ctx.closePath();
-      ctx.fillStyle = (i >= 6 || i <= 1) ? cfg.light : (i === 2 || i === 5 ? cfg.base : cfg.dark);
-      ctx.fill();
-      ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-      ctx.lineWidth = 1;
-      ctx.stroke();
-    }
-
-    ctx.beginPath();
-    ctx.moveTo(inner[0].x, inner[0].y);
-    for (let i = 1; i < sides; i++) ctx.lineTo(inner[i].x, inner[i].y);
-    ctx.closePath();
-    ctx.fillStyle = cfg.facet;
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.fillRect(cx - r * 0.35, cy - r * 0.35, r * 0.25, r * 0.1);
-  }
-
-  function renderFacetedEmerald(ctx, cx, cy, r, cfg) {
-    // Rombo cuadrado rotado 45 grados
-    const s = r * 1.1;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - s);
-    ctx.lineTo(cx + s, cy);
-    ctx.lineTo(cx, cy + s);
-    ctx.lineTo(cx - s, cy);
-    ctx.closePath();
-
-    // Biseles exteriores
-    const inS = s * 0.5;
-    // Triángulo superior
-    ctx.fillStyle = cfg.light;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - s);
-    ctx.lineTo(cx + inS, cy - inS);
-    ctx.lineTo(cx - inS, cy - inS);
-    ctx.closePath();
-    ctx.fill();
-
-    // Triángulo inferior
-    ctx.fillStyle = cfg.dark;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy + s);
-    ctx.lineTo(cx + inS, cy + inS);
-    ctx.lineTo(cx - inS, cy + inS);
-    ctx.closePath();
-    ctx.fill();
-
-    // Triángulos laterales
-    ctx.fillStyle = cfg.base;
-    ctx.beginPath();
-    ctx.moveTo(cx - s, cy);
-    ctx.lineTo(cx - inS, cy - inS);
-    ctx.lineTo(cx - inS, cy + inS);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(cx + s, cy);
-    ctx.lineTo(cx + inS, cy - inS);
-    ctx.lineTo(cx + inS, cy + inS);
-    ctx.closePath();
-    ctx.fill();
-
-    // Centro
-    ctx.fillStyle = cfg.facet;
-    ctx.fillRect(cx - inS, cy - inS, inS * 2, inS * 2);
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.strokeRect(cx - inS, cy - inS, inS * 2, inS * 2);
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.beginPath();
-    ctx.arc(cx - inS * 0.4, cy - inS * 0.4, r * 0.14, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function renderFacetedTriangle(ctx, cx, cy, r, cfg) {
-    const h = r * 1.15;
-    const p1 = { x: cx, y: cy - h * 0.9 };
-    const p2 = { x: cx + r * 1.05, y: cy + h * 0.8 };
-    const p3 = { x: cx - r * 1.05, y: cy + h * 0.8 };
-    const center = { x: cx, y: cy + h * 0.1 };
-
-    // 3 facetas triangulares hacia el centro
-    ctx.fillStyle = cfg.light;
-    ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
-    ctx.lineTo(center.x, center.y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.4)';
-    ctx.stroke();
-
-    ctx.fillStyle = cfg.dark;
-    ctx.beginPath();
-    ctx.moveTo(p2.x, p2.y);
-    ctx.lineTo(p3.x, p3.y);
-    ctx.lineTo(center.x, center.y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = cfg.base;
-    ctx.beginPath();
-    ctx.moveTo(p3.x, p3.y);
-    ctx.lineTo(p1.x, p1.y);
-    ctx.lineTo(center.x, center.y);
-    ctx.closePath();
-    ctx.fill();
-    ctx.stroke();
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.beginPath();
-    ctx.arc(cx - r * 0.2, cy - r * 0.1, r * 0.14, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function renderFacetedMarquise(ctx, cx, cy, r, cfg) {
-    const rx = r * 0.75;
-    const ry = r * 1.15;
-
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - ry);
-    ctx.quadraticCurveTo(cx + rx * 1.4, cy, cx, cy + ry);
-    ctx.quadraticCurveTo(cx - rx * 1.4, cy, cx, cy - ry);
-    ctx.closePath();
-    ctx.fillStyle = cfg.base;
-    ctx.fill();
-
-    // Facetas centrales
-    ctx.fillStyle = cfg.light;
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - ry);
-    ctx.lineTo(cx, cy + ry);
-    ctx.quadraticCurveTo(cx - rx, cy, cx, cy - ry);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.fillStyle = cfg.facet;
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, rx * 0.4, ry * 0.4, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
-    ctx.stroke();
-
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-    ctx.beginPath();
-    ctx.arc(cx - rx * 0.2, cy - ry * 0.3, r * 0.12, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function renderFacetedDiamond(ctx, cx, cy, r, cfg) {
-    // Diamante blanco-celeste de alta pureza con reflejos prismáticos
-    const sides = 8;
-    const outer = [];
-    const innerR = r * 0.6;
-
-    for (let i = 0; i < sides; i++) {
-      const angle = (i * Math.PI * 2) / sides;
-      outer.push({ x: cx + Math.cos(angle) * r, y: cy + Math.sin(angle) * r });
-    }
-
-    ctx.beginPath();
-    ctx.moveTo(outer[0].x, outer[0].y);
-    for (let i = 1; i < sides; i++) ctx.lineTo(outer[i].x, outer[i].y);
-    ctx.closePath();
-    ctx.fillStyle = cfg.base;
-    ctx.fill();
-
-    // Tabla central y destellos
-    ctx.beginPath();
-    ctx.arc(cx, cy, innerR, 0, Math.PI * 2);
-    ctx.fillStyle = cfg.facet;
-    ctx.fill();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.stroke();
-
-    // Estrella de 4 puntas de brillo especular
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.moveTo(cx, cy - r * 0.7);
-    ctx.lineTo(cx + r * 0.15, cy);
-    ctx.lineTo(cx, cy + r * 0.7);
-    ctx.lineTo(cx - r * 0.15, cy);
-    ctx.closePath();
-    ctx.fill();
-
-    ctx.beginPath();
-    ctx.moveTo(cx - r * 0.7, cy);
-    ctx.lineTo(cx, cy + r * 0.15);
-    ctx.lineTo(cx + r * 0.7, cy);
-    ctx.lineTo(cx, cy - r * 0.15);
-    ctx.closePath();
-    ctx.fill();
-  }
-
-  function renderColorBomb3D(ctx, cx, cy, r) {
-    // Esfera prismática con gradiente radial cromático y halo
-    const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
-    grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.2, '#00ffff');
-    grad.addColorStop(0.4, '#ff00ff');
-    grad.addColorStop(0.6, '#ffff00');
-    grad.addColorStop(0.8, '#00ff66');
-    grad.addColorStop(1, '#112244');
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-
-    ctx.strokeStyle = '#ffffff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Anillo giratorio de energía
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, r * 1.15, r * 0.4, Math.sin(Date.now() * 0.003), 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
   // ==========================================
-  // GESTIÓN DE INPUTS TÁCTILES Y SWIPES
+  // BUCLE DE JUEGO (RAF)
   // ==========================================
-  function setupInputs() {
-    const canvas = dom.canvas;
-
-    function getCoords(e) {
-      const rect = canvas.getBoundingClientRect();
-      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      const boardSize = State.boardSize || rect.width;
-      const scaleX = boardSize / rect.width;
-      const scaleY = boardSize / rect.height;
-
-      return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY
-      };
-    }
-
-    function pointToGridCell(px, py) {
-      const { startX, startY, size, tileSize } = getBoardDimensions();
-      if (px < startX || px >= startX + size || py < startY || py >= startY + size) {
-        return null;
-      }
-      const c = Math.floor((px - startX) / tileSize);
-      const r = Math.floor((py - startY) / tileSize);
-      if (r >= 0 && r < CONFIG.ROWS && c >= 0 && c < CONFIG.COLS) {
-        return { r, c };
-      }
-      return null;
-    }
-
-    // Touch / Pointer Down
-    function handlePointerDown(e) {
-      if (State.state !== 'PLAYING') return;
-
-      if (window.ArcadeAudio?.ctx?.state === 'suspended') {
-        window.ArcadeAudio.ctx.resume();
-      }
-
-      const { x, y } = getCoords(e);
-      const cell = pointToGridCell(x, y);
-      if (!cell) return;
-
-      State.touchStartCell = cell;
-      State.touchStartX = x;
-      State.touchStartY = y;
-
-      // Si ya había una celda seleccionada por toque previo
-      if (State.selectedCell) {
-        const dist = Math.abs(State.selectedCell.r - cell.r) + Math.abs(State.selectedCell.c - cell.c);
-        if (dist === 1) {
-          // Intercambio por segundo toque adyacente
-          const r1 = State.selectedCell.r;
-          const c1 = State.selectedCell.c;
-          State.selectedCell = null;
-          handleCellSwap(r1, c1, cell.r, cell.c);
-          return;
-        }
-      }
-
-      State.selectedCell = cell;
-      playAudio('select');
-      window.ArcadeCanvas?.haptic(5);
-    }
-
-    // Pointer Move (Swipe)
-    function handlePointerMove(e) {
-      if (!State.touchStartCell || State.state !== 'PLAYING') return;
-
-      const { x, y } = getCoords(e);
-      const dx = x - State.touchStartX;
-      const dy = y - State.touchStartY;
-      const threshold = getBoardDimensions().tileSize * 0.35;
-
-      if (Math.abs(dx) > threshold || Math.abs(dy) > threshold) {
-        let targetR = State.touchStartCell.r;
-        let targetC = State.touchStartCell.c;
-
-        if (Math.abs(dx) > Math.abs(dy)) {
-          targetC += dx > 0 ? 1 : -1;
-        } else {
-          targetR += dy > 0 ? 1 : -1;
-        }
-
-        if (targetR >= 0 && targetR < CONFIG.ROWS && targetC >= 0 && targetC < CONFIG.COLS) {
-          const r1 = State.touchStartCell.r;
-          const c1 = State.touchStartCell.c;
-          State.touchStartCell = null;
-          State.selectedCell = null;
-          handleCellSwap(r1, c1, targetR, targetC);
-        }
-      }
-    }
-
-    function handlePointerUp() {
-      State.touchStartCell = null;
-    }
-
-    canvas.addEventListener('mousedown', handlePointerDown);
-    canvas.addEventListener('mousemove', handlePointerMove);
-    window.addEventListener('mouseup', handlePointerUp);
-
-    canvas.addEventListener('touchstart', handlePointerDown, { passive: false });
-    canvas.addEventListener('touchmove', (e) => {
-      e.preventDefault();
-      handlePointerMove(e);
-    }, { passive: false });
-    window.addEventListener('touchend', handlePointerUp);
-  }
-
-  // ==========================================
-  // BUCLE PRINCIPAL DE JUEGO
-  // ==========================================
+  let lastTime = 0;
   function gameLoop(timestamp) {
-    if (!State.lastTime) State.lastTime = timestamp;
-    const dt = Math.min((timestamp - State.lastTime) / 1000, 0.1);
-    State.lastTime = timestamp;
+    if (!lastTime) lastTime = timestamp;
+    const dt = Math.min((timestamp - lastTime) / 1000, 0.05);
+    lastTime = timestamp;
 
-    if (State.state === 'PLAYING') {
-      // Cronómetro en modo infinito
-      if (State.isEndless) {
-        State.timeRemaining -= dt;
-        if (State.timeRemaining <= 0) {
-          State.timeRemaining = 0;
-          updateHUD();
-          checkWinOrLossConditions();
-        } else {
-          updateHUD();
-        }
-      }
+    window.ArcadeJuice?.update(dt);
+    updateLivesSystem();
 
-      // Temporizador de pistas automáticas
-      State.hintTimer += dt;
-      if (State.hintTimer >= CONFIG.HINT_DELAY && !State.hintMove) {
-        State.hintMove = CristalesLogic.findAnyValidMove(State.grid);
-      }
-      if (State.hintMove) {
-        State.hintPulse += dt;
-      }
-    }
-
-    // Actualizar animaciones
-    for (let i = State.animations.length - 1; i >= 0; i--) {
-      const a = State.animations[i];
-      a.progress += dt / a.duration;
-      if (a.progress >= 1) {
-        a.progress = 1;
-        State.animations.splice(i, 1);
-        if (a.onComplete) a.onComplete();
-      }
-    }
-
-    // Actualizar partículas
-    ParticlePool.update(dt);
-
-    // Dibujar frame
     render();
-
     requestAnimationFrame(gameLoop);
   }
 
   // ==========================================
-  // CONFIGURACIÓN DE UI Y EVENTOS
+  // ENTRADAS TÁCTILES Y DE RATÓN
   // ==========================================
-  function handleResize() {
-    const container = dom.canvas.parentElement;
-    if (!container) return;
+  function setupInputs() {
+    const canvas = dom.canvas;
 
-    const rect = container.getBoundingClientRect();
-    const size = Math.floor(Math.min(rect.width, rect.height) * 0.98);
+    function getGridCoords(e) {
+      const rect = canvas.getBoundingClientRect();
+      const x = (e.clientX - rect.left) / (rect.width / 8);
+      const y = (e.clientY - rect.top) / (rect.height / 8);
+      const c = Math.floor(x);
+      const r = Math.floor(y);
+      if (r >= 0 && r < 8 && c >= 0 && c < 8) return { r, c };
+      return null;
+    }
 
-    State.boardSize = size;
-    State.tileSize = size / CONFIG.COLS;
-
-    const dpr = window.devicePixelRatio || 1;
-    dom.canvas.style.width = `${size}px`;
-    dom.canvas.style.height = `${size}px`;
-    dom.canvas.width = Math.round(size * dpr);
-    dom.canvas.height = Math.round(size * dpr);
-
-    State.ctx = dom.canvas.getContext('2d');
-    State.ctx.resetTransform();
-    State.ctx.scale(dpr, dpr);
-  }
-
-  function setupUI() {
-    window.addEventListener('resize', handleResize);
-
-    // Pestañas modal inicial
-    dom.tabLevels.addEventListener('click', () => {
-      dom.tabLevels.classList.add('active');
-      dom.tabEndless.classList.remove('active');
-      dom.levelsView.classList.remove('hidden');
-      dom.endlessView.classList.add('hidden');
+    canvas.addEventListener('pointerdown', (e) => {
+      e.preventDefault();
+      const coords = getGridCoords(e);
+      if (coords) onCellClicked(coords.r, coords.c);
     });
 
-    dom.tabEndless.addEventListener('click', () => {
-      dom.tabEndless.classList.add('active');
-      dom.tabLevels.classList.remove('active');
-      dom.endlessView.classList.remove('hidden');
-      dom.levelsView.classList.add('hidden');
-    });
-
-    dom.btnStartEndless.addEventListener('click', () => {
-      playAudio('select');
-      startEndless();
-    });
-
-    // Botón de pista manual
-    dom.btnHint.addEventListener('click', () => {
-      if (State.state !== 'PLAYING') return;
-      State.hintMove = CristalesLogic.findAnyValidMove(State.grid);
-      State.hintPulse = 0;
-      playAudio('select');
-      window.ArcadeCanvas?.haptic(10);
-    });
-
-    // Pausa
-    dom.btnPauseHeader.addEventListener('click', () => {
-      if (State.state !== 'PLAYING') return;
-      State.state = 'PAUSED';
-      dom.overlayPause.classList.remove('hidden');
-      playAudio('select');
-    });
-
-    dom.btnResume.addEventListener('click', () => {
-      State.state = 'PLAYING';
-      dom.overlayPause.classList.add('hidden');
-      playAudio('select');
-    });
-
-    dom.btnRestartLevel.addEventListener('click', () => {
-      if (State.isEndless) startEndless();
-      else startLevel(State.currentLevelIdx);
-    });
-
-    dom.btnLevelSelect.addEventListener('click', () => {
-      dom.overlayPause.classList.add('hidden');
-      renderLevelSelector();
-      dom.startCard.classList.remove('hidden');
-      State.state = 'MENU';
-    });
-
-    // Botones de modal resultado
-    dom.btnNextLevel.addEventListener('click', () => {
-      if (State.currentLevelIdx < CONFIG.LEVELS.length - 1) {
-        startLevel(State.currentLevelIdx + 1);
+    // Potenciadores
+    dom.btnPowerupHammer.addEventListener('click', () => {
+      if (State.activePowerupTool === 'hammer') {
+        State.activePowerupTool = null;
+        dom.btnPowerupHammer.classList.remove('active');
+      } else {
+        State.activePowerupTool = 'hammer';
+        dom.btnPowerupHammer.classList.add('active');
+        dom.btnPowerupSwap.classList.remove('active');
       }
     });
 
-    dom.btnRetryLevel.addEventListener('click', () => {
-      if (State.isEndless) startEndless();
-      else startLevel(State.currentLevelIdx);
+    dom.btnPowerupSwap.addEventListener('click', () => {
+      if (State.activePowerupTool === 'swap') {
+        State.activePowerupTool = null;
+        dom.btnPowerupSwap.classList.remove('active');
+      } else {
+        State.activePowerupTool = 'swap';
+        dom.btnPowerupSwap.classList.add('active');
+        dom.btnPowerupHammer.classList.remove('active');
+      }
     });
 
+    dom.btnPowerupShuffle.addEventListener('click', applyShufflePowerup);
+
+    dom.btnHint.addEventListener('click', () => {
+      const move = CristalesLogic.findAnyValidMove(State.grid);
+      if (move) {
+        spawnGlow(move.c1, move.r1, '#ffe066');
+        spawnGlow(move.c2, move.r2, '#ffe066');
+        playAudio('select');
+        window.ArcadeJuice?.spawnFloat('¡PISTA!', CONFIG.VIRTUAL_W / 2, 220, '#ffe066', 13);
+      }
+    });
+  }
+
+  // ==========================================
+  // MAPA DE MUNDOS Y SELECCIÓN DE NIVELES
+  // ==========================================
+  let selectedWorld = 1;
+
+  function renderWorldMap(worldIdx) {
+    selectedWorld = worldIdx;
+    const wData = CONFIG.WORLDS[worldIdx - 1];
+    dom.worldBadge.textContent = wData.name.toUpperCase();
+    dom.worldDesc.textContent = `Niveles ${(worldIdx - 1) * 10 + 1} al ${worldIdx * 10} • Obstáculo: ${wData.obstacleType}`;
+
+    dom.levelsGrid.innerHTML = '';
+    const startLvl = (worldIdx - 1) * 10;
+
+    for (let i = 0; i < 10; i++) {
+      const lvlIndex = startLvl + i;
+      const lvlNum = lvlIndex + 1;
+      const isUnlocked = lvlIndex < State.saveData.unlockedLevels;
+      const stars = State.saveData.starsPerLevel[lvlIndex] || 0;
+
+      const badge = document.createElement('div');
+      badge.className = `level-badge ${isUnlocked ? 'unlocked' : 'locked'}`;
+      badge.innerHTML = `
+        <span class="level-num">${lvlNum}</span>
+        <span class="level-stars">${isUnlocked && stars > 0 ? '★'.repeat(stars) : ''}</span>
+      `;
+
+      if (isUnlocked) {
+        badge.addEventListener('click', () => startLevel(lvlIndex));
+      }
+
+      dom.levelsGrid.appendChild(badge);
+    }
+  }
+
+  function renderAchievementsModal() {
+    const list = [
+      { id: 'ach_first_level', title: 'Primer Prisma', desc: 'Supera el nivel 1 de campaña', icon: '💎' },
+      { id: 'ach_world_clear', title: 'Maestro del Mundo', desc: 'Completa los 10 niveles de un mundo', icon: '🌍' },
+      { id: 'ach_combo5', title: 'Reverberación', desc: 'Desata una reacción de Cascada x5', icon: '⚡' },
+      { id: 'ach_color_bomb', title: 'Prisma Hipercromático', desc: 'Activa un Prisma de Color de 5 gemas', icon: '🌈' },
+      { id: 'ach_fusion', title: 'Fusión Especial', desc: 'Combina dos cristales especiales adyacentes', icon: '💥' },
+      { id: 'ach_endless_10k', title: 'Brillo Perpetuo', desc: 'Alcanza 10,000 pts en Modo Infinito', icon: '⏱️' },
+      { id: 'ach_stars_30', title: 'Coleccionista de Estrellas', desc: 'Acumula 30 estrellas en la campaña', icon: '⭐' },
+      { id: 'ach_hammer', title: 'Artífice de Cuarzo', desc: 'Usa un Martillo de Cuarzo con éxito', icon: '🔨' }
+    ];
+
+    dom.achList.innerHTML = '';
+    list.forEach(ach => {
+      const unlocked = window.ArcadeJuice?.hasAchievement('cristales', ach.id);
+      const row = document.createElement('div');
+      row.className = `ach-item ${unlocked ? 'unlocked' : ''}`;
+      row.innerHTML = `
+        <span class="ach-icon">${unlocked ? ach.icon : '🔒'}</span>
+        <div>
+          <div class="ach-title">${ach.title}</div>
+          <div class="ach-desc">${ach.desc}</div>
+        </div>
+        <span class="ach-status">${unlocked ? 'COMPLETADO' : 'BLOQUEADO'}</span>
+      `;
+      dom.achList.appendChild(row);
+    });
+  }
+
+  function setupUI() {
+    document.querySelectorAll('.world-tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.world-tab').forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        renderWorldMap(parseInt(tab.dataset.world, 10));
+      });
+    });
+
+    dom.btnStartEndless.addEventListener('click', startEndless);
+
+    // Recompensa Diaria
+    dom.btnOpenDaily.addEventListener('click', () => {
+      dom.modalDaily.classList.remove('hidden');
+    });
+    dom.btnClaimDaily.addEventListener('click', () => {
+      State.saveData.powerups.hammer += 1;
+      State.saveData.powerups.swap += 1;
+      State.saveData.lives = 5;
+      updatePowerupCounts();
+      updateLivesSystem();
+      saveGameData();
+      dom.modalDaily.classList.add('hidden');
+      window.ArcadeJuice?.spawnFloat('¡RECOMPENSA RECLAMADA!', CONFIG.VIRTUAL_W / 2, 200, '#ffcc00', 14);
+    });
+
+    dom.btnCloseNoLives.addEventListener('click', () => {
+      dom.modalNoLives.classList.add('hidden');
+    });
+
+    // Pausa y Resultados
+    function togglePause() {
+      dom.overlayPause.classList.toggle('hidden');
+    }
+    dom.btnPauseHeader.addEventListener('click', togglePause);
+    dom.btnResume.addEventListener('click', togglePause);
+    dom.btnRestartLevel.addEventListener('click', () => {
+      togglePause();
+      startLevel(State.currentLevelIdx);
+    });
+    dom.btnLevelSelect.addEventListener('click', () => {
+      dom.overlayPause.classList.add('hidden');
+      dom.startCard.classList.remove('hidden');
+      renderWorldMap(selectedWorld);
+    });
+
+    dom.btnNextLevel.addEventListener('click', () => {
+      dom.overlayResult.classList.add('hidden');
+      if (State.currentLevelIdx + 1 < CONFIG.LEVELS.length) {
+        startLevel(State.currentLevelIdx + 1);
+      } else {
+        dom.startCard.classList.remove('hidden');
+        renderWorldMap(1);
+      }
+    });
+    dom.btnRetryLevel.addEventListener('click', () => {
+      dom.overlayResult.classList.add('hidden');
+      startLevel(State.currentLevelIdx);
+    });
     dom.btnExitToLevels.addEventListener('click', () => {
       dom.overlayResult.classList.add('hidden');
-      renderLevelSelector();
       dom.startCard.classList.remove('hidden');
-      State.state = 'MENU';
+      renderWorldMap(selectedWorld);
     });
 
-    // Mute / Unmute
+    // Logros
+    dom.btnAchievementsHeader.addEventListener('click', () => {
+      renderAchievementsModal();
+      dom.modalAchievements.classList.remove('hidden');
+    });
+    dom.btnCloseAch.addEventListener('click', () => {
+      dom.modalAchievements.classList.add('hidden');
+    });
+
+    // Opciones
+    dom.btnOptionsHeader.addEventListener('click', () => {
+      dom.optSfx.checked = window.ArcadeJuice?.getOption('sfx', true);
+      dom.optBgm.checked = window.ArcadeJuice?.getOption('bgm', true);
+      dom.optVibration.checked = window.ArcadeJuice?.getOption('vibration', true);
+      dom.optContrast.checked = window.ArcadeJuice?.getOption('contrast', false);
+      dom.modalOptions.classList.remove('hidden');
+    });
+    dom.btnCloseOptions.addEventListener('click', () => {
+      window.ArcadeJuice?.setOption('sfx', dom.optSfx.checked);
+      window.ArcadeJuice?.setOption('bgm', dom.optBgm.checked);
+      window.ArcadeJuice?.setOption('vibration', dom.optVibration.checked);
+      window.ArcadeJuice?.setOption('contrast', dom.optContrast.checked);
+
+      document.body.classList.toggle('high-contrast', dom.optContrast.checked);
+
+      if (!dom.optBgm.checked) stopBGM();
+      else startBGM();
+
+      dom.modalOptions.classList.add('hidden');
+    });
+
+    // Sonido Header
     dom.btnSoundToggle.addEventListener('click', () => {
       if (window.ArcadeAudio) {
         const muted = window.ArcadeAudio.toggleMute();
         dom.iconSoundOn.classList.toggle('hidden', muted);
         dom.iconSoundOff.classList.toggle('hidden', !muted);
+        if (muted) stopBGM();
+        else startBGM();
       }
     });
 
-    if (window.ArcadeAudio?.isMuted) {
-      dom.iconSoundOn.classList.add('hidden');
-      dom.iconSoundOff.classList.remove('hidden');
+    if (window.ArcadeJuice?.getOption('contrast', false)) {
+      document.body.classList.add('high-contrast');
     }
   }
 
   function init() {
     handleResize();
+    loadGameData();
     setupInputs();
     setupUI();
-    renderLevelSelector();
+    renderWorldMap(1);
 
     requestAnimationFrame(gameLoop);
   }

@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="Gotas - Puzzle arcade 90 de parejas de gotas de gel 3D con cascadas en cadena y gota arcoíris.">
+  <meta name="description" content="Gotas - Puzzle arcade 90 de parejas de gotas líquidas con expresiones reactivas, cascadas fluidas, maratón de jefes y duelo IA.">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23121629'/%3E%3Ccircle cx='11' cy='16' r='6' fill='%23ff2255'/%3E%3Ccircle cx='21' cy='16' r='6' fill='%2300e676'/%3E%3C/svg%3E">
   <title>Gotas - Arcade 90</title>
   <link rel="stylesheet" href="../../shared/theme.css">
@@ -27,6 +27,15 @@
         <h1 class="brand-title">GOTAS</h1>
       </div>
       <div class="hud-actions">
+        <button id="btn-tutorial-header" class="icon-button" aria-label="Tutorial de Cascadas" title="Tutorial">
+          📖
+        </button>
+        <button id="btn-achievements-header" class="icon-button" aria-label="Ver Logros" title="Logros">
+          🏆
+        </button>
+        <button id="btn-options-header" class="icon-button" aria-label="Ajustes y Accesibilidad" title="Ajustes">
+          ⚙️
+        </button>
         <button id="btn-sound-toggle" class="icon-button" aria-label="Silenciar / Activar sonido" title="Sonido">
           <svg id="icon-sound-on" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
             <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
@@ -46,7 +55,7 @@
     <!-- Marcador y Vista Previa -->
     <div class="gotas-hud">
       <div class="hud-box">
-        <span class="hud-label">PUNTOS</span>
+        <span class="hud-label" id="label-stat-left">PUNTOS</span>
         <span class="hud-val" id="hud-score">0</span>
       </div>
 
@@ -56,9 +65,21 @@
       </div>
 
       <div class="hud-box">
-        <span class="hud-label">NIVEL</span>
+        <span class="hud-label" id="label-stat-right">NIVEL</span>
         <span class="hud-val" id="hud-level">1</span>
       </div>
+    </div>
+
+    <!-- Barra de Jefe / Duelo IA (Activa en Maratón y Duelo) -->
+    <div id="hud-boss-bar" class="hud-boss-bar hidden">
+      <div class="boss-info">
+        <span class="boss-icon" id="boss-icon">👾</span>
+        <span class="boss-name" id="boss-name">JEFE: SORBETE</span>
+      </div>
+      <div class="boss-hp-container">
+        <div class="boss-hp-fill" id="boss-hp-fill" style="width: 100%;"></div>
+      </div>
+      <span class="boss-hp-text" id="boss-hp-text">1000 / 1000 PV</span>
     </div>
 
     <!-- Escenario Principal (Tablero 6x12) -->
@@ -66,16 +87,34 @@
       <div class="board-wrapper" id="gotas-container">
         <canvas id="gotas-canvas" width="360" height="640" aria-label="Tablero de Gotas"></canvas>
 
+        <!-- Banner de Advertencia de Basura -->
+        <div id="trash-warning-banner" class="trash-warning hidden">
+          ⚠️ ¡BASURA LÍQUIDA ENTRANTE!
+        </div>
+
         <!-- Banner de Cascadas / Combos -->
         <div id="combo-banner" class="combo-banner hidden">
           <span id="combo-text" class="combo-title">¡CASCADA x2!</span>
         </div>
 
-        <!-- Pantalla de Inicio -->
+        <!-- Pantalla de Inicio y Selector de Modos -->
         <div id="start-card" class="modal-card">
           <div class="gel-icon">💧</div>
           <h2 class="card-title">GOTAS 90</h2>
-          <p class="card-subtitle">Conecta 4 o más gotas del mismo color</p>
+          <p class="card-subtitle">Física de gel, reacciones en cadena y jefes alquímicos</p>
+
+          <!-- Selector de Modo de Juego -->
+          <div class="mode-selector">
+            <button class="mode-btn active" data-mode="normal">Normal</button>
+            <button class="mode-btn" data-mode="marathon">Maratón Jefes</button>
+            <button class="mode-btn" data-mode="time">Contrarreloj</button>
+            <button class="mode-btn" data-mode="duel">Duelo IA</button>
+          </div>
+
+          <div id="mode-description-box" class="mode-desc-box">
+            <span id="mode-desc-title" class="mode-desc-title">MODO NORMAL</span>
+            <p id="mode-desc-p" class="mode-desc-p">Combina 4 o más gotas del mismo color. La velocidad y los colores aumentan progresivamente.</p>
+          </div>
 
           <div class="instructions-card">
             <div class="inst-row">
@@ -84,7 +123,7 @@
             </div>
             <div class="inst-row">
               <span class="inst-key">👆 Toque</span>
-              <span class="inst-desc">Rotar 90° la pareja</span>
+              <span class="inst-desc">Rotar 90° con elasticidad</span>
             </div>
             <div class="inst-row">
               <span class="inst-key">👇 Deslizar Abajo</span>
@@ -92,22 +131,27 @@
             </div>
             <div class="inst-row">
               <span class="inst-key">🌈 Gota Arcoíris</span>
-              <span class="inst-desc">Elimina todo el color sobre el que cae</span>
+              <span class="inst-desc">Disuelve todo el color que toca</span>
             </div>
           </div>
 
           <button type="button" id="btn-start" class="btn-play">▶ JUGAR AHORA</button>
-          <div class="record-meta">RÉCORD: <strong id="best-score-val">0</strong></div>
+
+          <div class="card-footer-stats">
+            <span>RÉCORD: <strong id="best-score-val">0</strong></span>
+            <span>MAX CADENA: <strong id="best-chain-val">x1</strong></span>
+          </div>
         </div>
 
         <!-- Pantalla de Pausa -->
         <div id="overlay-pause" class="game-overlay hidden">
-          <div class="overlay-card">
+          <div class="overlay-card glass-panel">
             <h2>EN PAUSA</h2>
-            <p>Partida suspendida</p>
+            <p>Laboratorio alquímico suspendido</p>
             <div class="overlay-actions">
               <button id="btn-resume" class="btn-primary">Continuar</button>
               <button id="btn-restart-pause" class="btn-secondary">Reiniciar</button>
+              <button id="btn-pause-options" class="btn-secondary">Ajustes</button>
               <a href="../../index.html" class="btn-secondary">Menú Principal</a>
             </div>
           </div>
@@ -115,7 +159,7 @@
 
         <!-- Pantalla de Game Over -->
         <div id="overlay-gameover" class="game-overlay hidden">
-          <div class="overlay-card">
+          <div class="overlay-card glass-panel">
             <h2 id="go-title">¡FIN DE PARTIDA!</h2>
             <p id="go-sub">Columna de entrada colapsada</p>
             <div class="result-stats">
@@ -137,6 +181,85 @@
             </div>
           </div>
         </div>
+
+        <!-- Modal de Tutorial Interactivo -->
+        <div id="modal-tutorial" class="game-overlay hidden">
+          <div class="overlay-card glass-panel tut-panel">
+            <div class="modal-header">
+              <h3>📖 TUTORIAL: EL ARTE DE LAS CASCADAS</h3>
+            </div>
+            <div class="tut-step active" id="tut-step-1">
+              <div class="tut-illustration">💧 💧 💧 💧</div>
+              <h4>1. Conexiones Básicas (4+)</h4>
+              <p>Junta 4 o más gotas del mismo color adyacentes horizontal o verticalmente para disolverlas en el matraz.</p>
+            </div>
+            <div class="tut-step hidden" id="tut-step-2">
+              <div class="tut-illustration">⚡ 🌊 💥</div>
+              <h4>2. Cascadas y Efecto Dominó</h4>
+              <p>Coloca gotas sobre otras de distinto color. Al disolverse las de abajo, las de arriba caerán por gravedad y pueden formar nuevos grupos automáticos.</p>
+            </div>
+            <div class="tut-step hidden" id="tut-step-3">
+              <div class="tut-illustration">🌈 🧪 ✨</div>
+              <h4>3. Gota Arcoíris y Reacciones</h4>
+              <p>La gota multicolor disuelve todas las gotas del color sobre el que cae, detonando combos masivos de limpieza.</p>
+            </div>
+            <div class="tut-pagination">
+              <button id="btn-tut-prev" class="btn-secondary" style="width: 80px;">◀ Ant</button>
+              <span id="tut-page-indicator" style="font-weight: 800; font-size: 11px;">1 / 3</span>
+              <button id="btn-tut-next" class="btn-primary" style="width: 80px;">Sig ▶</button>
+            </div>
+            <div class="overlay-actions" style="margin-top: 12px;">
+              <button id="btn-close-tut" class="btn-secondary">Cerrar Tutorial</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal de Logros -->
+        <div id="modal-achievements" class="game-overlay hidden">
+          <div class="overlay-card glass-panel ach-panel">
+            <div class="modal-header">
+              <h3>🏆 LOGROS DE GOTAS</h3>
+            </div>
+            <p style="font-size: 11px; color: #94a3b8; margin-bottom: 10px;">Demuestra tu destreza en reacciones de gel</p>
+            <div class="ach-list" id="ach-list">
+              <!-- Se puebla dinámicamente -->
+            </div>
+            <div class="overlay-actions" style="margin-top: 14px;">
+              <button id="btn-close-ach" class="btn-primary">Cerrar</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Modal de Opciones y Accesibilidad -->
+        <div id="modal-options" class="game-overlay hidden">
+          <div class="overlay-card glass-panel options-panel">
+            <div class="modal-header">
+              <h3>⚙️ AJUSTES Y ACCESIBILIDAD</h3>
+            </div>
+            <div class="options-group">
+              <label class="opt-row">
+                <span>Efectos de Sonido (SFX)</span>
+                <input type="checkbox" id="opt-sfx" checked>
+              </label>
+              <label class="opt-row">
+                <span>Música Sintetizada (BGM)</span>
+                <input type="checkbox" id="opt-bgm" checked>
+              </label>
+              <label class="opt-row">
+                <span>Vibración Háptica</span>
+                <input type="checkbox" id="opt-vibration" checked>
+              </label>
+              <label class="opt-row">
+                <span>Modo Alto Contraste</span>
+                <input type="checkbox" id="opt-contrast">
+              </label>
+            </div>
+            <div class="overlay-actions" style="margin-top: 16px;">
+              <button id="btn-close-options" class="btn-primary">Guardar y Cerrar</button>
+            </div>
+          </div>
+        </div>
+
       </div>
     </main>
 
@@ -152,6 +275,7 @@
   <script src="../../shared/canvas.js"></script>
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
+  <script src="../../shared/juice.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

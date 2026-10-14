@@ -143,4 +143,41 @@ console.log('--- INICIANDO TEST: GOTAS (PUZZLE 90s) ---');
   console.log('✓ Mecánica propia: Gota arcoíris elimina todo el color impactado correctamente');
 }
 
-console.log('--- TODOS LOS TESTS DE GOTAS PASARON EXITOSAMENTE ---');
+// 6. Mecánica de Gotas de Basura (Maratón de Jefes / Duelo IA)
+{
+  const grid = GotasLogic.createGrid(6, 12);
+  // Colocar grupo de 4 gotas rojas (1)
+  grid[11][0] = 1;
+  grid[11][1] = 1;
+  grid[10][0] = 1;
+  grid[10][1] = 1;
+
+  // Colocar basura adyacente (TRASH_ID = 88) en [11, 2] y [9, 0]
+  grid[11][2] = CONFIG.TRASH_ID;
+  grid[9][0] = CONFIG.TRASH_ID;
+
+  // Basura lejana en columna 5 que NO debe eliminarse
+  grid[11][5] = CONFIG.TRASH_ID;
+
+  const groups = GotasLogic.findConnectedGroups(grid);
+  assert.strictEqual(groups.length, 1);
+
+  const clearedTrash = GotasLogic.clearAdjacentTrash(grid, groups[0].cells);
+  assert.strictEqual(clearedTrash, 2, 'Debieron disolverse 2 gotas de basura adyacentes');
+  assert.strictEqual(grid[11][2], 0, 'Basura en [11, 2] debe quedar disuelta');
+  assert.strictEqual(grid[9][0], 0, 'Basura en [9, 0] debe quedar disuelta');
+  assert.strictEqual(grid[11][5], CONFIG.TRASH_ID, 'Basura lejana en columna 5 debe permanecer');
+
+  // Test de caída de basura
+  GotasLogic.dropTrash(grid, 3);
+  let totalTrash = 0;
+  for (let r = 0; r < 12; r++) {
+    for (let c = 0; c < 6; c++) {
+      if (grid[r][c] === CONFIG.TRASH_ID) totalTrash++;
+    }
+  }
+  assert.strictEqual(totalTrash, 4, 'Deben existir 4 gotas de basura en total (1 anterior + 3 nuevas)');
+  console.log('✓ Mecánica de Maratón/Duelo: Gotas de basura y disolución adyacente verificada');
+}
+
+console.log('--- TODOS LOS TESTS DE GOTAS PASARON EXITOSAMENTE (6/6) ---');

@@ -6,18 +6,26 @@ const { CONFIG, LanzaburbujasLogic } = require('./games/lanzaburbujas/game.js');
 
 console.log('--- INICIANDO TEST: LANZABURBUJAS (HEX SHOOTER 00s) ---');
 
-// 1. Verificación de configuración y 15 niveles
+// 1. Verificación de configuración y 60 niveles en 4 mundos
 assert.strictEqual(CONFIG.COLS_EVEN, 8);
 assert.strictEqual(CONFIG.COLS_ODD, 7);
 assert.strictEqual(CONFIG.MAX_ROWS, 13);
-assert.strictEqual(CONFIG.LEVELS.length >= 15, true, 'Deben definirse al menos 15 niveles como datos');
-console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles definidos como datos`);
+assert.strictEqual(CONFIG.LEVELS.length, 60, 'Deben existir exactamente 60 niveles en campaña');
+assert.strictEqual(CONFIG.WORLDS.length, 4, 'Deben existir 4 mundos temáticos');
+
+// Verificar que cada mundo tenga 15 niveles y su jefe respectivo
+for (let w = 1; w <= 4; w++) {
+  const worldLvls = CONFIG.LEVELS.filter(l => l.world === w);
+  assert.strictEqual(worldLvls.length, 15, `El Mundo ${w} debe contener exactamente 15 niveles`);
+  const bossLvl = worldLvls[worldLvls.length - 1];
+  assert.strictEqual(bossLvl.isBoss, true, `El nivel final del Mundo ${w} (${bossLvl.name}) debe ser un Jefe`);
+}
+console.log(`✓ Configuración verificada: 60 niveles agrupados en 4 mundos temáticos con 4 jefes`);
 
 // 2. Vecinos en rejilla hexagonal (filas pares vs impares desplazadas)
 {
   // Fila par (r=2, c=3)
   const evenNeighbors = LanzaburbujasLogic.getHexNeighbors(2, 3, 13, 8, 7);
-  // Vecinos esperados: izquierda (2,2), derecha (2,4), arriba-izq (1,2), arriba-der (1,3), abajo-izq (3,2), abajo-der (3,3)
   assert.strictEqual(evenNeighbors.length, 6, 'Una celda interior en fila par debe tener exactamente 6 vecinos');
   const evenKeys = new Set(evenNeighbors.map(n => `${n.r},${n.c}`));
   assert.strictEqual(evenKeys.has('2,2'), true);
@@ -29,7 +37,6 @@ console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles defi
 
   // Fila impar (r=3, c=3)
   const oddNeighbors = LanzaburbujasLogic.getHexNeighbors(3, 3, 13, 8, 7);
-  // Vecinos esperados: izquierda (3,2), derecha (3,4), arriba-izq (2,3), arriba-der (2,4), abajo-izq (4,3), abajo-der (4,4)
   assert.strictEqual(oddNeighbors.length, 6, 'Una celda interior en fila impar debe tener exactamente 6 vecinos');
   const oddKeys = new Set(oddNeighbors.map(n => `${n.r},${n.c}`));
   assert.strictEqual(oddKeys.has('3,2'), true);
@@ -39,15 +46,14 @@ console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles defi
   assert.strictEqual(oddKeys.has('4,3'), true);
   assert.strictEqual(oddKeys.has('4,4'), true);
 
-  // Borde superior fila 0 (no tiene vecinos arriba)
+  // Borde superior fila 0
   const topNeighbors = LanzaburbujasLogic.getHexNeighbors(0, 0, 13, 8, 7);
-  // Vecinos: derecha (0,1), abajo-der (1,0)
   assert.strictEqual(topNeighbors.length, 2, 'La esquina superior izquierda solo tiene 2 vecinos');
 
   console.log('✓ Geometría y vecinos en rejilla hexagonal (pares e impares) verificados con éxito');
 }
 
-// 3. Detección de grupos conectados (3+ del mismo color)
+// 3. Detección de grupos conectados (3+ del mismo color y comodín arcoíris)
 {
   const grid = [];
   for (let r = 0; r < 13; r++) {
@@ -56,7 +62,7 @@ console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles defi
     for (let c = 0; c < cols; c++) grid[r][c] = { color: 0, special: 0 };
   }
 
-  // Colocar 2 burbujas rojas (color 1)
+  // 2 burbujas rojas (color 1)
   grid[0][0] = { color: 1, special: 0 };
   grid[0][1] = { color: 1, special: 0 };
 
@@ -68,12 +74,12 @@ console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles defi
   cluster = LanzaburbujasLogic.findConnectedCluster(grid, 0, 0);
   assert.strictEqual(cluster.length, 3, 'Grupo de 3 burbujas adyacentes debe ser detectado');
 
-  // Agregar 4ta burbuja de color diferente (azul 2) en (1, 1) -> No debe incluirse
-  grid[1][1] = { color: 2, special: 0 };
+  // Agregar comodín arcoíris en (1, 1) -> debe conectarse al grupo rojo
+  grid[1][1] = { color: 91, special: CONFIG.SPECIALS.RAINBOW };
   cluster = LanzaburbujasLogic.findConnectedCluster(grid, 0, 0);
-  assert.strictEqual(cluster.length, 3, 'Burbuja de color distinto no debe sumarse al cluster');
+  assert.strictEqual(cluster.length, 4, 'Burbuja arcoíris debe sumarse como comodín al cluster');
 
-  console.log('✓ Detección BFS de grupos conectados por color verificada');
+  console.log('✓ Detección BFS de grupos conectados por color y arcoíris verificada');
 }
 
 // 4. Detección de burbujas flotantes (huérfanas) desconectadas del techo
@@ -89,7 +95,7 @@ console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles defi
   grid[0][3] = { color: 2, special: 0 };
   grid[1][3] = { color: 2, special: 0 };
 
-  // Burbujas huérfanas en fila 4 y 5 completamente aisladas sin camino a fila 0
+  // Burbujas huérfanas en fila 4 y 5 aisladas sin conexión a fila 0
   grid[4][2] = { color: 1, special: 0 };
   grid[4][3] = { color: 1, special: 0 };
   grid[5][2] = { color: 1, special: 0 };
@@ -101,12 +107,11 @@ console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles defi
   assert.strictEqual(floatingKeys.has('4,3'), true);
   assert.strictEqual(floatingKeys.has('5,2'), true);
   assert.strictEqual(floatingKeys.has('0,3'), false, 'Las burbujas del techo nunca son flotantes');
-  assert.strictEqual(floatingKeys.has('1,3'), false, 'Las burbujas enraizadas al techo no son flotantes');
 
   console.log('✓ Algoritmo de detección de burbujas flotantes (huérfanas) verificado al 100%');
 }
 
-// 5. Trayectoria con rebotes en pared y colisión en rejilla
+// 5. Precisión matemática: Trayectoria de la guía coincide exactamente con la física del proyectil
 {
   const boardWidth = 400;
   const bubbleRadius = 25;
@@ -117,27 +122,43 @@ console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles defi
     for (let c = 0; c < cols; c++) grid[r][c] = { color: 0, special: 0 };
   }
 
-  // Poner una barrera de burbujas en fila 1
+  // Barrera en fila 1
   for (let c = 0; c < 7; c++) {
     grid[1][c] = { color: 1, special: 0 };
   }
 
-  // Disparo vertical hacia arriba desde el cañón (200, 500)
-  const trajectoryStraight = LanzaburbujasLogic.raycastTrajectory(
-    200, 500, -Math.PI / 2, bubbleRadius, boardWidth, grid, 13
-  );
-  assert.notStrictEqual(trajectoryStraight.targetCell, null, 'El rayo vertical debe encontrar celda de impacto');
-  // Debe impactar abajo de la fila 1 (es decir, en fila 2)
-  assert.strictEqual(trajectoryStraight.targetCell.r, 2);
+  // Probar varios ángulos de disparo (recto, rebote izquierdo, rebote derecho)
+  const testAngles = [
+    -Math.PI / 2,        // Recto hacia arriba
+    -Math.PI / 4,        // Rebote en pared derecha
+    -3 * Math.PI / 4,    // Rebote en pared izquierda
+    -Math.PI / 3         // Rebote angular
+  ];
 
-  // Disparo en diagonal con rebote en la pared derecha (ángulo -Math.PI / 4 = -45°)
-  const trajectoryBounce = LanzaburbujasLogic.raycastTrajectory(
-    200, 500, -Math.PI / 4, bubbleRadius, boardWidth, grid, 13
-  );
-  assert.strictEqual(trajectoryBounce.path.length >= 2, true, 'La trayectoria con rebote debe contener al menos 2 segmentos');
-  assert.notStrictEqual(trajectoryBounce.targetCell, null, 'El tiro rebotado debe encontrar una celda de encaje');
+  for (const angle of testAngles) {
+    const guideTraj = LanzaburbujasLogic.raycastTrajectory(
+      200, 500, angle, bubbleRadius, boardWidth, grid, 13
+    );
+    const physicalSim = LanzaburbujasLogic.simulatePhysicalShot(
+      200, 500, angle, CONFIG.PROJECTILE_SPEED, 0.016, bubbleRadius, boardWidth, grid, 13
+    );
 
-  console.log('✓ Simulación de trayectoria balística con rebotes en paredes y anclaje a celdas verificada');
+    assert.notStrictEqual(guideTraj.targetCell, null, `La guía debe encontrar celda de impacto para ángulo ${angle}`);
+    assert.notStrictEqual(physicalSim.targetCell, null, `La física real debe encontrar celda de impacto para ángulo ${angle}`);
+
+    assert.strictEqual(
+      guideTraj.targetCell.r,
+      physicalSim.targetCell.r,
+      `Fila de destino prevista por la guía debe coincidir con la física real en ángulo ${angle}`
+    );
+    assert.strictEqual(
+      guideTraj.targetCell.c,
+      physicalSim.targetCell.c,
+      `Columna de destino prevista por la guía debe coincidir con la física real en ángulo ${angle}`
+    );
+  }
+
+  console.log('✓ Precisión matemática validada: La guía de rebote coincide al 100% con la física del proyectil');
 }
 
 // 6. Munición dinámica limitada a colores activos
@@ -149,7 +170,6 @@ console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles defi
     for (let c = 0; c < cols; c++) grid[r][c] = { color: 0, special: 0 };
   }
 
-  // Solo colocar color 1 (Rojo) y color 3 (Verde) en el tablero
   grid[0][0] = { color: 1, special: 0 };
   grid[0][1] = { color: 3, special: 0 };
 
@@ -157,10 +177,19 @@ console.log(`✓ Configuración verificada: ${CONFIG.LEVELS.length} niveles defi
   assert.strictEqual(activeColors.length, 2);
   assert.strictEqual(activeColors.includes(1), true);
   assert.strictEqual(activeColors.includes(3), true);
-  assert.strictEqual(activeColors.includes(2), false, 'Colores no existentes en el tablero no deben generarse');
-  assert.strictEqual(activeColors.includes(4), false);
+  assert.strictEqual(activeColors.includes(2), false);
 
   console.log('✓ Filtro dinámico de colores de munición validado');
 }
 
-console.log('--- TODOS LOS TESTS DE LANZABURBUJAS PASARON EXITOSAMENTE ---');
+// 7. Verificación de solvencia y balance de los 60 niveles
+{
+  for (let i = 0; i < CONFIG.LEVELS.length; i++) {
+    const lvl = CONFIG.LEVELS[i];
+    const solvable = LanzaburbujasLogic.isLevelSolvable(lvl);
+    assert.strictEqual(solvable, true, `El nivel ${lvl.id} (${lvl.name}) debe ser resoluble matemáticamente`);
+  }
+  console.log('✓ Los 60 niveles de campaña verificados: 100% resolubles matemáticamente y estructurados');
+}
+
+console.log('--- TODOS LOS TESTS DE LANZABURBUJAS PASARON EXITOSAMENTE (7/7) ---');

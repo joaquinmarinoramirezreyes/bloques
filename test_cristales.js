@@ -92,4 +92,15 @@ console.log('✓ 100 tableros iniciales verificados: Cero combinaciones prehecha
   console.log('✓ 50 simulaciones de cascadas masivas verificadas: Todas se estabilizan y terminan');
 }
 
-console.log('--- TODOS LOS TESTS DE CRISTALES PASARON EXITOSAMENTE ---');
+// 6. Verificación de solvencia de los 40 niveles de campaña
+{
+  assert.strictEqual(CONFIG.LEVELS.length, 40, 'Deben existir exactamente 40 niveles en los 4 mundos');
+  for (let i = 0; i < CONFIG.LEVELS.length; i++) {
+    const lvl = CONFIG.LEVELS[i];
+    const solvable = CristalesLogic.isLevelSolvable(lvl);
+    assert.strictEqual(solvable, true, `El nivel ${lvl.id} (${lvl.name}) debe ser resoluble matemáticamente`);
+  }
+  console.log('✓ Los 40 niveles de campaña verificados: 100% resolubles matemáticamente con ratios de movimientos balanceados');
+}
+
+console.log('--- TODOS LOS TESTS DE CRISTALES PASARON EXITOSAMENTE (6/6) ---');
