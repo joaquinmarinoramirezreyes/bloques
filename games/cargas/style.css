@@ -442,40 +442,95 @@ html, body {
   font-size: 0.85rem;
 }
 
-.levels-grid-container {
-  margin-bottom: 14px;
-  text-align: left;
+.world-tabs-container {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 10px;
 }
 
-.selector-title {
-  display: block;
-  font-size: 0.68rem;
-  font-weight: 700;
+.world-tab {
+  flex: 1;
+  background: #0f172a;
+  border: 1px solid #334155;
+  color: var(--text-muted);
+  font-family: inherit;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 6px 2px;
+  cursor: pointer;
+  min-height: 40px;
+  text-transform: uppercase;
+}
+
+.world-tab.active {
+  background: #1e293b;
+  border-bottom: 2px solid var(--caution-yellow);
   color: var(--caution-yellow);
-  margin-bottom: 6px;
-  letter-spacing: 0.5px;
+}
+
+.start-action-row {
+  display: flex;
+  gap: 8px;
+  margin-top: 6px;
+}
+
+.start-action-row .ind-btn {
+  flex: 1;
+}
+
+.ind-btn.btn-secondary {
+  background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+  border: 1px solid #475569;
+  color: #38bdf8;
+}
+
+.levels-grid-container {
+  margin-bottom: 12px;
+  text-align: left;
 }
 
 .levels-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  padding-right: 2px;
 }
 
 .lvl-chip {
   background: #0f172a;
   border: 1px solid #334155;
   color: var(--text-white);
-  padding: 8px 2px;
+  padding: 6px 2px;
   font-family: inherit;
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
-  min-height: 44px;
+  min-height: 46px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  position: relative;
+}
+
+.lvl-chip.locked {
+  opacity: 0.45;
+  border-style: dashed;
+}
+
+.chip-stars {
+  font-size: 8px;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.chip-boss-tag {
+  font-size: 7px;
+  color: #ef4444;
+  font-weight: 900;
+  margin-top: 1px;
 }
 
 .lvl-chip.active {
@@ -493,6 +548,71 @@ html, body {
   border: 2px solid #ef4444;
   background: #3b1111;
   color: #fca5a5;
+}
+
+/* Tienda de Mejoras */
+.shop-credits-bar {
+  background: #0f172a;
+  border: 1px solid #1e293b;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  margin-bottom: 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.shop-items-container {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 230px;
+  overflow-y: auto;
+  margin-bottom: 12px;
+}
+
+.shop-item-card {
+  display: flex;
+  align-items: center;
+  background: #0f172a;
+  border: 1px solid #334155;
+  padding: 8px;
+  gap: 8px;
+  text-align: left;
+}
+
+.shop-item-icon {
+  font-size: 1.4rem;
+  min-width: 30px;
+  text-align: center;
+}
+
+.shop-item-info {
+  flex: 1;
+}
+
+.shop-item-name {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: var(--caution-yellow);
+}
+
+.shop-item-desc {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.shop-buy-btn {
+  min-width: 75px;
+  font-size: 0.72rem;
+  padding: 4px 6px;
+}
+
+.shop-buy-btn.disabled {
+  background: #334155 !important;
+  color: #94a3b8 !important;
+  border-color: #475569 !important;
+  cursor: default;
 }
 
 .modal-title {
@@ -555,3 +675,4 @@ html, body {
 .hidden {
   display: none !important;
 }
+

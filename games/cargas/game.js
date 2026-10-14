@@ -1,13 +1,17 @@
 /**
  * games/cargas/game.js - Cargas Arcade 90s Industrial
- * Laberinto táctico con cargas de resonancia en rombo, empuje de núcleos,
- * cadenas de detonación, 4 guardianes mecánicos y jefes con ataques telegrafiados.
+ * Laberinto táctico con cargas de resonancia en rombo (distancia Manhattan),
+ * empuje y deslizamiento de núcleos, cadenas de resonancia, 3 mundos con mecánicas
+ * propias (hielo, cintas transportadoras, teletransportes, compuertas e interruptores,
+ * bloques regenerativos), IA con pathfinding BFS y evasión inteligente,
+ * 3 jefes de mundo, tienda de mejoras, 11 logros, almacenamiento versionado cargas:v2,
+ * corner-slipping táctil para pulgar, audio sintetizado generativo y modo debug ?debug=1.
  */
 (() => {
   'use strict';
 
   // ==========================================
-  // CONFIGURACIÓN Y CONSTANTES DE BALANCE
+  // 1. CONFIGURACIÓN Y BALANCE GENERAL
   // ==========================================
   const CONFIG = {
     COLS: 11,
@@ -16,29 +20,55 @@
     VIRTUAL_W: 330, // 11 * 30
     VIRTUAL_H: 390, // 13 * 30
 
-    PLAYER_SPEED: 4.2, // celdas por segundo
-    CHARGE_FUSE_TIME: 2.8, // segundos antes de detonación automática
-    CHARGE_SLIDE_SPEED: 9.0, // celdas por segundo al ser empujada
+    BASE_PLAYER_SPEED: 4.2, // celdas por segundo
+    CHARGE_FUSE_TIME: 2.7, // segundos antes de detonación automática
+    BASE_CHARGE_SLIDE_SPEED: 9.5, // celdas por segundo al ser empujada
     DEFAULT_BLAST_RADIUS: 2, // radio Manhattan
     MAX_BLAST_RADIUS: 5,
     DEFAULT_MAX_CHARGES: 1,
     MAX_CHARGES_LIMIT: 4,
-    BLAST_DURATION: 0.45, // segundos que dura la onda
-    INVULNERABILITY_TIME: 2.2, // segundos de invulnerabilidad tras ser golpeado
+    BLAST_DURATION: 0.42, // duración visible de la onda en segundos
+    INVULNERABILITY_TIME: 2.2,
+    REGEN_BLOCK_TIME: 8.0, // segundos para reaparición de bloques nanotecnológicos
 
     STARTING_LIVES: 3,
-    STORAGE_KEY: 'cargas:v1:best_score',
+    STORAGE_KEY: 'cargas:v2',
+    LEGACY_STORAGE_KEY: 'cargas:v1:best_score',
 
-    // 12 Niveles de Diseño como Datos
-    // '#' = Pilar Indestructible, '.' = Piso, 'B' = Bloque Blando,
-    // '1' = P1, '2' = P2, 'p' = Patrullero, 'h' = Cazador, 'a' = Blindado, 'c' = Constructor,
-    // 'X' = Portal de Salida, 'G' = Jefe Titán, 'K' = Jefe Arconte
+    // Mundos temáticos
+    WORLDS: [
+      { id: 1, name: "Sector Industrial Alfa", theme: "industrial", color: "#f59e0b", levels: [1, 10] },
+      { id: 2, name: "Criocámaras y Cintas", theme: "cryo", color: "#06b6d4", levels: [11, 20] },
+      { id: 3, name: "Núcleo Cuántico", theme: "quantum", color: "#a855f7", levels: [21, 30] }
+    ],
+
+    // ==========================================
+    // 30 NIVELES DE DISEÑO COMO DATOS (11x13)
+    // Símbolos:
+    // '#' = Pilar Indestructible
+    // '.' = Piso Normal
+    // 'B' = Bloque Blando Destructible
+    // 'R' = Bloque Regenerativo Nanotecnológico
+    // 'I' = Hielo (resbaladizo, baja fricción)
+    // '^', 'v', '<', '>' = Cintas Transportadoras direccionales
+    // 'S' = Interruptor de Presión
+    // 'D' = Compuerta de Seguridad (cerrada por defecto)
+    // 'T' = Teletransportador Cuántico
+    // '1' = Spawn Jugador 1
+    // '2' = Spawn Jugador 2
+    // 'X' = Portal de Extracción / Salida
+    // 'p' = Patrullero
+    // 'h' = Cazador (busca al jugador)
+    // 'a' = Blindado (2 puntos de vida)
+    // 'c' = Constructor
+    // 'G' = Jefe Mundo 1: Titán Giróscopo MK-II
+    // 'C' = Jefe Mundo 2: Coloso Criogénico
+    // 'K' = Jefe Mundo 3: Núcleo Arconte Supremo
+    // ==========================================
     LEVELS: [
+      // --- MUNDO 1: SECTOR INDUSTRIAL ALFA (1-10) ---
       {
-        id: 1,
-        name: "Complejo Alfa",
-        desc: "Iniciación de resonancia en el complejo exterior",
-        time: 120,
+        id: 1, world: 1, name: "Entrada Alfa", targetTime: 50,
         map: [
           "###########",
           "#1..B.B..2#",
@@ -56,10 +86,7 @@
         ]
       },
       {
-        id: 2,
-        name: "Depósito Ferroso",
-        desc: "Aparición de cazadores mecánicos que detectan la resonancia",
-        time: 120,
+        id: 2, world: 1, name: "Depósito Ferroso", targetTime: 55,
         map: [
           "###########",
           "#1..B.B..2#",
@@ -77,10 +104,7 @@
         ]
       },
       {
-        id: 3,
-        name: "Conductos Subterráneos",
-        desc: "Unidades blindadas pesadas resisten el primer impacto",
-        time: 120,
+        id: 3, world: 1, name: "Subterráneo Pesado", targetTime: 60,
         map: [
           "###########",
           "#1..B.B..2#",
@@ -98,10 +122,7 @@
         ]
       },
       {
-        id: 4,
-        name: "Fundición Nuclear",
-        desc: "Nanoconstructores despliegan barreras orgánicas",
-        time: 110,
+        id: 4, world: 1, name: "Fundición Nuclear", targetTime: 60,
         map: [
           "###########",
           "#1..B.B..2#",
@@ -119,174 +140,474 @@
         ]
       },
       {
-        id: 5,
-        name: "Cámara del Titán",
-        desc: "¡ALERTA DE JEFE! Titán Giróscopo en la arena central",
-        time: 150,
-        isBoss: true,
-        bossType: 'titan',
+        id: 5, world: 1, name: "Bloques Nanomórficos", targetTime: 60,
         map: [
           "###########",
-          "#1...B...2#",
-          "#.B#...#B.#",
-          "#B.......B#",
-          "#.B.....B.#",
-          "#....G....#",
-          "#..B...B..#",
-          "#.B.....B.#",
-          "#B.......B#",
-          "#.B#...#B.#",
-          "#..B.X.B..#",
-          "#...B.B...#",
+          "#1..R.R..2#",
+          "#.#.#.#.#.#",
+          "#R.R.h.R.R#",
+          "#.#R#R#R#.#",
+          "#..R.a.R..#",
+          "#.#.#.#.#.#",
+          "#R.R.p.R.R#",
+          "#.#R#R#R#.#",
+          "#X.R.c.R..#",
+          "#.#.#.#.#.#",
+          "#..R.R.R..#",
           "###########"
         ]
       },
       {
-        id: 6,
-        name: "Refinería de Silicio",
-        desc: "Constructores duales remodelan activamente los corredores",
-        time: 110,
+        id: 6, world: 1, name: "Corredores Blindados", targetTime: 65,
         map: [
           "###########",
           "#1..B.B..2#",
           "#.#B#.#B#.#",
-          "#B.B.c.B.B#",
+          "#B.B.a.B.B#",
           "#.#B#B#B#.#",
-          "#..B.h.B..#",
+          "#..B.a.B..#",
           "#.#.#.#.#.#",
-          "#B.B.c.B.B#",
+          "#B.B.h.B.B#",
           "#.#B#B#B#.#",
-          "#..B.h.B.X#",
+          "#..B.c.B.X#",
           "#.#B#.#B#.#",
           "#..B.B.B..#",
           "###########"
         ]
       },
       {
-        id: 7,
-        name: "Núcleo Magnético",
-        desc: "Blindados patrullan en formación con soporte de cazadores",
-        time: 110,
+        id: 7, world: 1, name: "Malla de Resonancia", targetTime: 65,
         map: [
           "###########",
-          "#1..B.B..2#",
-          "#.#B#B#B#.#",
-          "#B.B.a.B.B#",
+          "#1..R.B..2#",
           "#.#.#.#.#.#",
-          "#..B.h.B..#",
-          "#.#B#B#B#.#",
-          "#B.B.a.B.B#",
-          "#.#.#.#.#.#",
-          "#X.B.h.B..#",
-          "#.#B#B#B#.#",
-          "#..B.p.B..#",
-          "###########"
-        ]
-      },
-      {
-        id: 8,
-        name: "Galería de Ensamblaje",
-        desc: "Múltiples cazadores coordinados y blindados pesados",
-        time: 100,
-        map: [
-          "###########",
-          "#1..B.B..2#",
-          "#.#.#.#.#.#",
-          "#B.B.h.B.B#",
-          "#.#B#B#B#.#",
-          "#..B.c.B..#",
-          "#.#.#.#.#.#",
-          "#B.B.h.B.B#",
-          "#.#B#B#B#.#",
-          "#..B.a.B.X#",
-          "#.#.#.#.#.#",
-          "#..B.h.B..#",
-          "###########"
-        ]
-      },
-      {
-        id: 9,
-        name: "Subestación de Resonancia",
-        desc: "Blindados triples protegen la salida del reactor",
-        time: 100,
-        map: [
-          "###########",
-          "#1..B.B..2#",
-          "#.#B#B#B#.#",
-          "#B.B.a.B.B#",
-          "#.#B#.#B#.#",
-          "#..B.h.B..#",
-          "#.#.#.#.#.#",
-          "#B.B.a.B.B#",
-          "#.#B#.#B#.#",
-          "#X.B.a.B..#",
-          "#.#B#.#B#.#",
-          "#..B.h.B..#",
-          "###########"
-        ]
-      },
-      {
-        id: 10,
-        name: "Trono del Arconte",
-        desc: "¡ALERTA DE JEFE! Núcleo Arconte emite pulsos resonantes",
-        time: 160,
-        isBoss: true,
-        bossType: 'archon',
-        map: [
-          "###########",
-          "#1...B...2#",
-          "#.B#...#B.#",
-          "#B.......B#",
-          "#..B...B..#",
-          "#....K....#",
-          "#..B...B..#",
-          "#B.......B#",
-          "#.B#...#B.#",
-          "#....X....#",
-          "#.B#...#B.#",
-          "#...B.B...#",
-          "###########"
-        ]
-      },
-      {
-        id: 11,
-        name: "Brecha Cuántica",
-        desc: "Infiltración extrema contra cazadores de élite y blindados",
-        time: 90,
-        map: [
-          "###########",
-          "#1..B.B..2#",
-          "#.#B#B#B#.#",
-          "#B.B.h.B.B#",
-          "#.#.#.#.#.#",
+          "#B.R.h.R.B#",
+          "#.#B#R#B#.#",
           "#..B.a.B..#",
+          "#.#.#.#.#.#",
+          "#R.B.h.B.R#",
+          "#.#R#B#R#.#",
+          "#X.B.p.B..#",
+          "#.#.#.#.#.#",
+          "#..R.B.R..#",
+          "###########"
+        ]
+      },
+      {
+        id: 8, world: 1, name: "Arsenal Central", targetTime: 70,
+        map: [
+          "###########",
+          "#1..B.B..2#",
+          "#.#B#B#B#.#",
+          "#B.B.a.B.B#",
+          "#.#.#.#.#.#",
+          "#..B.h.B..#",
           "#.#B#B#B#.#",
           "#B.B.h.B.B#",
           "#.#.#.#.#.#",
           "#..B.c.B.X#",
           "#.#B#B#B#.#",
-          "#..B.h.B..#",
+          "#..B.a.B..#",
           "###########"
         ]
       },
       {
-        id: 12,
-        name: "Colapso del Reactor",
-        desc: "¡EVACUACIÓN! Desactiva las últimas defensas antes de la detonación",
-        time: 90,
+        id: 9, world: 1, name: "Subestación de Carga", targetTime: 70,
+        map: [
+          "###########",
+          "#1..R.R..2#",
+          "#.#B#B#B#.#",
+          "#R.B.a.B.R#",
+          "#.#B#.#B#.#",
+          "#..R.h.R..#",
+          "#.#.#.#.#.#",
+          "#R.B.a.B.R#",
+          "#.#B#.#B#.#",
+          "#X.R.h.R..#",
+          "#.#B#.#B#.#",
+          "#..B.R.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 10, world: 1, name: "Cámara del Titán", targetTime: 90, isBoss: true, bossType: 'titan',
+        map: [
+          "###########",
+          "#1...B...2#",
+          "#.B#...#B.#",
+          "#B.......B#",
+          "#.B..R..B.#",
+          "#....G....#",
+          "#.B..R..B.#",
+          "#B.......B#",
+          "#.B.....B.#",
+          "#.B#...#B.#",
+          "#..B.X.B..#",
+          "#...B.B...#",
+          "###########"
+        ]
+      },
+
+      // --- MUNDO 2: CRIOCÁMARAS Y CINTAS MAGNÉTICAS (11-20) ---
+      {
+        id: 11, world: 2, name: "Criogenia Inicial", targetTime: 60,
+        map: [
+          "###########",
+          "#1..I.I..2#",
+          "#.#.#.#.#.#",
+          "#I.Ip.I.I.I#",
+          "#.#I#I#I#.#",
+          "#..I.h.I..#",
+          "#.#.#.#.#.#",
+          "#I.Ip.I.I.I#",
+          "#.#I#I#I#.#",
+          "#..I.p.I.X#",
+          "#.#.#.#.#.#",
+          "#I.I...I.I#",
+          "###########"
+        ]
+      },
+      {
+        id: 12, world: 2, name: "Pistas Resbaladizas", targetTime: 65,
+        map: [
+          "###########",
+          "#1..B.B..2#",
+          "#.#I#I#I#.#",
+          "#B.I.h.I.B#",
+          "#.#I#.#I#.#",
+          "#..I.a.I..#",
+          "#.#.#.#.#.#",
+          "#B.I.p.I.B#",
+          "#.#I#.#I#.#",
+          "#X.I.h.I..#",
+          "#.#I#I#I#.#",
+          "#..B.B.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 13, world: 2, name: "Cintas Transportadoras", targetTime: 65,
         map: [
           "###########",
           "#1..B.B..2#",
           "#.#.#.#.#.#",
+          "#B>>>>>>B.B#",
+          "#.#B#.#B#.#",
+          "#..B.h.B..#",
+          "#.#.#.#.#.#",
+          "#B.B<<<<<<B#",
+          "#.#B#.#B#.#",
+          "#..B.p.B.X#",
+          "#.#.#.#.#.#",
+          "#..B.B.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 14, world: 2, name: "Cintas Cruzadas", targetTime: 70,
+        map: [
+          "###########",
+          "#1..B.B..2#",
+          "#.#v#.#^#.#",
+          "#B.v.a.^.B#",
+          "#.#v#B#^#.#",
+          "#..v.h.^..#",
+          "#.#.#.#.#.#",
+          "#B>>>>>>B.B#",
+          "#.#B#B#B#.#",
+          "#X.B.p.B..#",
+          "#.#B#.#B#.#",
+          "#..B.B.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 15, world: 2, name: "Glaciar Mecánico", targetTime: 70,
+        map: [
+          "###########",
+          "#1..I.I..2#",
+          "#.#I#I#I#.#",
+          "#I.I.a.I.I#",
+          "#.#B#I#B#.#",
+          "#..I.h.I..#",
+          "#.#I#I#I#.#",
+          "#I.I.c.I.I#",
+          "#.#B#I#B#.#",
+          "#..I.h.I.X#",
+          "#.#I#I#I#.#",
+          "#..I.I.I..#",
+          "###########"
+        ]
+      },
+      {
+        id: 16, world: 2, name: "Circuito de Cintas", targetTime: 70,
+        map: [
+          "###########",
+          "#1..B.B..2#",
+          "#.#v#.#^#.#",
+          "#B.v.h.^.B#",
+          "#.#v#.#^#.#",
+          "#B<<<<<<B.B#",
+          "#.#.#.#.#.#",
+          "#B>>>>>>B.B#",
+          "#.#v#.#^#.#",
+          "#X.v.a.^..#",
+          "#.#v#.#^#.#",
+          "#..B.B.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 17, world: 2, name: "Pistas Heladas Duales", targetTime: 75,
+        map: [
+          "###########",
+          "#1..I.B..2#",
+          "#.#I#B#I#.#",
+          "#I.I.a.B.B#",
+          "#.#I#B#I#.#",
+          "#..I.h.I..#",
+          "#.#.#.#.#.#",
+          "#B.B.h.I.I#",
+          "#.#I#B#I#.#",
+          "#..B.c.I.X#",
+          "#.#I#B#I#.#",
+          "#..I.B.I..#",
+          "###########"
+        ]
+      },
+      {
+        id: 18, world: 2, name: "Transporte de Resonancia", targetTime: 75,
+        map: [
+          "###########",
+          "#1..R.R..2#",
+          "#.#^#.#v#.#",
+          "#R.^.h.v.R#",
+          "#.#^#R#v#.#",
+          "#..^.a.v..#",
+          "#.#.#.#.#.#",
+          "#R>>>>>>R.R#",
+          "#.#R#R#R#.#",
+          "#X.R.c.R..#",
+          "#.#.#.#.#.#",
+          "#..R.R.R..#",
+          "###########"
+        ]
+      },
+      {
+        id: 20 - 1, world: 2, name: "Cámara Crio-Magnética", targetTime: 80,
+        map: [
+          "###########",
+          "#1..I.I..2#",
+          "#.#v#I#^#.#",
+          "#I.v.a.^.I#",
+          "#.#v#I#^#.#",
+          "#..v.h.^..#",
+          "#.#.#.#.#.#",
+          "#I.I.a.I.I#",
+          "#.#I#I#I#.#",
+          "#..I.h.I.X#",
+          "#.#I#I#I#.#",
+          "#..I.I.I..#",
+          "###########"
+        ]
+      },
+      {
+        id: 20, world: 2, name: "Cámara del Coloso Criogénico", targetTime: 100, isBoss: true, bossType: 'cryo',
+        map: [
+          "###########",
+          "#1...I...2#",
+          "#.I#...#I.#",
+          "#I.......I#",
+          "#.I.>>>.I.#",
+          "#....C....#",
+          "#.I.<<<.I.#",
+          "#I.......I#",
+          "#.I.....I.#",
+          "#.I#...#I.#",
+          "#..I.X.I..#",
+          "#...I.I...#",
+          "###########"
+        ]
+      },
+
+      // --- MUNDO 3: NÚCLEO CUÁNTICO Y COMPUERTAS (21-30) ---
+      {
+        id: 21, world: 3, name: "Compuertas de Seguridad", targetTime: 65,
+        map: [
+          "###########",
+          "#1..S.B..2#",
+          "#.#.#D#.#.#",
+          "#B.B...B.B#",
+          "#.#B#B#B#.#",
+          "#..B.h.B..#",
+          "#.#.#.#.#.#",
+          "#B.B.a.B.B#",
+          "#.#B#D#B#.#",
+          "#..B...B.X#",
+          "#.#.#.#.#.#",
+          "#..B.S.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 22, world: 3, name: "Enlace Teletransportador", targetTime: 70,
+        map: [
+          "###########",
+          "#1..T.B..2#",
+          "#.#.#.#.#.#",
           "#B.B.h.B.B#",
           "#.#B#B#B#.#",
-          "#..B.a.B..#",
-          "#.#.#.#.#.#",
-          "#B.B.c.B.B#",
+          "#..B...B..#",
+          "#.#.#T#.#.#",
+          "#B.B.a.B.B#",
           "#.#B#B#B#.#",
-          "#X.B.h.B..#",
+          "#..B.p.B.X#",
+          "#.#.#.#.#.#",
+          "#..B.B.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 23, world: 3, name: "Matriz Cuántica", targetTime: 70,
+        map: [
+          "###########",
+          "#1..B.B..2#",
+          "#.#D#.#D#.#",
+          "#B.S.h.S.B#",
           "#.#.#.#.#.#",
           "#..B.a.B..#",
+          "#.#T#.#T#.#",
+          "#B.B.h.B.B#",
+          "#.#D#.#D#.#",
+          "#X.B...B..#",
+          "#.#.#.#.#.#",
+          "#..B.B.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 24, world: 3, name: "Celdas de Contención", targetTime: 75,
+        map: [
+          "###########",
+          "#1..S.R..2#",
+          "#.#D#.#D#.#",
+          "#R.R.h.R.R#",
+          "#.#R#D#R#.#",
+          "#..R.a.R..#",
+          "#.#T#.#T#.#",
+          "#R.R.h.R.R#",
+          "#.#R#D#R#.#",
+          "#..R.S.R.X#",
+          "#.#D#.#D#.#",
+          "#..R.R.R..#",
+          "###########"
+        ]
+      },
+      {
+        id: 25, world: 3, name: "Laberinto de Teleportes", targetTime: 75,
+        map: [
+          "###########",
+          "#1..T.B..2#",
+          "#.#B#.#B#.#",
+          "#B.B.a.B.B#",
+          "#.#.#T#.#.#",
+          "#..B.h.B..#",
+          "#.#T#.#T#.#",
+          "#B.B.c.B.B#",
+          "#.#.#T#.#.#",
+          "#X.B.h.B..#",
+          "#.#B#.#B#.#",
+          "#..B.B.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 26, world: 3, name: "Compuertas en Serie", targetTime: 80,
+        map: [
+          "###########",
+          "#1..B.S..2#",
+          "#.#D#B#D#.#",
+          "#B.B.h.B.B#",
+          "#.#B#D#B#.#",
+          "#..S.a.S..#",
+          "#.#.#.#.#.#",
+          "#B.B.h.B.B#",
+          "#.#D#B#D#.#",
+          "#..B.c.B.X#",
+          "#.#.#.#.#.#",
+          "#..B.S.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 27, world: 3, name: "Red Mixta Magnética", targetTime: 80,
+        map: [
+          "###########",
+          "#1..I.T..2#",
+          "#.#v#.#^#.#",
+          "#I.v.h.^.I#",
+          "#.#D#S#D#.#",
+          "#..I.a.I..#",
+          "#.#T#.#T#.#",
+          "#I>>>>>>I.I#",
+          "#.#D#S#D#.#",
+          "#X.I.h.I..#",
+          "#.#.#.#.#.#",
+          "#..I.T.I..#",
+          "###########"
+        ]
+      },
+      {
+        id: 28, world: 3, name: "Brecha Cuántica", targetTime: 85,
+        map: [
+          "###########",
+          "#1..R.B..2#",
+          "#.#B#D#B#.#",
+          "#R.S.h.S.R#",
+          "#.#T#.#T#.#",
+          "#..B.a.B..#",
+          "#.#D#.#D#.#",
+          "#R.B.h.B.R#",
+          "#.#T#.#T#.#",
+          "#..R.c.R.X#",
+          "#.#B#D#B#.#",
+          "#..R.B.R..#",
+          "###########"
+        ]
+      },
+      {
+        id: 29, world: 3, name: "Antecámara del Arconte", targetTime: 85,
+        map: [
+          "###########",
+          "#1..B.B..2#",
+          "#.#D#D#D#.#",
+          "#B.S.a.S.B#",
+          "#.#T#.#T#.#",
+          "#..B.h.B..#",
+          "#.#.#.#.#.#",
+          "#B.S.a.S.B#",
+          "#.#T#.#T#.#",
+          "#X.B.h.B..#",
+          "#.#D#D#D#.#",
+          "#..B.B.B..#",
+          "###########"
+        ]
+      },
+      {
+        id: 30, world: 3, name: "Trono del Arconte Supremo", targetTime: 120, isBoss: true, bossType: 'archon',
+        map: [
+          "###########",
+          "#1...R...2#",
+          "#.R#...#R.#",
+          "#R...T...R#",
+          "#.R.>>>.R.#",
+          "#....K....#",
+          "#.R.<<<.R.#",
+          "#R...T...R#",
+          "#.R.....R.#",
+          "#.R#...#R.#",
+          "#..R.X.R..#",
+          "#...R.R...#",
           "###########"
         ]
       }
@@ -294,11 +615,11 @@
   };
 
   // ==========================================
-  // LÓGICA PURA Y ALGORITMOS VERIFICABLES
+  // 2. ALGORITMOS PUROS Y LÓGICA DE JUEGO (CargasLogic)
   // ==========================================
   const CargasLogic = {
     /**
-     * Parsea un mapa de cadenas a matriz 2D y extrae entidades
+     * Parsea un mapa 11x13 y extrae entidades y mecánicas
      */
     parseMap(mapStrings) {
       const rows = mapStrings.length;
@@ -309,42 +630,120 @@
       let portal = { r: rows - 2, c: cols - 2 };
       const guardians = [];
       let boss = null;
+      const teleporters = [];
+      const switches = [];
+      const doors = [];
+      const conveyors = [];
+      const regenBlocks = [];
 
       for (let r = 0; r < rows; r++) {
         grid[r] = [];
         for (let c = 0; c < cols; c++) {
-          const char = mapStrings[r][c];
-          if (char === '#') {
+          const ch = mapStrings[r][c];
+
+          if (ch === '#') {
             grid[r][c] = 1; // Pilar indestructible
-          } else if (char === 'B') {
+          } else if (ch === 'B') {
             grid[r][c] = 2; // Bloque blando destructible
+          } else if (ch === 'R') {
+            grid[r][c] = 2; // Bloque blando (regenerativo)
+            regenBlocks.push({ r, c, active: true, timer: 0 });
+          } else if (ch === 'I') {
+            grid[r][c] = 3; // Suelo de Hielo
+          } else if (ch === '^') {
+            grid[r][c] = 4; // Cinta transportadora Arriba
+            conveyors.push({ r, c, dir: { r: -1, c: 0 } });
+          } else if (ch === 'v') {
+            grid[r][c] = 5; // Cinta transportadora Abajo
+            conveyors.push({ r, c, dir: { r: 1, c: 0 } });
+          } else if (ch === '<') {
+            grid[r][c] = 6; // Cinta transportadora Izquierda
+            conveyors.push({ r, c, dir: { r: 0, c: -1 } });
+          } else if (ch === '>') {
+            grid[r][c] = 7; // Cinta transportadora Derecha
+            conveyors.push({ r, c, dir: { r: 0, c: 1 } });
+          } else if (ch === 'D') {
+            grid[r][c] = 8; // Compuerta de seguridad (cerrada inicialmente = obstáculo)
+            doors.push({ r, c, open: false });
+          } else if (ch === 'S') {
+            grid[r][c] = 9; // Interruptor de presión
+            switches.push({ r, c, pressed: false });
+          } else if (ch === 'T') {
+            grid[r][c] = 10; // Teletransportador cuántico
+            teleporters.push({ r, c });
           } else {
-            grid[r][c] = 0; // Piso transitable
-            if (char === '1') p1Start = { r, c };
-            else if (char === '2') p2Start = { r, c };
-            else if (char === 'X') portal = { r, c };
-            else if (char === 'p') guardians.push({ type: 'patrol', r, c, hp: 1 });
-            else if (char === 'h') guardians.push({ type: 'hunter', r, c, hp: 1 });
-            else if (char === 'a') guardians.push({ type: 'armored', r, c, hp: 2 });
-            else if (char === 'c') guardians.push({ type: 'builder', r, c, hp: 1 });
-            else if (char === 'G') boss = { type: 'titan', r, c, hp: 5, maxHp: 5 };
-            else if (char === 'K') boss = { type: 'archon', r, c, hp: 8, maxHp: 8 };
+            grid[r][c] = 0; // Suelo normal
+            if (ch === '1') p1Start = { r, c };
+            else if (ch === '2') p2Start = { r, c };
+            else if (ch === 'X') portal = { r, c };
+            else if (ch === 'p') guardians.push({ type: 'patrol', r, c, hp: 1 });
+            else if (ch === 'h') guardians.push({ type: 'hunter', r, c, hp: 1 });
+            else if (ch === 'a') guardians.push({ type: 'armored', r, c, hp: 2 });
+            else if (ch === 'c') guardians.push({ type: 'builder', r, c, hp: 1 });
+            else if (ch === 'G') boss = { type: 'titan', r, c, hp: 5, maxHp: 5 };
+            else if (ch === 'C') boss = { type: 'cryo', r, c, hp: 6, maxHp: 6 };
+            else if (ch === 'K') boss = { type: 'archon', r, c, hp: 8, maxHp: 8 };
           }
         }
       }
-      return { rows, cols, grid, p1Start, p2Start, portal, guardians, boss };
+
+      // Emparejar teletransportadores de dos en dos
+      const teleporterPairs = new Map();
+      if (teleporters.length >= 2) {
+        for (let i = 0; i < teleporters.length; i += 2) {
+          if (teleporters[i + 1]) {
+            const kA = `${teleporters[i].r},${teleporters[i].c}`;
+            const kB = `${teleporters[i + 1].r},${teleporters[i + 1].c}`;
+            teleporterPairs.set(kA, teleporters[i + 1]);
+            teleporterPairs.set(kB, teleporters[i]);
+          }
+        }
+      }
+
+      return {
+        rows,
+        cols,
+        grid,
+        p1Start,
+        p2Start,
+        portal,
+        guardians,
+        boss,
+        teleporters,
+        teleporterPairs,
+        switches,
+        doors,
+        conveyors,
+        regenBlocks
+      };
     },
 
     /**
-     * Onda expansiva en forma de rombo/diamante (Distancia Manhattan <= radius)
-     * Se detiene ante pilares indestructibles pero destruye y es absorbida por bloques blandos.
+     * Comprueba si una celda es transitable para entidades normales
      */
-    calculateDiamondBlast(grid, r0, c0, radius) {
+    isPassable(grid, r, c, doors = []) {
+      if (r < 0 || r >= grid.length || c < 0 || c >= grid[0].length) return false;
+      const tile = grid[r][c];
+      if (tile === 1 || tile === 2) return false; // Pilar o Bloque blando
+      if (tile === 8) { // Compuerta
+        const door = doors.find(d => d.r === r && d.c === c);
+        if (door && !door.open) return false;
+      }
+      return true;
+    },
+
+    /**
+     * Onda expansiva en forma de rombo/diamante (Distancia Manhattan <= radius).
+     * Se detiene ante pilares indestructibles y compuertas cerradas.
+     * Destruye bloques blandos (2) y es absorbida por ellos (no propaga más allá).
+     */
+    calculateDiamondBlast(grid, r0, c0, radius, doors = []) {
       const rows = grid.length;
       const cols = grid[0].length;
       const visited = new Set();
       const blastCells = [];
       const destroyedBlocks = [];
+      const hitSwitches = [];
 
       const queue = [{ r: r0, c: c0, dist: 0 }];
       visited.add(`${r0},${c0}`);
@@ -371,64 +770,113 @@
             visited.add(key);
 
             const tile = grid[nr][nc];
+
+            // 1. Pilar indestructible detiene la onda completamente
             if (tile === 1) {
-              // Indestructible pillar blocks blast wave completely
               continue;
-            } else if (tile === 2) {
-              // Soft destructible block is hit and destroyed, but stops further propagation
+            }
+
+            // 2. Compuerta cerrada detiene la onda
+            if (tile === 8) {
+              const door = doors.find(dr => dr.r === nr && dr.c === nc);
+              if (door && !door.open) continue;
+            }
+
+            // 3. Interruptor de presión activado por onda
+            if (tile === 9) {
+              hitSwitches.push({ r: nr, c: nc });
+            }
+
+            // 4. Bloque blando es destruido y absorbe la onda
+            if (tile === 2) {
               blastCells.push({ r: nr, c: nc, dist: cur.dist + 1 });
               destroyedBlocks.push({ r: nr, c: nc });
             } else {
-              // Open floor or entity: wave continues expanding
+              // Celda transitable: la onda continúa expandiéndose
               queue.push({ r: nr, c: nc, dist: cur.dist + 1 });
             }
           }
         }
       }
 
-      return { blastCells, destroyedBlocks };
+      return { blastCells, destroyedBlocks, hitSwitches };
     },
 
     /**
-     * Simula el empuje y deslizamiento continuo de una carga
+     * Simula el empuje y deslizamiento continuo de una carga.
+     * Se detiene ante pilares, bloques blandos, compuertas cerradas y OTRAS CARGAS.
+     * Maneja teletransportes y cintas transportadoras.
      */
-    simulateSlide(grid, chargeR, chargeC, dirR, dirC, guardians = []) {
+    simulateSlide(grid, chargeR, chargeC, dirR, dirC, guardians = [], otherCharges = [], teleporterPairs = new Map(), doors = []) {
       const rows = grid.length;
       const cols = grid[0].length;
       let curR = chargeR;
       let curC = chargeC;
+      let curDirR = dirR;
+      let curDirC = dirC;
       const crushedGuardians = [];
+      let maxSteps = 40; // Evitar bucles infinitos con teleportes
 
-      while (true) {
-        const nextR = curR + dirR;
-        const nextC = curC + dirC;
+      while (maxSteps-- > 0) {
+        let nextR = curR + curDirR;
+        let nextC = curC + curDirC;
 
         if (nextR < 0 || nextR >= rows || nextC < 0 || nextC >= cols) break;
-        if (grid[nextR][nextC] === 1 || grid[nextR][nextC] === 2) {
-          // Bloque o pared: se detiene justo antes
-          break;
+
+        // Comprobar obstáculos de terreno
+        const tile = grid[nextR][nextC];
+        if (tile === 1 || tile === 2) break; // Pilar o Bloque blando
+        if (tile === 8) {
+          const door = doors.find(d => d.r === nextR && d.c === nextC);
+          if (door && !door.open) break;
         }
+
+        // Comprobar colisión con OTRA CARGA existente (para evitar atravesarse)
+        const hitCharge = otherCharges.some(ch => !ch.detonated && ch.r === nextR && ch.c === nextC);
+        if (hitCharge) break;
 
         curR = nextR;
         curC = nextC;
 
-        // Si colisiona con un guardián, lo aplasta
+        // Aplastar guardianes en la trayectoria
         for (const g of guardians) {
           if (!g.destroyed && g.r === curR && g.c === curC) {
             g.destroyed = true;
             crushedGuardians.push(g);
           }
         }
+
+        // Interacción con Teletransportador cuántico
+        const tKey = `${curR},${curC}`;
+        if (teleporterPairs && teleporterPairs.has(tKey)) {
+          const partner = teleporterPairs.get(tKey);
+          // Verificar que el punto de salida esté despejado
+          const partnerTile = grid[partner.r][partner.c];
+          if (partnerTile !== 1 && partnerTile !== 2) {
+            curR = partner.r;
+            curC = partner.c;
+          }
+        }
+
+        // Interacción con Cinta transportadora
+        const currentTile = grid[curR][curC];
+        if (currentTile === 4) { curDirR = -1; curDirC = 0; }
+        else if (currentTile === 5) { curDirR = 1; curDirC = 0; }
+        else if (currentTile === 6) { curDirR = 0; curDirC = -1; }
+        else if (currentTile === 7) { curDirR = 0; curDirC = 1; }
       }
 
       return { finalR: curR, finalC: curC, crushedGuardians };
     },
 
     /**
-     * Resonancia en cadena: detona cualquier carga dentro del alcance de otra
-     * Garantiza terminación sin bucles infinitos con Set de detonadas.
+     * Resonancia en cadena: detona cualquier carga dentro del alcance de otra.
+     * Actualiza la cuadrícula de simulación dinámicamente para que las ondas
+     * posteriores se propaguen por los bloques blandos destruidos en el mismo instante.
      */
-    resolveChainDetonations(charges, grid) {
+    resolveChainDetonations(charges, baseGrid, doors = []) {
+      // Clonar cuadrícula para la resolución dinámica de la cadena
+      const simGrid = baseGrid.map(row => [...row]);
       const detonatedSet = new Set();
       const blastCells = [];
       const destroyedBlocks = [];
@@ -450,10 +898,18 @@
         comboCount++;
         chainList.push(current);
 
-        const blast = this.calculateDiamondBlast(grid, current.r, current.c, current.radius);
+        const blast = this.calculateDiamondBlast(simGrid, current.r, current.c, current.radius, doors);
         blastCells.push(...blast.blastCells);
-        destroyedBlocks.push(...blast.destroyedBlocks);
 
+        // Destruir bloques en la cuadrícula de simulación de inmediato
+        for (const blk of blast.destroyedBlocks) {
+          if (simGrid[blk.r][blk.c] === 2) {
+            simGrid[blk.r][blk.c] = 0; // Despejado para ondas siguientes en la misma cadena
+            destroyedBlocks.push(blk);
+          }
+        }
+
+        // Comprobar si la onda alcanzó a otras cargas no detonadas
         for (const cell of blast.blastCells) {
           for (const other of charges) {
             if (!detonatedSet.has(other.id) && !other.detonated) {
@@ -477,34 +933,34 @@
     },
 
     /**
-     * Evasión de los guardianes: evalúa peligro de cargas a punto de detonar (timer <= 1.0s)
+     * Evasión inteligente con BFS: encuentra la celda segura más cercana
+     * que esté completamente fuera de cualquier radio de peligro inmediato.
+     * Resuelve el fallo donde los guardianes caminaban hacia la bomba en callejones.
      */
-    getGuardianEvadeMove(grid, guardianR, guardianC, charges) {
+    getGuardianEvadeMove(grid, guardianR, guardianC, charges, doors = []) {
       const rows = grid.length;
       const cols = grid[0].length;
-
       const dangerMap = new Map();
-      let minChargeDist = Infinity;
-      let closestCharge = null;
 
+      // Identificar todas las celdas en peligro de bombas activas
       for (const ch of charges) {
-        if (!ch.detonated && ch.timer <= 1.0) {
-          const d = Math.abs(ch.r - guardianR) + Math.abs(ch.c - guardianC);
-          if (d < minChargeDist) {
-            minChargeDist = d;
-            closestCharge = ch;
-          }
-          const blast = this.calculateDiamondBlast(grid, ch.r, ch.c, ch.radius);
+        if (!ch.detonated && ch.timer <= 1.2) {
+          const blast = this.calculateDiamondBlast(grid, ch.r, ch.c, ch.radius, doors);
           for (const cell of blast.blastCells) {
             dangerMap.set(`${cell.r},${cell.c}`, true);
           }
         }
       }
 
-      const currentIsDangerous = dangerMap.has(`${guardianR},${guardianC}`);
-      if (!currentIsDangerous || !closestCharge) {
+      // Si el guardián no está en una celda de peligro, no necesita evadir
+      if (!dangerMap.has(`${guardianR},${guardianC}`)) {
         return { shouldEvade: false, dir: { r: 0, c: 0 } };
       }
+
+      // BFS para encontrar la celda segura (safe cell) alcanzable más cercana
+      const queue = [{ r: guardianR, c: guardianC, firstStep: null }];
+      const visited = new Set([`${guardianR},${guardianC}`]);
+      let chosenDir = null;
 
       const dirs = [
         { r: -1, c: 0 },
@@ -513,46 +969,222 @@
         { r: 0, c: 1 }
       ];
 
-      let bestDir = null;
-      let bestScore = -Infinity;
+      while (queue.length > 0) {
+        const cur = queue.shift();
 
-      for (const d of dirs) {
-        const nr = guardianR + d.r;
-        const nc = guardianC + d.c;
-        if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
-        if (grid[nr][nc] !== 0) continue; // obstáculo
+        // Si encontramos una celda transitable que NO está en peligro
+        if (!dangerMap.has(`${cur.r},${cur.c}`) && cur.firstStep) {
+          chosenDir = cur.firstStep;
+          break;
+        }
 
-        const isSafe = !dangerMap.has(`${nr},${nc}`);
-        const distToCharge = Math.abs(nr - closestCharge.r) + Math.abs(nc - closestCharge.c);
+        for (const d of dirs) {
+          const nr = cur.r + d.r;
+          const nc = cur.c + d.c;
+          const key = `${nr},${nc}`;
 
-        let score = distToCharge;
-        if (isSafe) score += 1000;
+          if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+          if (visited.has(key)) continue;
+          if (!this.isPassable(grid, nr, nc, doors)) continue;
 
-        if (score > bestScore) {
-          bestScore = score;
-          bestDir = d;
+          visited.add(key);
+          const firstStep = cur.firstStep || d;
+          queue.push({ r: nr, c: nc, firstStep });
         }
       }
 
       return {
         shouldEvade: true,
-        dir: bestDir || { r: 0, c: 0 }
+        dir: chosenDir || { r: 0, c: 0 }
+      };
+    },
+
+    /**
+     * Búsqueda de caminos BFS para el Cazador mecánico hacia el jugador.
+     * Evita movimientos aleatorios erráticos.
+     */
+    getHunterMove(grid, hunterR, hunterC, targetR, targetC, charges = [], doors = []) {
+      const rows = grid.length;
+      const cols = grid[0].length;
+
+      // Obstáculos dinámicos: cargas armadas no se pueden atravesar
+      const chargeSet = new Set(charges.filter(c => !c.detonated).map(c => `${c.r},${c.c}`));
+
+      const queue = [{ r: hunterR, c: hunterC, firstStep: null }];
+      const visited = new Set([`${hunterR},${hunterC}`]);
+
+      const dirs = [
+        { r: -1, c: 0 },
+        { r: 1, c: 0 },
+        { r: 0, c: -1 },
+        { r: 0, c: 1 }
+      ];
+
+      while (queue.length > 0) {
+        const cur = queue.shift();
+
+        if (cur.r === targetR && cur.c === targetC && cur.firstStep) {
+          return cur.firstStep;
+        }
+
+        for (const d of dirs) {
+          const nr = cur.r + d.r;
+          const nc = cur.c + d.c;
+          const key = `${nr},${nc}`;
+
+          if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+          if (visited.has(key)) continue;
+          if (!this.isPassable(grid, nr, nc, doors)) continue;
+          if (chargeSet.has(key)) continue;
+
+          visited.add(key);
+          const firstStep = cur.firstStep || d;
+          queue.push({ r: nr, c: nc, firstStep });
+        }
+      }
+
+      return null; // No hay ruta abierta directa
+    },
+
+    /**
+     * Solver de alcanzabilidad para verificar en Node que el nivel tiene solución
+     */
+    solveLevelReachability(mapStrings) {
+      const parsed = this.parseMap(mapStrings);
+      const rows = parsed.rows;
+      const cols = parsed.cols;
+      const grid = parsed.grid;
+
+      // El jugador puede destruir bloques blandos (2) con sus cargas.
+      // Por tanto, los bloques transitables en el largo plazo son los suelos (0, 3..7, 9, 10) y bloques blandos (2).
+      // Los únicos obstáculos infranqueables son pilares (1).
+      const visited = new Set();
+      const queue = [{ r: parsed.p1Start.r, c: parsed.p1Start.c }];
+      visited.add(`${parsed.p1Start.r},${parsed.p1Start.c}`);
+
+      let canReachExit = false;
+
+      while (queue.length > 0) {
+        const cur = queue.shift();
+        if (cur.r === parsed.portal.r && cur.c === parsed.portal.c) {
+          canReachExit = true;
+          break;
+        }
+
+        const dirs = [
+          { r: -1, c: 0 },
+          { r: 1, c: 0 },
+          { r: 0, c: -1 },
+          { r: 0, c: 1 }
+        ];
+
+        for (const d of dirs) {
+          const nr = cur.r + d.r;
+          const nc = cur.c + d.c;
+          const key = `${nr},${nc}`;
+
+          if (nr < 0 || nr >= rows || nc < 0 || nc >= cols) continue;
+          if (visited.has(key)) continue;
+          if (grid[nr][nc] === 1) continue; // Solo los pilares indestructibles frenan la transitabilidad teórica
+
+          visited.add(key);
+          queue.push({ r: nr, c: nc });
+        }
+      }
+
+      return {
+        canReachExit,
+        hasSpawn: parsed.p1Start.r > 0 && parsed.p1Start.c > 0,
+        hasExit: parsed.portal.r > 0 && parsed.portal.c > 0
       };
     }
   };
 
-  // Exportar para pruebas Node
+  // Exportar para pruebas Node y solver
   if (typeof module !== 'undefined' && module.exports) {
     module.exports = { CONFIG, CargasLogic };
     return;
   }
 
   // ==========================================
-  // SISTEMA DE AUDIO PROCEDURAL (SINTETIZADO)
+  // 3. ALMACENAMIENTO VERSIONADO cargas:v2 Y MIGRACIÓN
+  // ==========================================
+  const CargasStorage = {
+    load() {
+      const defaultState = {
+        version: 2,
+        highScore: 0,
+        unlockedWorld: 1,
+        unlockedLevel: 1,
+        levelStars: {}, // { levelId: stars (1..3) }
+        credits: 0,
+        upgrades: {
+          radius: 0, // max 3
+          charges: 0, // max 3
+          speed: 0, // max 3
+          slide: 0, // max 2
+          shield: 0 // max 2
+        },
+        achievements: {}
+      };
+
+      try {
+        let raw = null;
+        if (window.ArcadeStorage) {
+          raw = window.ArcadeStorage.getItem(CONFIG.STORAGE_KEY);
+        } else {
+          raw = localStorage.getItem(CONFIG.STORAGE_KEY);
+        }
+
+        if (raw) {
+          const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
+          if (parsed && parsed.version === 2) {
+            return Object.assign(defaultState, parsed);
+          }
+        }
+
+        // Migración desde cargas:v1:best_score
+        let legacyScore = 0;
+        if (window.ArcadeStorage) {
+          legacyScore = window.ArcadeStorage.getHighScore(CONFIG.LEGACY_STORAGE_KEY) || 0;
+        } else {
+          legacyScore = parseInt(localStorage.getItem(CONFIG.LEGACY_STORAGE_KEY), 10) || 0;
+        }
+
+        if (legacyScore > 0) {
+          defaultState.highScore = legacyScore;
+          defaultState.credits = Math.min(2500, Math.floor(legacyScore / 10));
+          this.save(defaultState);
+        }
+
+        return defaultState;
+      } catch (e) {
+        console.warn('Error loading Cargas storage, using defaults:', e);
+        return defaultState;
+      }
+    },
+
+    save(data) {
+      try {
+        const json = JSON.stringify(data);
+        if (window.ArcadeStorage) {
+          window.ArcadeStorage.setItem(CONFIG.STORAGE_KEY, json);
+        } else {
+          localStorage.setItem(CONFIG.STORAGE_KEY, json);
+        }
+      } catch (e) {}
+    }
+  };
+
+  // ==========================================
+  // 4. SISTEMA DE AUDIO PROCEDURAL Y MÚSICA SINTETIZADA
   // ==========================================
   const SynthSound = {
     ctx: null,
     muted: false,
+    bgmMuted: false,
+    bgmTimer: null,
+    bgmStep: 0,
 
     init() {
       if (this.ctx) return;
@@ -603,7 +1235,7 @@
       this.resume();
 
       try {
-        const bufferSize = this.ctx.sampleRate * duration;
+        const bufferSize = Math.floor(this.ctx.sampleRate * duration);
         const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
         const data = buffer.getChannelData(0);
         for (let i = 0; i < bufferSize; i++) {
@@ -616,7 +1248,7 @@
         const filter = this.ctx.createBiquadFilter();
         filter.type = 'lowpass';
         filter.frequency.setValueAtTime(800, this.ctx.currentTime);
-        filter.frequency.exponentialRampToValueAtTime(100, this.ctx.currentTime + duration);
+        filter.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + duration);
 
         const gain = this.ctx.createGain();
         gain.gain.setValueAtTime(vol, this.ctx.currentTime);
@@ -631,44 +1263,85 @@
     },
 
     sfxDrop() {
-      this.playTone(480, 'sine', 0.12, 0.22, 180);
+      this.playTone(460, 'sine', 0.1, 0.2, 170);
     },
 
     sfxSlide() {
-      this.playTone(320, 'sawtooth', 0.18, 0.15, 520);
+      this.playTone(280, 'sawtooth', 0.16, 0.18, 540);
     },
 
-    sfxExplode() {
-      this.playTone(140, 'triangle', 0.35, 0.35, 30);
-      this.playNoise(0.38, 0.3);
+    sfxExplode(combo = 1) {
+      const pitchOffset = Math.min(6, combo - 1) * 35;
+      this.playTone(130 + pitchOffset, 'triangle', 0.35, 0.35, 30);
+      this.playNoise(0.35, 0.28);
     },
 
-    sfxCombo() {
-      this.playTone(520, 'square', 0.15, 0.2, 880);
+    sfxCombo(combo) {
+      const baseFreq = 440 + (combo * 70);
+      this.playTone(baseFreq, 'square', 0.16, 0.25, baseFreq * 1.5);
     },
 
     sfxPowerup() {
-      this.playTone(440, 'sine', 0.1, 0.25, 660);
-      setTimeout(() => this.playTone(660, 'sine', 0.15, 0.25, 990), 80);
+      this.playTone(480, 'sine', 0.09, 0.22, 680);
+      setTimeout(() => this.playTone(680, 'sine', 0.14, 0.22, 1020), 70);
     },
 
     sfxHurt() {
-      this.playTone(160, 'sawtooth', 0.25, 0.3, 70);
+      this.playTone(150, 'sawtooth', 0.28, 0.35, 50);
     },
 
     sfxBossTelegraph() {
-      this.playTone(740, 'square', 0.18, 0.22, 370);
+      this.playTone(780, 'square', 0.18, 0.25, 390);
     },
 
     sfxVictory() {
       this.playTone(330, 'triangle', 0.15, 0.25);
-      setTimeout(() => this.playTone(440, 'triangle', 0.15, 0.25), 120);
-      setTimeout(() => this.playTone(550, 'triangle', 0.25, 0.25), 240);
+      setTimeout(() => this.playTone(440, 'triangle', 0.15, 0.25), 110);
+      setTimeout(() => this.playTone(550, 'triangle', 0.22, 0.25), 220);
+      setTimeout(() => this.playTone(660, 'triangle', 0.35, 0.25), 330);
+    },
+
+    sfxSwitch() {
+      this.playTone(850, 'sine', 0.08, 0.18, 420);
+    },
+
+    sfxTeleport() {
+      this.playTone(240, 'sine', 0.2, 0.25, 960);
+    },
+
+    // Música industrial generativa
+    startBGM() {
+      if (this.bgmTimer) return;
+      const bassNotes = [55, 55, 65, 55, 73, 55, 65, 49]; // Línea de bajo cyberpunk
+      this.bgmStep = 0;
+
+      this.bgmTimer = setInterval(() => {
+        if (this.bgmMuted || this.muted) return;
+        this.init();
+        if (!this.ctx || this.ctx.state === 'suspended') return;
+
+        const note = bassNotes[this.bgmStep % bassNotes.length];
+        this.playTone(note, 'triangle', 0.16, 0.08);
+
+        // Hi-hat metálico sintetizado cada 2 pasos
+        if (this.bgmStep % 2 === 1) {
+          this.playNoise(0.04, 0.03);
+        }
+
+        this.bgmStep++;
+      }, 240); // ~125 BPM
+    },
+
+    stopBGM() {
+      if (this.bgmTimer) {
+        clearInterval(this.bgmTimer);
+        this.bgmTimer = null;
+      }
     }
   };
 
   // ==========================================
-  // ESTADO Y POOLS DE ENTIDADES
+  // 5. ESTADO GLOBAL DEL JUEGO
   // ==========================================
   const State = {
     canvas: null,
@@ -677,7 +1350,7 @@
     boardH: CONFIG.VIRTUAL_H,
     tileSize: CONFIG.TILE_SIZE,
 
-    state: 'MENU', // 'MENU', 'PLAYING', 'PAUSED', 'GAMEOVER', 'LEVELCLEAR'
+    state: 'MENU', // 'MENU', 'PLAYING', 'PAUSED', 'GAMEOVER', 'LEVELCLEAR', 'SHOP'
     is2P: false,
 
     currentLevelIdx: 0,
@@ -686,10 +1359,19 @@
     levelEnemiesKilled: 0,
     levelBlocksDestroyed: 0,
     portalUnlocked: false,
-
-    // Cuadrícula activa
-    grid: [],
     portalPos: { r: 11, c: 8 },
+
+    // Datos persistentes
+    storage: null,
+
+    // Cuadrícula y mecánicas de mapa
+    grid: [],
+    teleporters: [],
+    teleporterPairs: new Map(),
+    switches: [],
+    doors: [],
+    conveyors: [],
+    regenBlocks: [],
 
     // Jugadores
     p1: null,
@@ -697,22 +1379,32 @@
 
     // Entidades
     charges: [],
-    activeBlasts: [], // { cells: [{r, c, dist}], timer, maxTimer }
+    activeBlasts: [],
     guardians: [],
     boss: null,
-    powerups: [], // { r, c, type: 'R'|'C'|'S'|'D'|'K' }
-    particles: [], // Pool de partículas
-    floats: [], // Textos flotantes
+    powerups: [],
+    particles: [],
+    floatingTexts: [],
 
-    // Control de tiempo
-    lastTime: 0,
+    // Juicing & Feedback
     shakeTime: 0,
+    hitStopTime: 0,
+    zoomPulse: 1.0,
     toastMsg: '',
-    toastTimer: 0
+    toastTimer: 0,
+
+    // Rendimiento y Debug (?debug=1)
+    debugMode: false,
+    fps: 60,
+    lastFpsUpdate: 0,
+    frameCount: 0,
+    autoDowngrade: false,
+
+    lastTime: 0
   };
 
   // ==========================================
-  // CLASES Y POOLING
+  // 6. CLASE JUGADOR Y CORNER-SLIPPING
   // ==========================================
   class Player {
     constructor(id, r, c, color, name) {
@@ -728,12 +1420,24 @@
       this.radius = CONFIG.DEFAULT_BLAST_RADIUS;
       this.maxCharges = CONFIG.DEFAULT_MAX_CHARGES;
       this.speedMult = 1.0;
+      this.slideSpeedMult = 1.0;
       this.hasRemote = false;
 
       this.invulnTimer = 0;
       this.dir = { r: 0, c: 0 };
       this.bufferedDir = { r: 0, c: 0 };
       this.isAlive = true;
+
+      // Mecánica de empuje táctil
+      this.pushTargetCharge = null;
+    }
+
+    applyUpgrades(upgrades) {
+      this.radius = CONFIG.DEFAULT_BLAST_RADIUS + (upgrades.radius || 0);
+      this.maxCharges = CONFIG.DEFAULT_MAX_CHARGES + (upgrades.charges || 0);
+      this.speedMult = 1.0 + ((upgrades.speed || 0) * 0.15);
+      this.slideSpeedMult = 1.0 + ((upgrades.slide || 0) * 0.4);
+      this.lives = CONFIG.STARTING_LIVES + (upgrades.shield || 0);
     }
 
     resetPos(r, c) {
@@ -743,12 +1447,13 @@
       this.y = r * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
       this.dir = { r: 0, c: 0 };
       this.bufferedDir = { r: 0, c: 0 };
-      this.invulnTimer = 1.5;
+      this.invulnTimer = 1.6;
       this.isAlive = true;
+      this.pushTargetCharge = null;
     }
   }
 
-  // Pre-allocación de pool de partículas
+  // Pre-allocación de Pool de Partículas
   const MAX_PARTICLES = 160;
   for (let i = 0; i < MAX_PARTICLES; i++) {
     State.particles.push({
@@ -781,10 +1486,11 @@
     }
   }
 
-  function spawnDebris(x, y, color = '#f59e0b', count = 8) {
-    for (let i = 0; i < count; i++) {
+  function spawnDebris(x, y, color = '#f59e0b', count = 10) {
+    const finalCount = State.autoDowngrade ? Math.floor(count / 2) : count;
+    for (let i = 0; i < finalCount; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = 40 + Math.random() * 80;
+      const speed = 40 + Math.random() * 85;
       spawnParticle(
         x,
         y,
@@ -795,6 +1501,17 @@
         0.3 + Math.random() * 0.3
       );
     }
+  }
+
+  function addFloatingText(text, x, y, color = '#fbbf24') {
+    State.floatingTexts.push({
+      text,
+      x,
+      y,
+      color,
+      life: 0.85,
+      maxLife: 0.85
+    });
   }
 
   function showToast(msg, duration = 2.0) {
@@ -808,7 +1525,7 @@
   }
 
   // ==========================================
-  // INICIALIZACIÓN DE NIVEL
+  // 7. CARGA DE NIVEL Y MUNDOS
   // ==========================================
   function loadLevel(idx) {
     if (idx < 0) idx = 0;
@@ -819,18 +1536,26 @@
     const parsed = CargasLogic.parseMap(lvlData.map);
 
     State.grid = parsed.grid;
-    State.timeRemaining = lvlData.time;
+    State.teleporters = parsed.teleporters;
+    State.teleporterPairs = parsed.teleporterPairs;
+    State.switches = parsed.switches;
+    State.doors = parsed.doors;
+    State.conveyors = parsed.conveyors;
+    State.regenBlocks = parsed.regenBlocks;
+
+    State.timeRemaining = lvlData.targetTime + 45; // Tiempo total con margen
     State.levelEnemiesKilled = 0;
     State.levelBlocksDestroyed = 0;
     State.portalUnlocked = false;
     State.portalPos = parsed.portal;
 
-    // Configurar jugadores
+    // Configuración de jugadores
     if (!State.p1) {
       State.p1 = new Player(1, parsed.p1Start.r, parsed.p1Start.c, '#06b6d4', 'Ingeniero Azul');
     } else {
       State.p1.resetPos(parsed.p1Start.r, parsed.p1Start.c);
     }
+    State.p1.applyUpgrades(State.storage.upgrades);
 
     if (State.is2P) {
       if (!State.p2) {
@@ -838,16 +1563,18 @@
       } else {
         State.p2.resetPos(parsed.p2Start.r, parsed.p2Start.c);
       }
+      State.p2.applyUpgrades(State.storage.upgrades);
     } else {
       State.p2 = null;
     }
 
-    // Cargas y ondas vacías
+    // Limpiar entidades dinámicas
     State.charges = [];
     State.activeBlasts = [];
     State.powerups = [];
+    State.floatingTexts = [];
 
-    // Inicializar guardianes
+    // Inicializar guardianes con balance
     State.guardians = parsed.guardians.map(g => ({
       type: g.type,
       r: g.r,
@@ -862,7 +1589,7 @@
       destroyed: false
     }));
 
-    // Jefe (si aplica)
+    // Inicializar jefe de mundo
     if (parsed.boss) {
       State.boss = {
         type: parsed.boss.type,
@@ -872,35 +1599,34 @@
         y: parsed.boss.r * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
         hp: parsed.boss.hp,
         maxHp: parsed.boss.maxHp,
-        attackTimer: 3.5,
+        attackTimer: 3.2,
         telegraphing: false,
         telegraphZones: [],
-        laserTimer: 0,
+        phase: 1,
         destroyed: false
       };
-      showToast(`¡ALERTA! SECTOR DE JEFE: ${lvlData.name.toUpperCase()}`, 3.0);
+      showToast(`¡ALERTA DE JEFE DE MUNDO: ${lvlData.name.toUpperCase()}!`, 3.0);
     } else {
       State.boss = null;
     }
 
-    // Actualizar UI
     updateHUD();
     updateLevelDisplay();
   }
 
   // ==========================================
-  // MECÁNICAS DE JUEGO: CARGAS Y EMPUJE
+  // 8. MECÁNICAS: CARGAS, EMPUJE Y RESIDUALES
   // ==========================================
   let chargeIdCounter = 1;
 
   function placeCharge(player) {
-    if (!player || !player.isAlive) return;
+    if (!player || !player.isAlive || State.state !== 'PLAYING') return;
 
-    // Verificar límite de cargas activas del jugador
-    const playerCharges = State.charges.filter(c => c.ownerId === player.id && !c.detonated);
-    if (playerCharges.length >= player.maxCharges) return;
+    // Verificar límite de cargas
+    const activeCount = State.charges.filter(c => c.ownerId === player.id && !c.detonated).length;
+    if (activeCount >= player.maxCharges) return;
 
-    // Verificar si ya hay una carga en esa casilla
+    // Verificar si ya existe carga en esa casilla
     const existing = State.charges.find(c => c.r === player.r && c.c === player.c && !c.detonated);
     if (existing) return;
 
@@ -923,11 +1649,12 @@
 
     State.charges.push(newCharge);
     SynthSound.sfxDrop();
+    unlockAchievement('FIRST_BLAST');
     updateHUD();
   }
 
   function triggerRemote(player) {
-    if (!player || !player.hasRemote) return;
+    if (!player || !player.hasRemote || State.state !== 'PLAYING') return;
     let anyTriggered = false;
     for (const ch of State.charges) {
       if (ch.ownerId === player.id && !ch.detonated) {
@@ -941,44 +1668,70 @@
   }
 
   function detonateTriggeredCharges() {
-    const res = CargasLogic.resolveChainDetonations(State.charges, State.grid);
+    // Si alguna carga está a medio deslizarse, congelar su celda discreta de forma consistente
+    for (const ch of State.charges) {
+      if (ch.sliding) {
+        ch.r = Math.round(ch.y / CONFIG.TILE_SIZE);
+        ch.c = Math.round(ch.x / CONFIG.TILE_SIZE);
+        ch.sliding = false;
+      }
+    }
+
+    const res = CargasLogic.resolveChainDetonations(State.charges, State.grid, State.doors);
 
     if (res.chainList.length > 0) {
-      SynthSound.sfxExplode();
-      State.shakeTime = 0.25;
+      SynthSound.sfxExplode(res.comboCount);
 
-      // Registrar onda expansiva activa para renderizado y daño
+      // Hit-stop y Shake según combo
+      if (res.comboCount >= 3) {
+        State.hitStopTime = 0.06; // 60ms cámara lenta
+        State.zoomPulse = 1.06;
+        State.shakeTime = 0.35;
+        SynthSound.sfxCombo(res.comboCount);
+        addFloatingText(`¡COMBO x${res.comboCount}!`, res.chainList[0].x, res.chainList[0].y, '#f59e0b');
+        unlockAchievement('CHAIN_REACTION');
+        if (res.comboCount >= 5) unlockAchievement('MEGA_RESONANCE');
+      } else {
+        State.shakeTime = 0.22;
+      }
+
+      // Registrar onda activa para renderizado
       State.activeBlasts.push({
         cells: res.blastCells,
         timer: CONFIG.BLAST_DURATION,
         maxTimer: CONFIG.BLAST_DURATION
       });
 
-      // Procesar bloques blandos destruidos
+      // Procesar bloques destruidos
       for (const b of res.destroyedBlocks) {
         if (State.grid[b.r][b.c] === 2) {
           State.grid[b.r][b.c] = 0; // Despejar bloque
           State.levelBlocksDestroyed++;
-          State.score += 20 * res.comboCount;
+          const pts = 25 * res.comboCount;
+          State.score += pts;
+          State.storage.credits += Math.ceil(pts / 5);
+
           spawnDebris(
             b.c * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
             b.r * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
             '#f59e0b',
-            10
+            12
           );
 
-          // Probabilidad de soltar Powerup (35%)
+          // Verificar si era un bloque regenerativo
+          const regen = State.regenBlocks.find(rb => rb.r === b.r && rb.c === b.c);
+          if (regen) {
+            regen.active = false;
+            regen.timer = CONFIG.REGEN_BLOCK_TIME;
+          }
+
+          // Probabilidad de soltar Powerup (30%)
           maybeSpawnPowerup(b.r, b.c);
         }
       }
 
-      // Procesar daño a entidades alcanzadas por la onda
+      // Procesar daño a entidades
       damageEntitiesInBlast(res.blastCells, res.comboCount);
-
-      if (res.comboCount > 1) {
-        SynthSound.sfxCombo();
-        showToast(`¡COMBO RESONANTE x${res.comboCount}!`, 1.5);
-      }
 
       // Eliminar cargas detonadas
       State.charges = State.charges.filter(c => !c.detonated);
@@ -987,8 +1740,7 @@
   }
 
   function maybeSpawnPowerup(r, c) {
-    const roll = Math.random();
-    if (roll < 0.35) {
+    if (Math.random() < 0.3) {
       const types = ['R', 'C', 'S', 'D'];
       const picked = types[Math.floor(Math.random() * types.length)];
       State.powerups.push({ r, c, type: picked });
@@ -1008,52 +1760,61 @@
         if (g.hp <= 0) {
           g.destroyed = true;
           State.levelEnemiesKilled++;
-          const pts = (g.type === 'armored' ? 400 : 200) * comboMult;
+          const pts = (g.type === 'armored' ? 450 : 250) * comboMult;
           State.score += pts;
-          SynthSound.playTone(380, 'square', 0.2, 0.3, 110);
-          spawnDebris(g.x, g.y, '#ef4444', 14);
+          State.storage.credits += Math.ceil(pts / 5);
+          SynthSound.playTone(360, 'square', 0.22, 0.3, 100);
+          spawnDebris(g.x, g.y, '#ef4444', 16);
+          addFloatingText(`+${pts}`, g.x, g.y, '#22c55e');
         } else {
-          // Blindado golpeado: pierde coraza, se vuelve más rápido
+          // Blindado pierde coraza
           spawnDebris(g.x, g.y, '#f59e0b', 8);
-          SynthSound.playTone(600, 'sawtooth', 0.15, 0.25, 300);
+          SynthSound.playTone(580, 'sawtooth', 0.16, 0.25, 290);
         }
       }
     }
 
-    // Daño a Jefe
+    // Daño a Jefe de Mundo
     if (State.boss && !State.boss.destroyed && blastSet.has(`${State.boss.r},${State.boss.c}`)) {
       State.boss.hp--;
-      spawnDebris(State.boss.x, State.boss.y, '#ef4444', 16);
-      SynthSound.playTone(220, 'sawtooth', 0.25, 0.35, 90);
+      spawnDebris(State.boss.x, State.boss.y, '#ef4444', 20);
+      SynthSound.playTone(220, 'sawtooth', 0.25, 0.35, 80);
+      addFloatingText('¡IMPACTO CRÍTICO!', State.boss.x, State.boss.y - 10, '#ef4444');
+
       if (State.boss.hp <= 0) {
         State.boss.destroyed = true;
-        State.score += 2500 * comboMult;
-        showToast('¡JEFE DESTRUIDO!', 3.0);
+        const pts = 3000 * comboMult;
+        State.score += pts;
+        State.storage.credits += 500;
+        showToast('¡JEFE DE MUNDO DESTRUIDO!', 3.0);
         SynthSound.sfxVictory();
+
+        if (State.boss.type === 'titan') unlockAchievement('TITAN_SLAYER');
+        else if (State.boss.type === 'cryo') unlockAchievement('CRYO_MASTER');
+        else if (State.boss.type === 'archon') unlockAchievement('ARCHON_FALL');
       }
     }
 
-    // Daño a Jugadores (si están dentro de la onda)
-    const checkPlayerHurt = (p) => {
+    // Daño a Jugadores si están en la onda
+    const checkHurt = (p) => {
       if (p && p.isAlive && p.invulnTimer <= 0 && blastSet.has(`${p.r},${p.c}`)) {
         hurtPlayer(p);
       }
     };
-    checkPlayerHurt(State.p1);
-    checkPlayerHurt(State.p2);
+    checkHurt(State.p1);
+    checkHurt(State.p2);
   }
 
   function hurtPlayer(p) {
     p.lives--;
     p.invulnTimer = CONFIG.INVULNERABILITY_TIME;
     SynthSound.sfxHurt();
-    State.shakeTime = 0.4;
-    spawnDebris(p.x, p.y, p.color, 15);
+    State.shakeTime = 0.35;
+    spawnDebris(p.x, p.y, p.color, 16);
     updateHUD();
 
     if (p.lives <= 0) {
       p.isAlive = false;
-      // Comprobar fin de partida
       const anyAlive = (State.p1 && State.p1.isAlive) || (State.p2 && State.p2.isAlive);
       if (!anyAlive) {
         triggerGameOver();
@@ -1062,25 +1823,34 @@
   }
 
   // ==========================================
-  // ACTUALIZACIÓN DE ESTADO (DELTA TIME)
+  // 9. ACTUALIZACIÓN POR FRAME (DELTA TIME)
   // ==========================================
   function update(dt) {
     if (State.state !== 'PLAYING') return;
 
-    // Reducir temporizador de nivel
-    State.timeRemaining -= dt;
-    if (State.timeRemaining <= 0) {
-      State.timeRemaining = 0;
-      triggerGameOver('¡TIEMPO AGOTADO! El reactor colapsó.');
+    // Hit-stop
+    if (State.hitStopTime > 0) {
+      State.hitStopTime -= dt;
       return;
     }
 
-    // Screen Shake
-    if (State.shakeTime > 0) {
-      State.shakeTime -= dt;
+    // Zoom pulse decay
+    if (State.zoomPulse > 1.0) {
+      State.zoomPulse = Math.max(1.0, State.zoomPulse - dt * 0.4);
     }
 
-    // Toast Timer
+    // Temporizador de nivel
+    State.timeRemaining -= dt;
+    if (State.timeRemaining <= 0) {
+      State.timeRemaining = 0;
+      triggerGameOver('¡TIEMPO AGOTADO! El reactor resonante ha colapsado.');
+      return;
+    }
+
+    // Screen shake
+    if (State.shakeTime > 0) State.shakeTime -= dt;
+
+    // Toast banner timer
     if (State.toastTimer > 0) {
       State.toastTimer -= dt;
       if (State.toastTimer <= 0) {
@@ -1089,13 +1859,11 @@
       }
     }
 
-    // Actualizar Jugadores
+    // Actualizar Jugadores con Corner-Slipping
     updatePlayer(State.p1, dt);
-    if (State.is2P) {
-      updatePlayer(State.p2, dt);
-    }
+    if (State.is2P) updatePlayer(State.p2, dt);
 
-    // Actualizar Cargas (fuse, empuje, deslizamiento)
+    // Actualizar Cargas y Deslizamiento continuo
     updateCharges(dt);
 
     // Actualizar Ondas Expansivas
@@ -1103,14 +1871,16 @@
 
     // Actualizar Guardianes y Jefe
     updateGuardians(dt);
-    if (State.boss) {
-      updateBoss(dt);
-    }
+    if (State.boss) updateBoss(dt);
 
-    // Comprobar recolección de Powerups
+    // Actualizar Bloques Regenerativos
+    updateRegenBlocks(dt);
+
+    // Comprobar Interruptores y Compuertas
+    updateSwitchesAndDoors();
+
+    // Comprobar Powerups y Salida
     checkPowerups();
-
-    // Comprobar condición de victoria / Portal de salida
     checkPortalCondition();
 
     // Actualizar Partículas
@@ -1122,124 +1892,207 @@
         if (p.life <= 0) p.active = false;
       }
     }
+
+    // Actualizar Textos Flotantes
+    for (let i = State.floatingTexts.length - 1; i >= 0; i--) {
+      const f = State.floatingTexts[i];
+      f.life -= dt;
+      f.y -= 18 * dt;
+      if (f.life <= 0) State.floatingTexts.splice(i, 1);
+    }
   }
 
+  /**
+   * Movimiento de jugador con Corner-Slipping (deslizamiento de esquinas)
+   */
   function updatePlayer(p, dt) {
     if (!p || !p.isAlive) return;
 
-    if (p.invulnTimer > 0) {
-      p.invulnTimer -= dt;
-    }
+    if (p.invulnTimer > 0) p.invulnTimer -= dt;
 
-    // Movimiento en cuadrícula con amortiguación
-    const dir = p.bufferedDir.r !== 0 || p.bufferedDir.c !== 0 ? p.bufferedDir : p.dir;
-    if (dir.r !== 0 || dir.c !== 0) {
-      const speed = CONFIG.PLAYER_SPEED * p.speedMult * CONFIG.TILE_SIZE * dt;
-      const targetR = p.r + dir.r;
-      const targetC = p.c + dir.c;
+    const requestedDir = p.bufferedDir.r !== 0 || p.bufferedDir.c !== 0 ? p.bufferedDir : p.dir;
 
-      // Verificar si hay una carga en la casilla objetivo para EMPUJARLA
-      const chargeInFront = State.charges.find(c => c.r === targetR && c.c === targetC && !c.detonated && !c.sliding);
+    if (requestedDir.r !== 0 || requestedDir.c !== 0) {
+      const T = CONFIG.TILE_SIZE;
+      const speed = CONFIG.BASE_PLAYER_SPEED * p.speedMult * T * dt;
+
+      // Suelo de hielo: mayor inercia / velocidad
+      const curTile = State.grid[p.r] ? State.grid[p.r][p.c] : 0;
+      const effectiveSpeed = curTile === 3 ? speed * 1.3 : speed;
+
+      // Posición del centro de la celda actual
+      const cellCenterX = p.c * T + T / 2;
+      const cellCenterY = p.r * T + T / 2;
+
+      // CORNER-SLIPPING: Si se mueve horizontalmente pero no está centrado verticalmente
+      if (requestedDir.c !== 0 && requestedDir.r === 0) {
+        const diffY = cellCenterY - p.y;
+        if (Math.abs(diffY) > 0.8 && Math.abs(diffY) < T * 0.45) {
+          p.y += Math.sign(diffY) * Math.min(Math.abs(diffY), speed * 0.8);
+        }
+      }
+      // Si se mueve verticalmente pero no está centrado horizontalmente
+      if (requestedDir.r !== 0 && requestedDir.c === 0) {
+        const diffX = cellCenterX - p.x;
+        if (Math.abs(diffX) > 0.8 && Math.abs(diffX) < T * 0.45) {
+          p.x += Math.sign(diffX) * Math.min(Math.abs(diffX), speed * 0.8);
+        }
+      }
+
+      const targetR = p.r + requestedDir.r;
+      const targetC = p.c + requestedDir.c;
+
+      // 1. Detección y empuje de Cargas
+      const chargeInFront = State.charges.find(c => !c.detonated && !c.sliding && c.r === targetR && c.c === targetC);
+      p.pushTargetCharge = chargeInFront || null;
+
       if (chargeInFront) {
-        // Empujar la carga si la casilla siguiente está vacía
-        const nextBehindR = targetR + dir.r;
-        const nextBehindC = targetC + dir.c;
-        if (
-          nextBehindR >= 0 && nextBehindR < CONFIG.ROWS &&
-          nextBehindC >= 0 && nextBehindC < CONFIG.COLS &&
-          State.grid[nextBehindR][nextBehindC] === 0
-        ) {
+        const behindR = targetR + requestedDir.r;
+        const behindC = targetC + requestedDir.c;
+
+        if (CargasLogic.isPassable(State.grid, behindR, behindC, State.doors) &&
+            !State.charges.some(c => !c.detonated && c.r === behindR && c.c === behindC)) {
+          // Deslizar carga
           chargeInFront.sliding = true;
-          chargeInFront.slideDir = { r: dir.r, c: dir.c };
+          chargeInFront.slideDir = { r: requestedDir.r, c: requestedDir.c };
           SynthSound.sfxSlide();
         }
       }
 
-      // Validar si el jugador puede entrar a targetR, targetC
-      if (
-        targetR >= 0 && targetR < CONFIG.ROWS &&
-        targetC >= 0 && targetC < CONFIG.COLS &&
-        State.grid[targetR][targetC] === 0 &&
-        !State.charges.some(c => c.r === targetR && c.c === targetC && !c.detonated)
-      ) {
-        const destX = targetC * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
-        const destY = targetR * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+      // 2. Comprobar si la casilla objetivo es transitable para el jugador
+      const canEnter = CargasLogic.isPassable(State.grid, targetR, targetC, State.doors) &&
+                       !State.charges.some(c => !c.detonated && c.r === targetR && c.c === targetC);
 
+      if (canEnter) {
+        const destX = targetC * T + T / 2;
+        const destY = targetR * T + T / 2;
         const dx = destX - p.x;
         const dy = destY - p.y;
         const dist = Math.hypot(dx, dy);
 
-        if (dist <= speed) {
+        if (dist <= effectiveSpeed) {
           p.x = destX;
           p.y = destY;
           p.r = targetR;
           p.c = targetC;
         } else {
-          p.x += (dx / dist) * speed;
-          p.y += (dy / dist) * speed;
-          p.r = Math.floor(p.y / CONFIG.TILE_SIZE);
-          p.c = Math.floor(p.x / CONFIG.TILE_SIZE);
+          p.x += (dx / dist) * effectiveSpeed;
+          p.y += (dy / dist) * effectiveSpeed;
+          p.r = Math.floor(p.y / T);
+          p.c = Math.floor(p.x / T);
         }
       }
+
+      // Interacción con Teletransportadores para el jugador
+      const tKey = `${p.r},${p.c}`;
+      if (State.teleporterPairs.has(tKey)) {
+        const partner = State.teleporterPairs.get(tKey);
+        p.r = partner.r;
+        p.c = partner.c;
+        p.x = partner.c * T + T / 2;
+        p.y = partner.r * T + T / 2;
+        SynthSound.sfxTeleport();
+        spawnDebris(p.x, p.y, '#a855f7', 14);
+      }
+
+      // Interacción con Cintas Transportadoras
+      const onTile = State.grid[p.r] ? State.grid[p.r][p.c] : 0;
+      if (onTile >= 4 && onTile <= 7) {
+        const convDir = onTile === 4 ? { r: -1, c: 0 } : onTile === 5 ? { r: 1, c: 0 } : onTile === 6 ? { r: 0, c: -1 } : { r: 0, c: 1 };
+        const convNextR = p.r + convDir.r;
+        const convNextC = p.c + convDir.c;
+        if (CargasLogic.isPassable(State.grid, convNextR, convNextC, State.doors)) {
+          p.x += convDir.c * speed * 0.7;
+          p.y += convDir.r * speed * 0.7;
+          p.r = Math.floor(p.y / T);
+          p.c = Math.floor(p.x / T);
+        }
+      }
+    } else {
+      p.pushTargetCharge = null;
     }
   }
 
+  /**
+   * Actualiza el movimiento de cargas y resuelve colisiones limpias
+   */
   function updateCharges(dt) {
     let anyAutoDetonated = false;
+    const T = CONFIG.TILE_SIZE;
 
     for (const ch of State.charges) {
       if (ch.detonated) continue;
 
-      // Deslizamiento por empuje
       if (ch.sliding) {
-        const slideStep = CONFIG.CHARGE_SLIDE_SPEED * CONFIG.TILE_SIZE * dt;
+        const slideSpeed = CONFIG.BASE_CHARGE_SLIDE_SPEED * T * dt;
         const nextR = ch.r + ch.slideDir.r;
         const nextC = ch.c + ch.slideDir.c;
 
-        if (
-          nextR < 0 || nextR >= CONFIG.ROWS ||
-          nextC < 0 || nextC >= CONFIG.COLS ||
-          State.grid[nextR][nextC] !== 0 ||
-          State.charges.some(other => other.id !== ch.id && other.r === nextR && other.c === nextC && !other.detonated)
-        ) {
-          // Chocó contra pared o bloque: detener deslizamiento
+        const isBlocked = !CargasLogic.isPassable(State.grid, nextR, nextC, State.doors) ||
+                          State.charges.some(other => other.id !== ch.id && !other.detonated && other.r === nextR && other.c === nextC);
+
+        if (isBlocked) {
+          // Detener deslizamiento limpiamente
           ch.sliding = false;
-          ch.x = ch.c * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
-          ch.y = ch.r * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+          ch.x = ch.c * T + T / 2;
+          ch.y = ch.r * T + T / 2;
         } else {
-          // Desplazar continuamente
-          const targetX = nextC * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
-          const targetY = nextR * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+          const targetX = nextC * T + T / 2;
+          const targetY = nextR * T + T / 2;
           const dx = targetX - ch.x;
           const dy = targetY - ch.y;
-          const d = Math.hypot(dx, dy);
+          const dist = Math.hypot(dx, dy);
 
-          if (d <= slideStep) {
+          if (dist <= slideSpeed) {
             ch.x = targetX;
             ch.y = targetY;
             ch.r = nextR;
             ch.c = nextC;
 
             // Aplastar guardianes al pasar por su celda
+            let crushedCount = 0;
             for (const g of State.guardians) {
               if (!g.destroyed && g.r === ch.r && g.c === ch.c) {
                 g.destroyed = true;
+                crushedCount++;
                 State.levelEnemiesKilled++;
-                State.score += 300;
-                spawnDebris(g.x, g.y, '#ef4444', 16);
-                SynthSound.playTone(300, 'square', 0.25, 0.35, 80);
+                State.score += 350;
+                State.storage.credits += 70;
+                spawnDebris(g.x, g.y, '#ef4444', 18);
+                SynthSound.playTone(280, 'square', 0.25, 0.35, 75);
+                addFloatingText('¡APLASTADO!', g.x, g.y, '#ef4444');
               }
             }
+            if (crushedCount >= 1) unlockAchievement('PINBALL_CRUSH');
+            if (crushedCount >= 2) unlockAchievement('DOUBLE_CRUSH');
+
+            // Teletransporte de carga
+            const tKey = `${ch.r},${ch.c}`;
+            if (State.teleporterPairs.has(tKey)) {
+              const partner = State.teleporterPairs.get(tKey);
+              ch.r = partner.r;
+              ch.c = partner.c;
+              ch.x = partner.c * T + T / 2;
+              ch.y = partner.r * T + T / 2;
+              SynthSound.sfxTeleport();
+            }
+
+            // Redirección por cinta transportadora
+            const tile = State.grid[ch.r][ch.c];
+            if (tile === 4) ch.slideDir = { r: -1, c: 0 };
+            else if (tile === 5) ch.slideDir = { r: 1, c: 0 };
+            else if (tile === 6) ch.slideDir = { r: 0, c: -1 };
+            else if (tile === 7) ch.slideDir = { r: 0, c: 1 };
           } else {
-            ch.x += (dx / d) * slideStep;
-            ch.y += (dy / d) * slideStep;
-            ch.r = Math.floor(ch.y / CONFIG.TILE_SIZE);
-            ch.c = Math.floor(ch.x / CONFIG.TILE_SIZE);
+            ch.x += (dx / dist) * slideSpeed;
+            ch.y += (dy / dist) * slideSpeed;
+            ch.r = Math.floor(ch.y / T);
+            ch.c = Math.floor(ch.x / T);
           }
         }
       }
 
-      // Cuenta regresiva del fusible (si no es remota)
+      // Temporizador de mecha
       if (!ch.remote) {
         ch.timer -= dt;
         if (ch.timer <= 0) {
@@ -1264,45 +2117,53 @@
     }
   }
 
+  /**
+   * Actualización de Guardianes con BFS y prevención de suicidio del constructor
+   */
   function updateGuardians(dt) {
+    const T = CONFIG.TILE_SIZE;
+
     for (const g of State.guardians) {
       if (g.destroyed) continue;
 
-      // 1. Evasión de ondas de choque (Cazador y Blindado evaden)
-      if (g.type === 'hunter' || g.type === 'armored') {
-        const evade = CargasLogic.getGuardianEvadeMove(State.grid, g.r, g.c, State.charges);
-        if (evade.shouldEvade && (evade.dir.r !== 0 || evade.dir.c !== 0)) {
-          g.dir = evade.dir;
-        }
+      // 1. Evasión inteligente de ondas
+      const evade = CargasLogic.getGuardianEvadeMove(State.grid, g.r, g.c, State.charges, State.doors);
+      if (evade.shouldEvade && (evade.dir.r !== 0 || evade.dir.c !== 0)) {
+        g.dir = evade.dir;
+      } else if (g.type === 'hunter' && State.p1 && State.p1.isAlive) {
+        // Cazador persigue al jugador con pathfinding BFS
+        const huntDir = CargasLogic.getHunterMove(State.grid, g.r, g.c, State.p1.r, State.p1.c, State.charges, State.doors);
+        if (huntDir) g.dir = huntDir;
       }
 
-      // 2. Comportamiento Constructor: colocar bloques blandos periódicamente
+      // 2. Constructor: coloca bloque detrás de él sin encerrarse
       if (g.type === 'builder') {
         g.builderTimer -= dt;
         if (g.builderTimer <= 0) {
-          g.builderTimer = 5.0;
-          // Si la celda actual es transitable, crear un bloque blando
-          if (State.grid[g.r][g.c] === 0) {
-            State.grid[g.r][g.c] = 2;
-            spawnDebris(g.x, g.y, '#9333ea', 8);
+          g.builderTimer = 5.5;
+          // Colocar bloque en casilla detrás de su dirección si está vacía
+          const behindR = g.r - g.dir.r;
+          const behindC = g.c - g.dir.c;
+          if (behindR >= 0 && behindR < CONFIG.ROWS && behindC >= 0 && behindC < CONFIG.COLS &&
+              State.grid[behindR][behindC] === 0 &&
+              !(behindR === State.portalPos.r && behindC === State.portalPos.c)) {
+            State.grid[behindR][behindC] = 2;
+            spawnDebris(behindC * T + T / 2, behindR * T + T / 2, '#9333ea', 8);
           }
         }
       }
 
       // 3. Movimiento del Guardián
-      const speed = (g.type === 'hunter' ? 2.8 : g.type === 'armored' && g.hp === 1 ? 3.0 : 2.2) * CONFIG.TILE_SIZE * dt;
+      const speed = (g.type === 'hunter' ? 2.6 : g.type === 'armored' && g.hp === 1 ? 3.1 : 2.1) * T * dt;
       const targetR = g.r + g.dir.r;
       const targetC = g.c + g.dir.c;
 
-      // Validar si puede avanzar
-      if (
-        targetR >= 0 && targetR < CONFIG.ROWS &&
-        targetC >= 0 && targetC < CONFIG.COLS &&
-        State.grid[targetR][targetC] === 0 &&
-        !State.charges.some(c => c.r === targetR && c.c === targetC && !c.detonated)
-      ) {
-        const destX = targetC * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
-        const destY = targetR * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2;
+      const canMove = CargasLogic.isPassable(State.grid, targetR, targetC, State.doors) &&
+                      !State.charges.some(c => !c.detonated && c.r === targetR && c.c === targetC);
+
+      if (canMove) {
+        const destX = targetC * T + T / 2;
+        const destY = targetR * T + T / 2;
         const dx = destX - g.x;
         const dy = destY - g.y;
         const dist = Math.hypot(dx, dy);
@@ -1315,11 +2176,11 @@
         } else {
           g.x += (dx / dist) * speed;
           g.y += (dy / dist) * speed;
-          g.r = Math.floor(g.y / CONFIG.TILE_SIZE);
-          g.c = Math.floor(g.x / CONFIG.TILE_SIZE);
+          g.r = Math.floor(g.y / T);
+          g.c = Math.floor(g.x / T);
         }
       } else {
-        // Chocó: cambiar dirección aleatoria o patrullar
+        // Chocó: cambiar a otra dirección válida
         const dirs = [
           { r: -1, c: 0 },
           { r: 1, c: 0 },
@@ -1329,7 +2190,8 @@
         const validDirs = dirs.filter(d => {
           const nr = g.r + d.r;
           const nc = g.c + d.c;
-          return nr >= 0 && nr < CONFIG.ROWS && nc >= 0 && nc < CONFIG.COLS && State.grid[nr][nc] === 0;
+          return CargasLogic.isPassable(State.grid, nr, nc, State.doors) &&
+                 !State.charges.some(c => !c.detonated && c.r === nr && c.c === nc);
         });
 
         if (validDirs.length > 0) {
@@ -1339,11 +2201,11 @@
         }
       }
 
-      // Daño al tocar al jugador
+      // Daño por contacto al jugador
       const checkTouch = (p) => {
         if (p && p.isAlive && p.invulnTimer <= 0) {
           const dist = Math.hypot(p.x - g.x, p.y - g.y);
-          if (dist < CONFIG.TILE_SIZE * 0.75) {
+          if (dist < T * 0.7) {
             hurtPlayer(p);
           }
         }
@@ -1353,6 +2215,9 @@
     }
   }
 
+  /**
+   * Actualiza el comportamiento de los 3 jefes de mundo
+   */
   function updateBoss(dt) {
     const boss = State.boss;
     if (!boss || boss.destroyed) return;
@@ -1360,32 +2225,42 @@
     boss.attackTimer -= dt;
 
     if (!boss.telegraphing) {
-      if (boss.attackTimer <= 1.2) {
-        // Entrar en modo telegrafiado
+      if (boss.attackTimer <= 1.3) {
         boss.telegraphing = true;
         SynthSound.sfxBossTelegraph();
 
         if (boss.type === 'titan') {
-          // Telégrafo en cruz y diagonal por la fila y columna del jefe
+          // Telégrafo en cruz y diagonal
           boss.telegraphZones = [];
           for (let c = 1; c < CONFIG.COLS - 1; c++) boss.telegraphZones.push({ r: boss.r, c });
           for (let r = 1; r < CONFIG.ROWS - 1; r++) boss.telegraphZones.push({ r, c: boss.c });
+        } else if (boss.type === 'cryo') {
+          // Telégrafo de mega-onda de escarcha en anillo
+          boss.telegraphZones = [];
+          for (let dr = -3; dr <= 3; dr++) {
+            for (let dc = -3; dc <= 3; dc++) {
+              if (Math.abs(dr) + Math.abs(dc) === 3) {
+                const tr = boss.r + dr;
+                const tc = boss.c + dc;
+                if (tr >= 1 && tr < CONFIG.ROWS - 1 && tc >= 1 && tc < CONFIG.COLS - 1) {
+                  boss.telegraphZones.push({ r: tr, c: tc });
+                }
+              }
+            }
+          }
         } else if (boss.type === 'archon') {
-          // Telégrafo de mega-rombo
-          const diamond = CargasLogic.calculateDiamondBlast(State.grid, boss.r, boss.c, 4);
+          // Mega-rombo de resonancia cuántica
+          const diamond = CargasLogic.calculateDiamondBlast(State.grid, boss.r, boss.c, 4, State.doors);
           boss.telegraphZones = diamond.blastCells;
         }
       }
     } else {
-      // En telegrafiado: advertencia visual
       if (boss.attackTimer <= 0) {
-        // ¡Disparo de ataque!
         boss.telegraphing = false;
-        boss.attackTimer = 4.5;
+        boss.attackTimer = 4.2;
         SynthSound.sfxExplode();
         State.shakeTime = 0.35;
 
-        // Registrar onda de daño del jefe
         State.activeBlasts.push({
           cells: boss.telegraphZones,
           timer: 0.5,
@@ -1406,6 +2281,53 @@
     }
   }
 
+  function updateRegenBlocks(dt) {
+    for (const rb of State.regenBlocks) {
+      if (!rb.active) {
+        rb.timer -= dt;
+        if (rb.timer <= 0) {
+          // Reaparecer bloque si la celda está despejada
+          const hasPlayer = (State.p1 && State.p1.r === rb.r && State.p1.c === rb.c) ||
+                            (State.p2 && State.p2.r === rb.r && State.p2.c === rb.c);
+          const hasCharge = State.charges.some(c => !c.detonated && c.r === rb.r && c.c === rb.c);
+
+          if (!hasPlayer && !hasCharge) {
+            rb.active = true;
+            State.grid[rb.r][rb.c] = 2;
+            spawnDebris(rb.c * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2, rb.r * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2, '#38bdf8', 10);
+            SynthSound.playTone(520, 'sine', 0.12, 0.2, 260);
+          } else {
+            rb.timer = 1.0; // Reintentar en un segundo
+          }
+        }
+      }
+    }
+  }
+
+  function updateSwitchesAndDoors() {
+    let anyPressed = false;
+
+    for (const sw of State.switches) {
+      // Un interruptor se presiona si hay un jugador o una carga encima
+      const p1On = State.p1 && State.p1.isAlive && State.p1.r === sw.r && State.p1.c === sw.c;
+      const p2On = State.p2 && State.p2.isAlive && State.p2.r === sw.r && State.p2.c === sw.c;
+      const chargeOn = State.charges.some(c => !c.detonated && c.r === sw.r && c.c === sw.c);
+
+      const isNowPressed = p1On || p2On || chargeOn;
+      if (isNowPressed && !sw.pressed) {
+        SynthSound.sfxSwitch();
+        spawnDebris(sw.c * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2, sw.r * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2, '#22c55e', 6);
+      }
+      sw.pressed = isNowPressed;
+      if (isNowPressed) anyPressed = true;
+    }
+
+    // Abrir o cerrar compuertas
+    for (const d of State.doors) {
+      d.open = anyPressed;
+    }
+  }
+
   function checkPowerups() {
     for (let i = State.powerups.length - 1; i >= 0; i--) {
       const pow = State.powerups[i];
@@ -1413,6 +2335,8 @@
         if (p && p.isAlive && p.r === pow.r && p.c === pow.c) {
           SynthSound.sfxPowerup();
           State.score += 150;
+          State.storage.credits += 30;
+
           if (pow.type === 'R') {
             p.radius = Math.min(CONFIG.MAX_BLAST_RADIUS, p.radius + 1);
             showToast('¡RADIO DE ONDA AUMENTADO!', 1.2);
@@ -1420,11 +2344,11 @@
             p.maxCharges = Math.min(CONFIG.MAX_CHARGES_LIMIT, p.maxCharges + 1);
             showToast('¡CARGA ADICIONAL!', 1.2);
           } else if (pow.type === 'S') {
-            p.speedMult = Math.min(1.6, p.speedMult + 0.2);
+            p.speedMult = Math.min(1.6, p.speedMult + 0.18);
             showToast('¡VELOCIDAD MEJORADA!', 1.2);
           } else if (pow.type === 'D') {
             p.hasRemote = true;
-            showToast('¡DETONADOR REMOTO EQUIPADO!', 1.5);
+            showToast('¡DETONADOR REMOTO ACTIVO!', 1.5);
           }
           State.powerups.splice(i, 1);
           updateHUD();
@@ -1440,7 +2364,6 @@
   }
 
   function checkPortalCondition() {
-    // Si todos los enemigos del nivel o el jefe fueron eliminados, se activa el portal
     const guardiansRemaining = State.guardians.filter(g => !g.destroyed).length;
     const bossAlive = State.boss && !State.boss.destroyed;
 
@@ -1464,7 +2387,7 @@
   }
 
   // ==========================================
-  // RENDERIZADO 2D / SEUDO-3D 90s
+  // 10. RENDERIZADO 2D / ESTÉTICA INDUSTRIAL 90s
   // ==========================================
   function render() {
     const ctx = State.ctx;
@@ -1472,64 +2395,158 @@
 
     ctx.save();
 
-    // Screen Shake
+    // Screen Shake & Zoom Pulse
     if (State.shakeTime > 0) {
       const sx = (Math.random() - 0.5) * 8;
       const sy = (Math.random() - 0.5) * 8;
       ctx.translate(sx, sy);
     }
 
-    // Fondo industrial oscuro
+    if (State.zoomPulse > 1.0) {
+      const cx = State.boardW / 2;
+      const cy = State.boardH / 2;
+      ctx.translate(cx, cy);
+      ctx.scale(State.zoomPulse, State.zoomPulse);
+      ctx.translate(-cx, -cy);
+    }
+
+    // Fondo industrial
     ctx.fillStyle = '#0a0d14';
     ctx.fillRect(0, 0, State.boardW, State.boardH);
 
-    // 1. Dibujar piso y cuadrícula metálica
+    // 1. Suelo y cuadrícula metálica
     drawFloor(ctx);
 
-    // 2. Dibujar zonas telegrafiadas del jefe
+    // 2. Cintas Transportadoras e Interruptores
+    drawWorldGimmicks(ctx);
+
+    // 3. Zonas telegrafiadas de jefe
     drawTelegraphZones(ctx);
 
-    // 3. Dibujar portal de salida
+    // 4. Portal de salida
     drawPortal(ctx);
 
-    // 4. Dibujar Powerups
+    // 5. Powerups
     drawPowerups(ctx);
 
-    // 5. Dibujar Pilares y Bloques Blandos
+    // 6. Pilares, Bloques Blandos y Regenerativos
     drawGridBlocks(ctx);
 
-    // 6. Dibujar Cargas
+    // 7. Cargas y previsualización de empuje
     drawCharges(ctx);
 
-    // 7. Dibujar Ondas Expansivas en Rombo
+    // 8. Ondas Expansivas en Rombo Manhattan
     drawActiveBlasts(ctx);
 
-    // 8. Dibujar Guardianes y Jefe
+    // 9. Guardianes y Jefe
     drawGuardians(ctx);
-    if (State.boss) {
-      drawBoss(ctx);
-    }
+    if (State.boss) drawBoss(ctx);
 
-    // 9. Dibujar Jugadores
+    // 10. Jugadores
     drawPlayer(ctx, State.p1);
-    if (State.is2P) {
-      drawPlayer(ctx, State.p2);
-    }
+    if (State.is2P) drawPlayer(ctx, State.p2);
 
-    // 10. Dibujar Partículas
+    // 11. Partículas y Textos Flotantes
     drawParticles(ctx);
+    drawFloatingTexts(ctx);
+
+    // 12. Overlay Debug (?debug=1)
+    if (State.debugMode) {
+      drawDebugOverlay(ctx);
+    }
 
     ctx.restore();
   }
 
   function drawFloor(ctx) {
     const T = CONFIG.TILE_SIZE;
-    ctx.strokeStyle = '#161e2e';
+    const lvl = CONFIG.LEVELS[State.currentLevelIdx];
+    const isCryo = lvl.world === 2;
+    const isQuantum = lvl.world === 3;
+
+    ctx.strokeStyle = isCryo ? '#0e243a' : isQuantum ? '#231536' : '#161e2e';
     ctx.lineWidth = 1;
 
     for (let r = 0; r < CONFIG.ROWS; r++) {
       for (let c = 0; c < CONFIG.COLS; c++) {
-        ctx.strokeRect(c * T, r * T, T, T);
+        const tile = State.grid[r][c];
+        const x = c * T;
+        const y = r * T;
+
+        if (tile === 3) {
+          // Suelo de Hielo
+          ctx.fillStyle = '#082f49';
+          ctx.fillRect(x, y, T, T);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(x + 4, y + 4, 3, 3);
+          ctx.fillRect(x + T - 8, y + T - 8, 4, 2);
+        } else {
+          ctx.strokeRect(x, y, T, T);
+        }
+      }
+    }
+  }
+
+  function drawWorldGimmicks(ctx) {
+    const T = CONFIG.TILE_SIZE;
+
+    // Cintas transportadoras
+    for (const conv of State.conveyors) {
+      const cx = conv.c * T + T / 2;
+      const cy = conv.r * T + T / 2;
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(conv.c * T + 2, conv.r * T + 2, T - 4, T - 4);
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = 'bold 12px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      const arrow = conv.dir.r === -1 ? '▲' : conv.dir.r === 1 ? '▼' : conv.dir.c === -1 ? '◀' : '▶';
+      ctx.fillText(arrow, cx, cy + 1);
+    }
+
+    // Teletransportadores cuánticos
+    for (const tp of State.teleporters) {
+      const cx = tp.c * T + T / 2;
+      const cy = tp.r * T + T / 2;
+      const spin = Date.now() * 0.003;
+
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.rotate(spin);
+      ctx.strokeStyle = '#a855f7';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(-8, -8, 16, 16);
+      ctx.fillStyle = '#6b21a8';
+      ctx.fillRect(-4, -4, 8, 8);
+      ctx.restore();
+    }
+
+    // Interruptores de presión
+    for (const sw of State.switches) {
+      const x = sw.c * T + 4;
+      const y = sw.r * T + 4;
+      ctx.fillStyle = sw.pressed ? '#15803d' : '#854d0e';
+      ctx.fillRect(x, y, T - 8, T - 8);
+      ctx.strokeStyle = sw.pressed ? '#4ade80' : '#fbbf24';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(x, y, T - 8, T - 8);
+    }
+
+    // Compuertas de seguridad
+    for (const d of State.doors) {
+      const x = d.c * T;
+      const y = d.r * T;
+      if (d.open) {
+        ctx.strokeStyle = '#22c55e';
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(x + 4, y + 4, T - 8, T - 8);
+      } else {
+        // Compuerta cerrada sólida
+        ctx.fillStyle = '#b91c1c';
+        ctx.fillRect(x + 2, y + 2, T - 4, T - 4);
+        ctx.strokeStyle = '#fca5a5';
+        ctx.lineWidth = 2;
+        ctx.strokeRect(x + 2, y + 2, T - 4, T - 4);
       }
     }
   }
@@ -1551,7 +2568,6 @@
     const py = State.portalPos.r * T;
 
     if (State.portalUnlocked) {
-      // Vórtice activo cyan brillante
       const time = Date.now() * 0.005;
       ctx.fillStyle = '#083344';
       ctx.fillRect(px + 2, py + 2, T - 4, T - 4);
@@ -1559,18 +2575,11 @@
       ctx.save();
       ctx.translate(px + T / 2, py + T / 2);
       ctx.rotate(time);
-
       ctx.strokeStyle = '#06b6d4';
       ctx.lineWidth = 2.5;
       ctx.strokeRect(-T * 0.3, -T * 0.3, T * 0.6, T * 0.6);
-
-      ctx.strokeStyle = '#38bdf8';
-      ctx.rotate(time * 0.5);
-      ctx.strokeRect(-T * 0.2, -T * 0.2, T * 0.4, T * 0.4);
-
       ctx.restore();
     } else {
-      // Portal inactivo gris
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(px + 4, py + 4, T - 8, T - 8);
       ctx.strokeStyle = '#475569';
@@ -1615,7 +2624,6 @@
           ctx.fillStyle = '#334155';
           ctx.fillRect(x, y, T, T);
 
-          // Bisel claro superior/izquierdo
           ctx.fillStyle = '#64748b';
           ctx.beginPath();
           ctx.moveTo(x, y);
@@ -1626,7 +2634,6 @@
           ctx.lineTo(x, y + T);
           ctx.fill();
 
-          // Bisel oscuro inferior/derecho
           ctx.fillStyle = '#0f172a';
           ctx.beginPath();
           ctx.moveTo(x + T, y);
@@ -1637,24 +2644,30 @@
           ctx.lineTo(x + T - 4, y + 4);
           ctx.fill();
 
-          // Placa central
           ctx.fillStyle = '#1e293b';
           ctx.fillRect(x + 5, y + 5, T - 10, T - 10);
         } else if (tile === 2) {
-          // Bloque blando destructible (materia inestable anaranjada con textura)
-          ctx.fillStyle = '#78350f';
-          ctx.fillRect(x + 1, y + 1, T - 2, T - 2);
+          // Comprobar si es bloque regenerativo
+          const isRegen = State.regenBlocks.some(rb => rb.r === r && rb.c === c);
 
-          ctx.fillStyle = '#b45309';
-          ctx.fillRect(x + 3, y + 3, T - 6, T - 6);
-
-          ctx.strokeStyle = '#d97706';
-          ctx.lineWidth = 1.5;
-          ctx.strokeRect(x + 3, y + 3, T - 6, T - 6);
-
-          // Remache central
-          ctx.fillStyle = '#fbbf24';
-          ctx.fillRect(x + T / 2 - 2, y + T / 2 - 2, 4, 4);
+          if (isRegen) {
+            ctx.fillStyle = '#0369a1';
+            ctx.fillRect(x + 1, y + 1, T - 2, T - 2);
+            ctx.strokeStyle = '#38bdf8';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x + 3, y + 3, T - 6, T - 6);
+          } else {
+            // Bloque blando normal anaranjado con textura
+            ctx.fillStyle = '#78350f';
+            ctx.fillRect(x + 1, y + 1, T - 2, T - 2);
+            ctx.fillStyle = '#b45309';
+            ctx.fillRect(x + 3, y + 3, T - 6, T - 6);
+            ctx.strokeStyle = '#d97706';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x + 3, y + 3, T - 6, T - 6);
+            ctx.fillStyle = '#fbbf24';
+            ctx.fillRect(x + T / 2 - 2, y + T / 2 - 2, 4, 4);
+          }
         }
       }
     }
@@ -1674,7 +2687,7 @@
       ctx.ellipse(0, 8, 10, 5, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Esfera de energía resonante
+      // Esfera de energía
       const radius = 10 + pulse;
       const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, radius);
       grad.addColorStop(0, '#fef08a');
@@ -1686,7 +2699,7 @@
       ctx.arc(0, 0, radius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Anillo exterior de diamante
+      // Diamante exterior
       ctx.strokeStyle = '#fbbf24';
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -1697,7 +2710,7 @@
       ctx.closePath();
       ctx.stroke();
 
-      // Indicador digital de cuenta regresiva
+      // Cuenta regresiva
       if (!ch.remote) {
         ctx.fillStyle = '#000';
         ctx.font = 'bold 9px monospace';
@@ -1722,7 +2735,7 @@
         ctx.save();
         ctx.translate(cx, cy);
 
-        // Dibujar rombo/diamante Manhattan
+        // Rombo Manhattan
         ctx.fillStyle = `rgba(245, 158, 11, ${alpha * 0.75})`;
         ctx.beginPath();
         ctx.moveTo(0, -T * 0.45);
@@ -1732,7 +2745,6 @@
         ctx.closePath();
         ctx.fill();
 
-        // Borde incandescente
         ctx.strokeStyle = `rgba(254, 240, 138, ${alpha})`;
         ctx.lineWidth = 2;
         ctx.stroke();
@@ -1749,15 +2761,12 @@
       ctx.save();
       ctx.translate(g.x, g.y);
 
-      // Base del chasis robótico
       ctx.fillStyle = g.type === 'patrol' ? '#10b981' : g.type === 'hunter' ? '#ef4444' : g.type === 'armored' ? (g.hp === 2 ? '#64748b' : '#f97316') : '#9333ea';
-
       ctx.fillRect(-8, -8, 16, 16);
       ctx.strokeStyle = '#000';
       ctx.lineWidth = 1.5;
       ctx.strokeRect(-8, -8, 16, 16);
 
-      // Ojo visor / Núcleo
       ctx.fillStyle = '#fef08a';
       ctx.fillRect(-3, -3, 6, 6);
 
@@ -1771,27 +2780,25 @@
 
     ctx.save();
     ctx.translate(boss.x, boss.y);
-
-    // Titán Giróscopo o Arconte
     const time = Date.now() * 0.004;
 
-    ctx.fillStyle = '#1e1b4b';
+    ctx.fillStyle = boss.type === 'titan' ? '#1e1b4b' : boss.type === 'cryo' ? '#082f49' : '#3b0764';
     ctx.beginPath();
     ctx.arc(0, 0, 16, 0, Math.PI * 2);
     ctx.fill();
 
-    // Aspas mecánicas giratorias
-    ctx.strokeStyle = boss.type === 'titan' ? '#ef4444' : '#8b5cf6';
+    // Aspas giratorias
+    ctx.strokeStyle = boss.type === 'titan' ? '#ef4444' : boss.type === 'cryo' ? '#38bdf8' : '#c084fc';
     ctx.lineWidth = 3;
     for (let i = 0; i < 4; i++) {
       const angle = time + (i * Math.PI) / 2;
       ctx.beginPath();
       ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle) * 18, Math.sin(angle) * 18);
+      ctx.lineTo(Math.cos(angle) * 19, Math.sin(angle) * 19);
       ctx.stroke();
     }
 
-    // Barra de salud del jefe sobre su cabeza
+    // Barra de salud sobre el jefe
     const hpRatio = boss.hp / boss.maxHp;
     ctx.fillStyle = '#000';
     ctx.fillRect(-14, -24, 28, 5);
@@ -1804,31 +2811,32 @@
   function drawPlayer(ctx, p) {
     if (!p || !p.isAlive) return;
 
-    // Parpadeo de invulnerabilidad
-    if (p.invulnTimer > 0 && Math.floor(Date.now() / 80) % 2 === 0) {
-      return;
-    }
+    if (p.invulnTimer > 0 && Math.floor(Date.now() / 80) % 2 === 0) return;
 
     ctx.save();
     ctx.translate(p.x, p.y);
 
-    // Traje de ingeniero cibernético 90s
     ctx.fillStyle = p.color;
     ctx.beginPath();
     ctx.arc(0, 0, 9, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.strokeStyle = '#000';
     ctx.lineWidth = 1.5;
     ctx.stroke();
 
-    // Visor
     ctx.fillStyle = '#fde047';
     ctx.fillRect(-4, -4, 8, 4);
 
-    // Mochila de resonancia
     ctx.fillStyle = '#334155';
     ctx.fillRect(-6, 4, 12, 4);
+
+    // Indicador visual de empuje cuando está frente a una carga
+    if (p.pushTargetCharge) {
+      ctx.fillStyle = '#f59e0b';
+      ctx.font = 'bold 9px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('EMPUJE', 0, -12);
+    }
 
     ctx.restore();
   }
@@ -1842,8 +2850,29 @@
     }
   }
 
+  function drawFloatingTexts(ctx) {
+    ctx.font = 'bold 11px monospace';
+    ctx.textAlign = 'center';
+    for (const f of State.floatingTexts) {
+      ctx.fillStyle = f.color;
+      ctx.fillText(f.text, f.x, f.y);
+    }
+  }
+
+  function drawDebugOverlay(ctx) {
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.75)';
+    ctx.fillRect(5, 5, 130, 65);
+    ctx.fillStyle = '#22c55e';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(`FPS: ${State.fps}`, 10, 20);
+    ctx.fillText(`Auto-Downgrade: ${State.autoDowngrade ? 'ON' : 'OFF'}`, 10, 35);
+    ctx.fillText(`Cargas: ${State.charges.length}`, 10, 50);
+    ctx.fillText(`Guardianes: ${State.guardians.filter(g => !g.destroyed).length}`, 10, 65);
+  }
+
   // ==========================================
-  // BUCLE DE JUEGO (GAME LOOP)
+  // 11. BUCLE DE JUEGO Y MEDICIÓN DE RENDIMIENTO
   // ==========================================
   function gameLoop(timestamp) {
     if (!State.lastTime) State.lastTime = timestamp;
@@ -1852,6 +2881,21 @@
 
     if (dt > 0.08) dt = 0.08; // Clamp de seguridad según REGLAS-JUEGOS
 
+    // Medición de FPS
+    State.frameCount++;
+    if (timestamp - State.lastFpsUpdate >= 1000) {
+      State.fps = State.frameCount;
+      State.frameCount = 0;
+      State.lastFpsUpdate = timestamp;
+
+      // Auto-degradación de efectos si el framerate cae por debajo de 55 FPS
+      if (State.fps < 55) {
+        State.autoDowngrade = true;
+      } else if (State.fps >= 58) {
+        State.autoDowngrade = false;
+      }
+    }
+
     update(dt);
     render();
 
@@ -1859,8 +2903,33 @@
   }
 
   // ==========================================
-  // EVENTOS, UI Y FLUJO DE ESTADO
+  // 12. LOGROS, TIENDA Y GESTIÓN DE EVENTOS
   // ==========================================
+  const ACHIEVEMENTS = [
+    { id: 'FIRST_BLAST', title: 'Primera Carga', desc: 'Detona tu primera carga resonante' },
+    { id: 'CHAIN_REACTION', title: 'Reacción en Cadena', desc: 'Consigue un combo x3 o superior' },
+    { id: 'MEGA_RESONANCE', title: 'Mega Resonancia', desc: 'Alcanza un combo x5 en un solo estallido' },
+    { id: 'PINBALL_CRUSH', title: 'Efecto Billar', desc: 'Aplasta a un enemigo empujando una carga' },
+    { id: 'DOUBLE_CRUSH', title: 'Doble Impacto', desc: 'Aplasta 2 enemigos con una sola carga' },
+    { id: 'TITAN_SLAYER', title: 'Caída del Titán', desc: 'Derrota al Titán Giróscopo MK-II (Mundo 1)' },
+    { id: 'CRYO_MASTER', title: 'Dominio Glacial', desc: 'Vence al Coloso Criogénico (Mundo 2)' },
+    { id: 'ARCHON_FALL', title: 'Fin del Arconte', desc: 'Destruye al Núcleo Arconte Supremo (Mundo 3)' },
+    { id: 'SPEED_DEMON', title: 'Velocidad Pura', desc: 'Completa un sector en menos de 25 segundos' },
+    { id: 'PERFECTIONIST', title: 'Perfección Táctica', desc: 'Obtén 3 estrellas en al menos 5 sectores' },
+    { id: 'SHOP_MASTER', title: 'Ingeniero Equipado', desc: 'Mejora una habilidad al nivel máximo en la tienda' }
+  ];
+
+  function unlockAchievement(id) {
+    if (!State.storage.achievements[id]) {
+      State.storage.achievements[id] = true;
+      CargasStorage.save(State.storage);
+      const ach = ACHIEVEMENTS.find(a => a.id === id);
+      if (ach) {
+        showToast(`🏆 ¡LOGRO DESBLOQUEADO: ${ach.title.toUpperCase()}!`, 3.5);
+      }
+    }
+  }
+
   function triggerGameOver(reason = 'Misión fallida. El núcleo ha colapsado.') {
     State.state = 'GAMEOVER';
     SynthSound.playTone(160, 'sawtooth', 0.5, 0.4, 40);
@@ -1883,14 +2952,47 @@
     State.state = 'LEVELCLEAR';
     SynthSound.sfxVictory();
 
-    // Bonificación de tiempo restante
-    const timeBonus = Math.floor(State.timeRemaining) * 10;
+    const lvlData = CONFIG.LEVELS[State.currentLevelIdx];
+    const timeTaken = Math.max(1, (lvlData.targetTime + 45) - State.timeRemaining);
+
+    // Calcular estrellas (1 a 3)
+    let stars = 1;
+    if (State.levelEnemiesKilled >= State.guardians.length) stars++;
+    if (timeTaken <= lvlData.targetTime) stars++;
+
+    if (timeTaken < 25) unlockAchievement('SPEED_DEMON');
+
+    // Bonificación de tiempo
+    const timeBonus = Math.floor(State.timeRemaining) * 15;
     State.score += timeBonus;
+    State.storage.credits += Math.floor(timeBonus / 10) + (stars * 50);
+
+    // Actualizar estrellas guardadas
+    const prevStars = State.storage.levelStars[lvlData.id] || 0;
+    if (stars > prevStars) {
+      State.storage.levelStars[lvlData.id] = stars;
+    }
+
+    // Comprobar logro de perfeccionista
+    const threeStarsCount = Object.values(State.storage.levelStars).filter(s => s === 3).length;
+    if (threeStarsCount >= 5) unlockAchievement('PERFECTIONIST');
+
+    // Desbloquear siguiente nivel y mundo
+    if (State.currentLevelIdx + 1 < CONFIG.LEVELS.length) {
+      const nextLvl = CONFIG.LEVELS[State.currentLevelIdx + 1];
+      if (nextLvl.id > State.storage.unlockedLevel) {
+        State.storage.unlockedLevel = nextLvl.id;
+      }
+      if (nextLvl.world > State.storage.unlockedWorld) {
+        State.storage.unlockedWorld = nextLvl.world;
+      }
+    }
 
     const bestScore = saveHighScore();
+    CargasStorage.save(State.storage);
 
     document.getElementById('result-title').textContent = '¡SECTOR COMPLETADO!';
-    document.getElementById('result-desc').textContent = `Excelente operación. Bono de tiempo: +${timeBonus} pts.`;
+    document.getElementById('result-desc').textContent = `Estrellas: ${'⭐'.repeat(stars)} &bull; Bono de Tiempo: +${timeBonus} pts.`;
     document.getElementById('res-score').textContent = State.score;
     document.getElementById('res-enemies').textContent = State.levelEnemiesKilled;
     document.getElementById('res-blocks').textContent = State.levelBlocksDestroyed;
@@ -1900,22 +3002,18 @@
       document.getElementById('btn-result-next').classList.remove('hidden');
     } else {
       document.getElementById('btn-result-next').classList.add('hidden');
-      document.getElementById('result-desc').textContent = '¡HAS ESCAPADO DE TODOS LOS SECTORES!';
+      document.getElementById('result-desc').textContent = '¡HAS EVACUADO TODOS LOS SECTORES CUÁNTICOS!';
     }
 
     document.getElementById('modal-result').classList.remove('hidden');
   }
 
   function saveHighScore() {
-    let best = 0;
-    if (window.ArcadeStorage) {
-      best = window.ArcadeStorage.getHighScore(CONFIG.STORAGE_KEY) || 0;
-      if (State.score > best) {
-        best = State.score;
-        window.ArcadeStorage.setHighScore(CONFIG.STORAGE_KEY, best);
-      }
+    if (State.score > State.storage.highScore) {
+      State.storage.highScore = State.score;
+      CargasStorage.save(State.storage);
     }
-    return best;
+    return State.storage.highScore;
   }
 
   function updateHUD() {
@@ -1926,36 +3024,29 @@
       document.getElementById('hud-radius').textContent = `R: ${State.p1.radius}`;
       const activeP1 = State.charges.filter(c => c.ownerId === 1 && !c.detonated).length;
       document.getElementById('hud-charges').textContent = `${activeP1}/${State.p1.maxCharges}`;
-      document.getElementById('hud-speed').textContent = `${p1SpeedFormat(State.p1.speedMult)}`;
+      document.getElementById('hud-speed').textContent = `${State.p1.speedMult.toFixed(1)}x`;
       document.getElementById('hud-remote-txt').textContent = State.p1.hasRemote ? 'LISTO' : 'AUTO';
 
-      // Vidas
       let icons = '';
       for (let i = 0; i < State.p1.lives; i++) icons += '⚙️';
       document.getElementById('lives-val').textContent = icons || '💀';
     }
   }
 
-  function p1SpeedFormat(mult) {
-    return mult === 1 ? '1x' : `${mult.toFixed(1)}x`;
-  }
-
   function updateLevelDisplay() {
     const lvl = CONFIG.LEVELS[State.currentLevelIdx];
-    document.getElementById('level-display').textContent = `NIVEL ${lvl.id}: ${lvl.name.toUpperCase()}`;
+    document.getElementById('level-display').textContent = `M${lvl.world} N${lvl.id}: ${lvl.name.toUpperCase()}`;
   }
 
   // ==========================================
-  // CONFIGURACIÓN DE INPUTS Y CONTROLES TÁCTILES
+  // 13. ENTRADAS Y CONTROLES TÁCTILES MEJORADOS
   // ==========================================
   function setupInputs() {
     // Teclado
     window.addEventListener('keydown', (e) => {
       SynthSound.resume();
-
       if (State.state !== 'PLAYING') return;
 
-      // P1: WASD / Flechas
       switch (e.key.toLowerCase()) {
         case 'w':
         case 'arrowup':
@@ -1988,24 +3079,14 @@
           break;
       }
 
-      // P2 (si está habilitado 2P co-op): Teclas IJKL / NumPad
+      // P2 co-op
       if (State.is2P && State.p2) {
         switch (e.key.toLowerCase()) {
-          case 'i':
-            State.p2.bufferedDir = { r: -1, c: 0 };
-            break;
-          case 'k':
-            State.p2.bufferedDir = { r: 1, c: 0 };
-            break;
-          case 'j':
-            State.p2.bufferedDir = { r: 0, c: -1 };
-            break;
-          case 'l':
-            State.p2.bufferedDir = { r: 0, c: 1 };
-            break;
-          case 'enter':
-            placeCharge(State.p2);
-            break;
+          case 'i': State.p2.bufferedDir = { r: -1, c: 0 }; break;
+          case 'k': State.p2.bufferedDir = { r: 1, c: 0 }; break;
+          case 'j': State.p2.bufferedDir = { r: 0, c: -1 }; break;
+          case 'l': State.p2.bufferedDir = { r: 0, c: 1 }; break;
+          case 'enter': placeCharge(State.p2); break;
         }
       }
     });
@@ -2038,10 +3119,9 @@
         }
       };
 
-      el.addEventListener('touchstart', setDir, { passive: false });
-      el.addEventListener('touchend', clearDir, { passive: false });
-      el.addEventListener('mousedown', setDir);
-      el.addEventListener('mouseup', clearDir);
+      el.addEventListener('pointerdown', setDir);
+      el.addEventListener('pointerup', clearDir);
+      el.addEventListener('pointerleave', clearDir);
     };
 
     bindDpad('btn-dpad-up', -1, 0);
@@ -2049,7 +3129,7 @@
     bindDpad('btn-dpad-left', 0, -1);
     bindDpad('btn-dpad-right', 0, 1);
 
-    // Botones de Acción Táctiles
+    // Botones de Acción
     const btnCharge = document.getElementById('btn-action-charge');
     if (btnCharge) {
       btnCharge.addEventListener('pointerdown', (e) => {
@@ -2068,7 +3148,7 @@
       });
     }
 
-    // Touch Swipe directo sobre canvas
+    // Touch Swipe en canvas
     let touchStartX = 0;
     let touchStartY = 0;
     const canvas = State.canvas;
@@ -2087,7 +3167,7 @@
           const absX = Math.abs(dx);
           const absY = Math.abs(dy);
 
-          if (absX > 18 || absY > 18) {
+          if (absX > 16 || absY > 16) {
             if (absX > absY) {
               State.p1.bufferedDir = { r: 0, c: dx > 0 ? 1 : -1 };
             } else {
@@ -2101,8 +3181,11 @@
     }
   }
 
+  // ==========================================
+  // 14. UI, SELECTOR DE 3 MUNDOS Y TIENDA
+  // ==========================================
   function setupUI() {
-    // Selector de modo 1P / 2P
+    // Modo 1P / 2P
     const btn1p = document.getElementById('btn-mode-1p');
     const btn2p = document.getElementById('btn-mode-2p');
     btn1p.addEventListener('click', () => {
@@ -2116,30 +3199,78 @@
       btn1p.classList.remove('active');
     });
 
-    // Cuadrícula de 12 niveles
-    const gridEl = document.getElementById('levels-grid');
-    gridEl.innerHTML = '';
-    CONFIG.LEVELS.forEach((lvl, idx) => {
-      const chip = document.createElement('button');
-      chip.className = `lvl-chip ${lvl.isBoss ? 'boss-chip' : ''} ${idx === 0 ? 'active' : ''}`;
-      chip.innerHTML = `<span>${lvl.id}</span>${lvl.isBoss ? '<small style="font-size:8px">JEFE</small>' : ''}`;
-      chip.addEventListener('click', () => {
-        document.querySelectorAll('.lvl-chip').forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        State.currentLevelIdx = idx;
-      });
-      gridEl.appendChild(chip);
-    });
+    // Pestañas de 3 Mundos en el Selector de Niveles
+    let activeWorldTab = 1;
+    const renderLevelGrid = (worldId) => {
+      const gridEl = document.getElementById('levels-grid');
+      gridEl.innerHTML = '';
+      const filtered = CONFIG.LEVELS.filter(lvl => lvl.world === worldId);
 
-    // Botón Iniciar
+      filtered.forEach((lvl) => {
+        const isUnlocked = lvl.id <= State.storage.unlockedLevel;
+        const stars = State.storage.levelStars[lvl.id] || 0;
+        const chip = document.createElement('button');
+        chip.className = `lvl-chip ${lvl.isBoss ? 'boss-chip' : ''} ${lvl.id === State.currentLevelIdx + 1 ? 'active' : ''}`;
+        if (!isUnlocked) chip.classList.add('locked');
+
+        chip.innerHTML = `<span>${lvl.id}</span>
+          <div class="chip-stars">${stars > 0 ? '⭐'.repeat(stars) : ''}</div>
+          ${lvl.isBoss ? '<small class="chip-boss-tag">JEFE</small>' : ''}`;
+
+        chip.addEventListener('click', () => {
+          if (!isUnlocked) {
+            showToast('¡Sector bloqueado! Supera los anteriores.', 1.5);
+            return;
+          }
+          document.querySelectorAll('.lvl-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          State.currentLevelIdx = lvl.id - 1;
+        });
+
+        gridEl.appendChild(chip);
+      });
+    };
+
+    const tabW1 = document.getElementById('tab-world-1');
+    const tabW2 = document.getElementById('tab-world-2');
+    const tabW3 = document.getElementById('tab-world-3');
+
+    if (tabW1 && tabW2 && tabW3) {
+      tabW1.addEventListener('click', () => {
+        activeWorldTab = 1;
+        tabW1.classList.add('active');
+        tabW2.classList.remove('active');
+        tabW3.classList.remove('active');
+        renderLevelGrid(1);
+      });
+      tabW2.addEventListener('click', () => {
+        activeWorldTab = 2;
+        tabW2.classList.add('active');
+        tabW1.classList.remove('active');
+        tabW3.classList.remove('active');
+        renderLevelGrid(2);
+      });
+      tabW3.addEventListener('click', () => {
+        activeWorldTab = 3;
+        tabW3.classList.add('active');
+        tabW1.classList.remove('active');
+        tabW2.classList.remove('active');
+        renderLevelGrid(3);
+      });
+    }
+
+    renderLevelGrid(1);
+
+    // Botón Iniciar Operación
     document.getElementById('btn-start-game').addEventListener('click', () => {
       SynthSound.resume();
+      SynthSound.startBGM();
       document.getElementById('modal-start').classList.add('hidden');
       loadLevel(State.currentLevelIdx);
       State.state = 'PLAYING';
     });
 
-    // Pausa
+    // Pausa y Menús
     const modalPause = document.getElementById('modal-pause');
     document.getElementById('btn-pause-header').addEventListener('click', () => {
       if (State.state === 'PLAYING') {
@@ -2163,6 +3294,7 @@
       modalPause.classList.add('hidden');
       document.getElementById('modal-start').classList.remove('hidden');
       State.state = 'MENU';
+      renderLevelGrid(activeWorldTab);
     });
 
     // Modal Resultados
@@ -2182,15 +3314,89 @@
       document.getElementById('modal-result').classList.add('hidden');
       document.getElementById('modal-start').classList.remove('hidden');
       State.state = 'MENU';
+      renderLevelGrid(activeWorldTab);
     });
 
-    // Toggle Sonido
+    // Botón Tienda de Mejoras
+    const modalShop = document.getElementById('modal-shop');
+    const btnOpenShop = document.getElementById('btn-open-shop');
+    if (btnOpenShop) {
+      btnOpenShop.addEventListener('click', () => {
+        openShopUI();
+      });
+    }
+
+    const btnCloseShop = document.getElementById('btn-close-shop');
+    if (btnCloseShop) {
+      btnCloseShop.addEventListener('click', () => {
+        modalShop.classList.add('hidden');
+      });
+    }
+
+    // Toggle Sonido y BGM
     const btnSound = document.getElementById('btn-sound-toggle');
     btnSound.addEventListener('click', () => {
       SynthSound.muted = !SynthSound.muted;
       document.getElementById('icon-sound-on').classList.toggle('hidden', SynthSound.muted);
       document.getElementById('icon-sound-off').classList.toggle('hidden', !SynthSound.muted);
     });
+  }
+
+  function openShopUI() {
+    const modalShop = document.getElementById('modal-shop');
+    const creditsEl = document.getElementById('shop-credits-val');
+    creditsEl.textContent = State.storage.credits;
+
+    const upgradesList = [
+      { key: 'radius', name: 'Radio de Resonancia', max: 3, baseCost: 150, icon: '💎', desc: 'Aumenta el alcance Manhattan de la onda' },
+      { key: 'charges', name: 'Capacitador de Cargas', max: 3, baseCost: 200, icon: '💣', desc: 'Permite desplegar más cargas simultáneas' },
+      { key: 'speed', name: 'Servomotores de Botas', max: 3, baseCost: 150, icon: '⚡', desc: '+15% velocidad base de movimiento' },
+      { key: 'slide', name: 'Guantelete Magnético', max: 2, baseCost: 250, icon: '🧤', desc: 'Las cargas empujadas se deslizan +40% más rápido' },
+      { key: 'shield', name: 'Blindaje de Ingeniero', max: 2, baseCost: 350, icon: '🛡️', desc: '+1 vida adicional al iniciar cada sector' }
+    ];
+
+    const container = document.getElementById('shop-items-container');
+    container.innerHTML = '';
+
+    upgradesList.forEach(upg => {
+      const curLvl = State.storage.upgrades[upg.key] || 0;
+      const isMax = curLvl >= upg.max;
+      const cost = upg.baseCost * (curLvl + 1);
+
+      const itemCard = document.createElement('div');
+      itemCard.className = 'shop-item-card';
+      itemCard.innerHTML = `
+        <div class="shop-item-icon">${upg.icon}</div>
+        <div class="shop-item-info">
+          <div class="shop-item-name">${upg.name} (Nivel ${curLvl}/${upg.max})</div>
+          <div class="shop-item-desc">${upg.desc}</div>
+        </div>
+        <button class="ind-btn btn-primary shop-buy-btn ${isMax ? 'disabled' : ''}">
+          ${isMax ? 'MÁXIMO' : `${cost} ⚙️`}
+        </button>
+      `;
+
+      const buyBtn = itemCard.querySelector('.shop-buy-btn');
+      if (!isMax) {
+        buyBtn.addEventListener('click', () => {
+          if (State.storage.credits >= cost) {
+            State.storage.credits -= cost;
+            State.storage.upgrades[upg.key] = curLvl + 1;
+            CargasStorage.save(State.storage);
+            SynthSound.sfxPowerup();
+            showToast(`¡MEJORA ADQUIRIDA: ${upg.name.toUpperCase()}!`, 1.5);
+            if (curLvl + 1 >= upg.max) unlockAchievement('SHOP_MASTER');
+            openShopUI();
+          } else {
+            showToast('¡Créditos insuficientes! Destruye más bloques.', 1.5);
+          }
+        });
+      }
+
+      container.appendChild(itemCard);
+    });
+
+    modalShop.classList.remove('hidden');
   }
 
   function handleResize() {
@@ -2216,6 +3422,11 @@
   }
 
   function init() {
+    // Comprobar parámetro ?debug=1 en la URL
+    const urlParams = new URLSearchParams(window.location.search);
+    State.debugMode = urlParams.get('debug') === '1';
+
+    State.storage = CargasStorage.load();
     handleResize();
     window.addEventListener('resize', handleResize);
     setupInputs();
