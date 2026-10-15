@@ -78,6 +78,7 @@
     vibrate(pattern = 25) {
       try {
         if (typeof navigator !== 'undefined' && navigator.vibrate) {
+          if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
           const enabled = this.getOption('vibration', true);
           if (enabled) {
             navigator.vibrate(pattern);

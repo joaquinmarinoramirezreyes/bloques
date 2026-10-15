@@ -131,6 +131,7 @@
 
   function triggerHaptic(duration = 12) {
     if ('vibrate' in navigator) {
+      if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
       try {
         navigator.vibrate(duration);
       } catch (e) {

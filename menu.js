@@ -156,6 +156,16 @@
       badge: "ACCIÓN",
       icon: "cargas",
       eras: ["90"]
+    },
+    {
+      id: "bastion",
+      name: "Bastión",
+      folder: "games/bastion",
+      description: "Tower defense estratégico. Construye centinelas balísticos, gestiona el oro de batalla y defiende el núcleo arcano.",
+      color: "#38bdf8",
+      badge: "DEFENSA",
+      icon: "bastion",
+      eras: ["00"]
     }
   ];
 
@@ -306,6 +316,13 @@
       return `
         <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
           <path d="M12 2l4 4-2 2 4 4-4 4 2 2-4 4-4-4 2-2-4-4 4-4-2-2 4-4zm0 5l-2.5 2.5 2.5 2.5 2.5-2.5L12 7zm0 5l-2.5 2.5 2.5 2.5 2.5-2.5L12 12z"/>
+        </svg>
+      `;
+    }
+    if (iconType === 'bastion') {
+      return `
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+          <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3zm0 4.5c1.93 0 3.5 1.57 3.5 3.5s-1.57 3.5-3.5 3.5S8.5 11.93 8.5 10s1.57-3.5 3.5-3.5zm0 10.5c-2.33 0-4.32-.93-5.75-2.44C7.08 13.56 9.4 12.5 12 12.5s4.92 1.06 5.75 2.06c-1.43 1.51-3.42 2.44-5.75 2.44z"/>
         </svg>
       `;
     }

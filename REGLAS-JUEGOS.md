@@ -127,3 +127,21 @@ Este estándar establece el nivel de acabado audiovisual, respuesta física y re
 - **Transparencia en el reporte**: Informar con precisión qué aspectos fueron probados **EJECUTANDO** código y qué aspectos fueron revisados por **INSPECCIÓN**.
 - **Bitácora de cambios**: Mantener y actualizar un archivo `NOTAS.md` en la carpeta de cada juego donde se apliquen mejoras, detallando cada cambio introducido.
 
+---
+
+## 12. Prueba de Humo Automatizada (Smoke Test)
+
+Todo juego nuevo, modificado o refactorizado debe pasar obligatoriamente la suite automatizada de prueba de humo ejecutada en navegador real headless antes de darse por completado o listo para entrega:
+
+```bash
+npm run smoke
+# o directamente:
+node scripts/smoke.js
+```
+
+### Criterios Obligatorios de Aprobación:
+1. **Cero errores en consola**: Sin `TypeError`, excepciones no capturadas (`uncaught exceptions`), advertencias de script o errores HTTP 404 en favicons, módulos, fuentes o assets.
+2. **Canvas activo y renderizado**: El elemento `<canvas>` debe existir, tener dimensiones mayores a 0 (`width > 0 && height > 0`) y contener píxeles de color dibujados tras la carga inicial (no vacío ni transparente).
+3. **Bucle de simulación activo**: El ciclo de animación (`requestAnimationFrame`) debe ciclar activamente sin bloqueos ni fugas de frames.
+4. **Reporte limpio**: Si un solo juego falla en la suite de 15 juegos, el proceso termina con código de salida `1` y la entrega queda bloqueada hasta corregir el fallo de raíz.
+

@@ -56,6 +56,56 @@
         console.warn('No se pudo guardar el récord en localStorage:', err);
         return false;
       }
+    },
+
+    /**
+     * Obtiene un valor arbitrario de forma segura
+     */
+    get(key, defaultValue = null) {
+      if (!key) return defaultValue;
+      try {
+        const val = localStorage.getItem(key);
+        return val !== null ? val : defaultValue;
+      } catch (err) {
+        return defaultValue;
+      }
+    },
+
+    /**
+     * Guarda un valor arbitrario de forma segura
+     */
+    set(key, val) {
+      if (!key) return false;
+      try {
+        localStorage.setItem(key, typeof val === 'string' ? val : JSON.stringify(val));
+        return true;
+      } catch (err) {
+        return false;
+      }
+    },
+
+    /**
+     * Obtiene y parsea un objeto JSON
+     */
+    getJSON(key, defaultValue = null) {
+      try {
+        const raw = this.get(key, null);
+        if (!raw) return defaultValue;
+        return typeof raw === 'string' ? JSON.parse(raw) : raw;
+      } catch (e) {
+        return defaultValue;
+      }
+    },
+
+    /**
+     * Guarda un objeto serializado en JSON
+     */
+    setJSON(key, obj) {
+      try {
+        return this.set(key, JSON.stringify(obj));
+      } catch (e) {
+        return false;
+      }
     }
   };
 

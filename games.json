@@ -148,5 +148,15 @@
     "badge": "ACCIÓN",
     "icon": "cargas",
     "eras": ["90"]
+  },
+  {
+    "id": "bastion",
+    "name": "Bastión",
+    "folder": "games/bastion",
+    "description": "Tower defense estratégico. Construye centinelas balísticos, gestiona el oro de batalla y defiende el núcleo arcano.",
+    "color": "#38bdf8",
+    "badge": "DEFENSA",
+    "icon": "bastion",
+    "eras": ["00"]
   }
 ]

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>Bastión | Sala Arcade</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230c131f'/%3E%3Cpath d='M8 26h16v-4H8v4zm2-6h12v-8h2V8l-3-2-3 2v2h-4V8l-3-2-3 2v4h2v8z' fill='%2338bdf8'/%3E%3Ccircle cx='16' cy='15' r='2' fill='%23f59e0b'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="../../shared/theme.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="arcade-lock">
+  <div class="game-layout">
+    <!-- Barra superior arcade -->
+    <header class="game-header">
+      <a href="../../index.html" class="nav-btn" aria-label="Volver al menú principal">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+        </svg>
+        <span class="nav-text">ARCADE</span>
+      </a>
+
+      <div class="header-titles">
+        <h1 class="game-title">BASTIÓN</h1>
+        <span class="game-badge">DEFENSA</span>
+      </div>
+
+      <div class="header-actions">
+        <button id="btn-open-meta" class="icon-btn" title="Templo de Mejoras (Metaprogreso)" aria-label="Templo de Mejoras">
+          <span class="icon">🔮</span>
+        </button>
+        <button id="btn-open-maps" class="icon-btn" title="Seleccionar Mapa" aria-label="Seleccionar Mapa">
+          <span class="icon">🗺️</span>
+        </button>
+        <button id="btn-sound" class="icon-btn" aria-label="Silenciar sonido">
+          <span class="icon">🔊</span>
+        </button>
+        <button id="btn-pause" class="icon-btn" aria-label="Pausar juego">
+          <span class="icon">⏸</span>
+        </button>
+      </div>
+    </header>
+
+    <!-- Contenedor del lienzo de juego y HUD -->
+    <main class="board-wrapper" id="board-wrapper">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Controles de Zoom Táctil y Centrado Móvil (Fase 5) -->
+      <div id="touch-zoom-controls" class="touch-zoom-controls">
+        <button type="button" class="zoom-btn" id="btn-zoom-in" title="Acercar mapa" aria-label="Acercar">+</button>
+        <button type="button" class="zoom-btn" id="btn-zoom-reset" title="Restablecer vista" aria-label="Restablecer">🔍</button>
+        <button type="button" class="zoom-btn" id="btn-zoom-out" title="Alejar mapa" aria-label="Alejar">-</button>
+      </div>
+
+      <!-- Cinta de Reliquias Activas -->
+      <div class="hud-relics" id="hud-relics"></div>
+
+      <!-- HUD Superior: Recursos, Vida y Oleada -->
+      <div class="hud-top">
+        <div class="stat-badge lives-badge" title="Vidas del Núcleo">
+          <span class="stat-icon">💖</span>
+          <span class="stat-val" id="hud-lives">20</span>
+        </div>
+        <div class="stat-badge gold-badge" title="Oro de batalla disponible">
+          <span class="stat-icon">🪙</span>
+          <span class="stat-val" id="hud-gold">300</span>
+        </div>
+        <div class="stat-badge shards-badge" title="Esquirlas del Vacío (Persistentes)">
+          <span class="stat-icon">🟣</span>
+          <span class="stat-val" id="hud-shards">0</span>
+        </div>
+        <div class="stat-badge wave-badge" title="Oleada actual">
+          <span class="stat-icon">🚩</span>
+          <span class="stat-val" id="hud-wave">OLEADA 0/20</span>
+        </div>
+        <div class="stat-badge intel-badge" id="hud-wave-intel" title="Composición del próximo asalto">
+          <span class="stat-icon">📡</span>
+          <span class="stat-val" id="intel-summary">Próxima: ...</span>
+        </div>
+        <button id="btn-speed" class="speed-toggle-btn" aria-label="Velocidad de juego">
+          <span id="speed-label">⚡ 1x</span>
+        </button>
+      </div>
+
+      <!-- Barra Inferior de Acción y Selección de Torres -->
+      <footer class="action-dock">
+        <!-- Habilidades Activas del Comandante (Fase 4) -->
+        <div class="skills-dock" id="skills-dock">
+          <button type="button" class="skill-btn" id="btn-skill-orbital" data-skill="orbital_strike" title="Bombardeo Orbital [Q] - 450 daño de fuego en área">
+            <span class="skill-btn-icon">☄️</span>
+            <div class="skill-btn-meta">
+              <span class="skill-btn-name">Bombardeo</span>
+              <span class="skill-btn-key">Q</span>
+            </div>
+            <div class="cooldown-overlay" id="cd-overlay-orbital"></div>
+            <span class="cooldown-timer hidden" id="cd-timer-orbital">40s</span>
+          </button>
+          <button type="button" class="skill-btn" id="btn-skill-freeze" data-skill="time_freeze" title="Estasis Temporal [W] - Congela invasores por 4.5s">
+            <span class="skill-btn-icon">❄️</span>
+            <div class="skill-btn-meta">
+              <span class="skill-btn-name">Estasis</span>
+              <span class="skill-btn-key">W</span>
+            </div>
+            <div class="cooldown-overlay" id="cd-overlay-freeze"></div>
+            <span class="cooldown-timer hidden" id="cd-timer-freeze">55s</span>
+          </button>
+          <button type="button" class="skill-btn" id="btn-skill-surge" data-skill="gold_surge" title="Sobrecarga [E] - +120 oro y +35% velocidad de torres">
+            <span class="skill-btn-icon">⚡</span>
+            <div class="skill-btn-meta">
+              <span class="skill-btn-name">Sobrecarga</span>
+              <span class="skill-btn-key">E</span>
+            </div>
+            <div class="cooldown-overlay" id="cd-overlay-surge"></div>
+            <span class="cooldown-timer hidden" id="cd-timer-surge">45s</span>
+          </button>
+        </div>
+
+        <!-- Banner de Apuntado Orbital -->
+        <div class="targeting-banner hidden" id="targeting-banner">
+          <span class="targeting-banner-text">☄️ APUNTANDO BOMBARDEO — Toca el mapa para detonar</span>
+          <button type="button" class="cancel-target-btn" id="btn-cancel-target">✕ Cancelar</button>
+        </div>
+
+        <!-- Panel Scrollable de Construcción de las 6 Torres -->
+        <div class="towers-selector-scroll">
+          <div class="towers-selector" id="towers-selector">
+            <!-- 1. Balístico -->
+            <button type="button" class="tower-build-btn" id="btn-build-balistico" data-tower="balistico" title="Centinela Balístico [1]">
+              <span class="tower-btn-icon">🎯</span>
+              <div class="tower-btn-info">
+                <span class="tower-btn-name">Centinela</span>
+                <span class="tower-btn-cost">100 🪙</span>
+              </div>
+            </button>
+            <!-- 2. Mortero -->
+            <button type="button" class="tower-build-btn" id="btn-build-mortero" data-tower="mortero" title="Mortero de Fragmentación [2]">
+              <span class="tower-btn-icon">💣</span>
+              <div class="tower-btn-info">
+                <span class="tower-btn-name">Mortero</span>
+                <span class="tower-btn-cost">140 🪙</span>
+              </div>
+            </button>
+            <!-- 3. Rayo -->
+            <button type="button" class="tower-build-btn" id="btn-build-rayo" data-tower="rayo" title="Emisor Prismático [3]">
+              <span class="tower-btn-icon">⚡</span>
+              <div class="tower-btn-info">
+                <span class="tower-btn-name">Prisma</span>
+                <span class="tower-btn-cost">160 🪙</span>
+              </div>
+            </button>
+            <!-- 4. Criogénica -->
+            <button type="button" class="tower-build-btn" id="btn-build-crio" data-tower="crio" title="Torre Criogénica [4]">
+              <span class="tower-btn-icon">❄️</span>
+              <div class="tower-btn-info">
+                <span class="tower-btn-name">Criogénica</span>
+                <span class="tower-btn-cost">120 🪙</span>
+              </div>
+            </button>
+            <!-- 5. Obelisco -->
+            <button type="button" class="tower-build-btn" id="btn-build-obelisco" data-tower="obelisco" title="Obelisco de Apoyo [5]">
+              <span class="tower-btn-icon">🏛️</span>
+              <div class="tower-btn-info">
+                <span class="tower-btn-name">Obelisco</span>
+                <span class="tower-btn-cost">150 🪙</span>
+              </div>
+            </button>
+            <!-- 6. Francotirador -->
+            <button type="button" class="tower-build-btn" id="btn-build-sniper" data-tower="francotirador" title="Cañón de Precisión [6]">
+              <span class="tower-btn-icon">🔭</span>
+              <div class="tower-btn-info">
+                <span class="tower-btn-name">Precisión</span>
+                <span class="tower-btn-cost">180 🪙</span>
+              </div>
+            </button>
+            <!-- Cancelar colocación -->
+            <button type="button" class="cancel-build-btn hidden" id="btn-cancel-build">
+              ✕ Cancelar
+            </button>
+          </div>
+        </div>
+
+        <!-- Botón de Iniciar Oleada -->
+        <div class="wave-action-container">
+          <button type="button" class="start-wave-btn" id="btn-start-wave">
+            ⚔️ INICIAR ASALTO
+          </button>
+        </div>
+
+        <!-- Inspector de Torre Seleccionada (Nivel, Mejoras y Ramas) -->
+        <div class="tower-inspector-dock hidden" id="tower-inspector">
+          <div class="inspector-info">
+            <span class="inspector-title" id="inspector-name">Centinela Balístico</span>
+            <span class="inspector-details" id="inspector-stats">Daño: 25 | Cadencia: 1.2s | Alcance: 3.2c</span>
+          </div>
+          <div class="inspector-actions">
+            <!-- Botón de Mejora Lvl 2 y 3 -->
+            <button type="button" class="upgrade-btn hidden" id="btn-upgrade-tower">
+              ⭐ Mejorar
+            </button>
+            <!-- Botones de Especialización Rama A y B (Lvl 4) -->
+            <button type="button" class="branch-btn hidden" id="btn-branch-a">
+              🔱 Rama A
+            </button>
+            <button type="button" class="branch-btn hidden" id="btn-branch-b">
+              💥 Rama B
+            </button>
+            <!-- Prioridad de Apuntado -->
+            <button type="button" class="priority-btn" id="btn-toggle-priority" title="Cambiar prioridad de apuntado">
+              🎯 <span id="priority-label">Primero</span>
+            </button>
+            <!-- Vender -->
+            <button type="button" class="sell-btn" id="btn-sell-tower">
+              🪙 Vender (+70)
+            </button>
+            <!-- Cerrar Inspector -->
+            <button type="button" class="close-inspector-btn" id="btn-close-inspector" aria-label="Cerrar panel">
+              ✕
+            </button>
+          </div>
+        </div>
+      </footer>
+
+      <!-- Modal de Inicio -->
+      <div class="overlay-modal" id="start-modal">
+        <div class="modal-card">
+          <div class="bastion-crest-icon">🛡️</div>
+          <h2 class="modal-title">BASTIÓN</h2>
+          <p class="modal-subtitle">Defensa Estratégica del Núcleo Arcano</p>
+
+          <div class="instructions-box">
+            <div class="instruction-row">
+              <span class="inst-icon">🎯</span>
+              <span class="inst-text"><strong>6 Torres Especializadas:</strong> Balístico (rápido), Mortero (área), Prisma (perforante), Crio (ralentiza), Obelisco (potencia vecinas) y Precisión (largo alcance).</span>
+            </div>
+            <div class="instruction-row">
+              <span class="inst-icon">⭐</span>
+              <span class="inst-text"><strong>Mejoras y Ramas:</strong> Mejora cada torre hasta nivel 3 y elige entre 2 ramas únicas de especialización en nivel 4.</span>
+            </div>
+            <div class="instruction-row">
+              <span class="inst-icon">👾</span>
+              <span class="inst-text"><strong>6 Tipos de Enemigos + Jefes:</strong> Blindados, voladores etéreos, regeneradores y divisores. Enfréntate al Titán en las oleadas 10 y 20.</span>
+            </div>
+          </div>
+
+          <div class="start-actions-stack">
+            <button id="btn-start-game" class="arcade-btn-primary">
+              COMENZAR DEFENSA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Selector de Mapas con Dificultad y Mutadores -->
+      <div class="overlay-modal hidden" id="maps-modal">
+        <div class="modal-card maps-modal-card">
+          <h2 class="modal-title">MAPAS Y MODOS DE JUEGO</h2>
+          <p class="modal-subtitle">Elige el sector defensivo, modo, dificultad y mutadores:</p>
+
+          <!-- Pestañas de Modo (Campaña vs Sin Fin) (Fase 5) -->
+          <div class="mode-tabs" id="mode-tabs">
+            <button type="button" class="mode-tab active" id="btn-mode-campaign" data-mode="campaign">🛡️ CAMPAÑA (20 W)</button>
+            <button type="button" class="mode-tab" id="btn-mode-endless" data-mode="endless">♾️ MODO SIN FIN</button>
+          </div>
+
+          <!-- Banner Récord Modo Sin Fin -->
+          <div class="endless-banner hidden" id="endless-record-banner">
+            <span>♾️ RÉCORD MODO SIN FIN: <strong>OLEADA <span id="endless-record-val">0</span></strong></span>
+          </div>
+
+          <!-- Pestañas de Dificultad -->
+          <div class="diff-tabs" id="diff-tabs">
+            <button type="button" class="diff-tab active" data-diff="normal">🛡️ NORMAL</button>
+            <button type="button" class="diff-tab" data-diff="heroico">⚔️ HEROICO (+50% 🟣)</button>
+            <button type="button" class="diff-tab" data-diff="pesadilla">💀 PESADILLA (+100% 🟣)</button>
+          </div>
+
+          <!-- Mutadores Opcionales -->
+          <div class="mutators-container">
+            <div class="mutators-grid">
+              <label class="mutator-label">
+                <input type="checkbox" id="mut-armored">
+                <span>Invasión Acorazada (+20% Armadura)</span>
+              </label>
+              <label class="mutator-label">
+                <input type="checkbox" id="mut-speedy">
+                <span>Frenesí (+25% Velocidad)</span>
+              </label>
+              <label class="mutator-label">
+                <input type="checkbox" id="mut-frugal">
+                <span>Escasez (-20% Oro de bajas)</span>
+              </label>
+              <label class="mutator-label">
+                <input type="checkbox" id="mut-swarm">
+                <span>Enjambre (Oleadas densas)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="maps-selection-grid">
+            <button type="button" class="map-card-select" onclick="window.selectMap(0)">
+              <span class="map-badge-diff normal">SECTOR 1</span>
+              <strong class="map-card-title">1. Valle Prístino</strong>
+              <small class="map-card-desc">Sendero en zig-zag bordeado por peñascos.</small>
+            </button>
+            <button type="button" class="map-card-select" onclick="window.selectMap(1)">
+              <span class="map-badge-diff advanced">SECTOR 2</span>
+              <strong class="map-card-title">2. Desfiladero de Obsidiana</strong>
+              <small class="map-card-desc">Dos entradas de asedio que se unen en un embudo.</small>
+            </button>
+            <button type="button" class="map-card-select" onclick="window.selectMap(2)">
+              <span class="map-badge-diff challenge">SECTOR 3</span>
+              <strong class="map-card-title">3. Ruinas del Nexo</strong>
+              <small class="map-card-desc">Espiral central con plataformas altas de fuego.</small>
+            </button>
+            <button type="button" class="map-card-select" onclick="window.selectMap(3)">
+              <span class="map-badge-diff expert">SECTOR 4</span>
+              <strong class="map-card-title">4. Cripta de Cristal</strong>
+              <small class="map-card-desc">Doble ruta simétrica flanqueada por prismas.</small>
+            </button>
+            <button type="button" class="map-card-select" onclick="window.selectMap(4)">
+              <span class="map-badge-diff master">SECTOR 5</span>
+              <strong class="map-card-title">5. Bastión Hundido</strong>
+              <small class="map-card-desc">Fortaleza laberíntica con cuellos de botella estrechos.</small>
+            </button>
+            <button type="button" class="map-card-select" onclick="window.selectMap(5)">
+              <span class="map-badge-diff nightmare">SECTOR 6</span>
+              <strong class="map-card-title">6. Núcleo del Cataclismo</strong>
+              <small class="map-card-desc">Triple portal convergente directo al corazón arcano.</small>
+            </button>
+          </div>
+
+          <div class="modal-actions" style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="arcade-btn-danger-sm" id="btn-reset-campaign-data">
+              🗑️ Reiniciar Progreso
+            </button>
+            <button type="button" class="arcade-btn-secondary" onclick="document.getElementById('maps-modal').classList.add('hidden')">
+              CERRAR
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Metaprogreso (Templo del Nexo) -->
+      <div class="overlay-modal hidden" id="modal-meta">
+        <div class="modal-card meta-panel">
+          <div class="bastion-crest-icon">🔮</div>
+          <h2 class="modal-title">TEMPLO DEL NEXO</h2>
+          <p class="modal-subtitle">Canjea tus Esquirlas del Vacío en mejoras pasivas permanentes:</p>
+
+          <div class="meta-shards-banner">
+            <span style="font-size: 24px;">🟣</span>
+            <span class="meta-shards-val" id="meta-shards-count">0</span>
+            <span style="color: #94a3b8; font-size: 0.82rem; font-weight: 700;">Esquirlas Disponibles</span>
+          </div>
+
+          <div class="meta-upgrades-grid" id="meta-upgrades-container">
+            <!-- Rellenado dinámicamente con las 6 mejoras -->
+          </div>
+
+          <div class="modal-actions" style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
+            <button type="button" class="arcade-btn-danger-sm" id="btn-reset-meta-data">
+              🗑️ Reiniciar Todo
+            </button>
+            <button type="button" class="arcade-btn-primary" id="btn-close-meta">
+              VOLVER A LA DEFENSA
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Elección de Reliquias (Roguelike Artifact Card Pick) -->
+      <div class="overlay-modal hidden" id="modal-relics">
+        <div class="modal-card" style="max-width: 620px;">
+          <div class="bastion-crest-icon">✨</div>
+          <h2 class="modal-title">RELIQUIA ARCANA</h2>
+          <p class="modal-subtitle">Has superado un hito defensivo. Elige un artefacto para tu bastión:</p>
+
+          <div class="relics-pick-grid" id="relics-pick-container">
+            <!-- 3 cartas generadas dinámicamente -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Pausa -->
+      <div class="overlay-modal hidden" id="pause-modal">
+        <div class="modal-card">
+          <h2 class="modal-title">PAUSA</h2>
+          <p class="modal-subtitle">El asedio está en pausa</p>
+          <div class="modal-actions">
+            <button id="btn-resume" class="arcade-btn-primary">REANUDAR</button>
+            <button id="btn-restart" class="arcade-btn-secondary">REINICIAR SECTOR</button>
+            <button type="button" class="arcade-btn-secondary" id="btn-pause-open-meta">TEMPLO DE MEJORAS</button>
+            <a href="../../index.html" class="arcade-btn-danger">SALIR AL MENÚ</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Victoria Táctica -->
+      <div class="overlay-modal hidden" id="victory-modal">
+        <div class="modal-card" style="max-width: 480px;">
+          <div class="bastion-crest-icon" style="color: #10b981;">🏆</div>
+          <h2 class="modal-title" style="color: #10b981;">¡BASTIÓN DEFENDIDO!</h2>
+          <p class="modal-subtitle">Has resistido las 20 oleadas del cataclismo</p>
+
+          <div class="stars-banner" id="vic-stars">★★★</div>
+
+          <div class="stats-grid-detailed">
+            <div class="stat-box">
+              <span class="stat-box-label">Daño Total Infligido</span>
+              <span class="stat-box-val highlight" id="vic-stat-damage">0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-box-label">Invasores Abatidos</span>
+              <span class="stat-box-val" id="vic-stat-kills">0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-box-label">Oro Total Obtenido</span>
+              <span class="stat-box-val" id="vic-stat-gold">0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-box-label">Esquirlas del Vacío Ganadas</span>
+              <span class="stat-box-val shards" id="vic-stat-shards">+0 🟣</span>
+            </div>
+            <div class="stat-box" style="grid-column: span 2;">
+              <span class="stat-box-label">Torre Más Valiosa (MVP)</span>
+              <span class="stat-box-val" id="vic-stat-mvp" style="color: #f59e0b;">Centinela Balístico</span>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button id="btn-victory-meta" class="arcade-btn-primary">
+              TEMPLO DEL NEXO (MEJORAS)
+            </button>
+            <button id="btn-victory-restart" class="arcade-btn-secondary">
+              JUGAR SIGUIENTE SECTOR
+            </button>
+            <a href="../../index.html" class="arcade-btn-danger">
+              MENÚ PRINCIPAL
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal de Fin de Partida (Derrota) -->
+      <div class="overlay-modal hidden" id="gameover-modal">
+        <div class="modal-card" style="max-width: 480px;">
+          <div class="bastion-crest-icon">💥</div>
+          <h2 class="modal-title danger-title">EL NÚCLEO HA CAÍDO</h2>
+          <p class="modal-subtitle">Las defensas del bastión fueron sobrepasadas</p>
+
+          <div class="stats-grid-detailed">
+            <div class="stat-box">
+              <span class="stat-box-label">Oleada Alcanzada</span>
+              <span class="stat-box-val highlight" id="res-wave">OLEADA 1/20</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-box-label">Puntuación Táctica</span>
+              <span class="stat-box-val" id="res-score">0 PTS</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-box-label">Invasores Eliminados</span>
+              <span class="stat-box-val" id="res-kills">0</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-box-label">Esquirlas Rescatadas</span>
+              <span class="stat-box-val shards" id="res-shards">+0 🟣</span>
+            </div>
+          </div>
+
+          <div class="modal-actions">
+            <button id="btn-gameover-meta" class="arcade-btn-primary">
+              TEMPLO DE MEJORAS
+            </button>
+            <button id="btn-gameover-restart" class="arcade-btn-secondary">
+              REINTENTAR SECTOR
+            </button>
+            <a href="../../index.html" class="arcade-btn-danger">
+              MENÚ PRINCIPAL
+            </a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel de Depuración (?debug=1) (Fase 5) -->
+      <div id="debug-panel" class="debug-panel hidden">
+        <div class="debug-header">
+          <span class="debug-title">🛠️ BASTIÓN DEBUG</span>
+          <span class="debug-fps" id="debug-fps">60 FPS</span>
+        </div>
+        <div class="debug-stats" id="debug-stats">
+          Entidades: 0 | Oleada: 0 | Oro: 0
+        </div>
+        <div class="debug-actions">
+          <button type="button" class="dbg-btn" id="dbg-btn-gold">+1000 🪙</button>
+          <button type="button" class="dbg-btn" id="dbg-btn-lives">+50 ❤️</button>
+          <button type="button" class="dbg-btn" id="dbg-btn-skip">⚡ Saltar W</button>
+          <button type="button" class="dbg-btn" id="dbg-btn-kill">☠️ Nuke</button>
+          <button type="button" class="dbg-btn" id="dbg-btn-speed">⏩ 5x</button>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    window.selectedDifficulty = 'normal';
+    window.selectedMutators = [];
+    window.selectedGameMode = 'campaign';
+  </script>
+
+  <!-- Dependencias compartidas y scripts del juego -->
+  <script src="../../shared/storage.js"></script>
+  <script src="../../shared/canvas.js"></script>
+  <script src="../../shared/audio.js"></script>
+  <script src="../../shared/juice.js"></script>
+  <script src="data/mapas.js"></script>
+  <script src="data/enemigos.js"></script>
+  <script src="data/torres.js"></script>
+  <script src="data/reliquias.js"></script>
+  <script src="data/mejoras.js"></script>
+  <script src="data/campana.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

@@ -61,6 +61,7 @@
      */
     haptic(ms = 12) {
       if ('vibrate' in navigator) {
+        if (navigator.userActivation && !navigator.userActivation.hasBeenActive) return;
         try {
           navigator.vibrate(ms);
         } catch (e) {
