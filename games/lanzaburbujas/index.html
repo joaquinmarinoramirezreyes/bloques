@@ -52,20 +52,14 @@
       </div>
     </header>
 
-    <!-- Sub-barra de nivel y munición intercambiable -->
+    <!-- Sub-barra de nivel y estado -->
     <div id="sub-bar">
       <div class="level-pill" id="level-pill">
         <span id="level-title-display">M1 • Nivel 1: Despeje Inicial</span>
       </div>
-
-      <div class="ammo-swap-container" id="ammo-swap-wrapper">
-        <span class="ammo-label">SIGUIENTE:</span>
-        <div class="next-bubble-preview" id="next-bubble-preview">
-          <canvas id="next-bubble-canvas" width="32" height="32"></canvas>
-        </div>
-        <button id="btn-swap-ammo" class="glass-btn swap-btn" title="Intercambiar burbuja">
-          ⇄ CAMBIAR
-        </button>
+      <div class="hud-shots-pill" id="hud-shots-pill">
+        <span class="shots-label">DISPAROS:</span>
+        <span class="shots-val" id="shots-fired-val">0</span>
       </div>
     </div>
 
@@ -84,27 +78,41 @@
       </div>
     </div>
 
-    <!-- Contenedor del Canvas de Juego -->
+    <!-- Contenedor del Canvas de Juego (Zona central) -->
     <main id="canvas-container">
       <canvas id="game-canvas"></canvas>
 
-      <!-- Barra de Potenciadores / Boosters utilizables -->
-      <div id="boosters-dock" class="boosters-dock">
-        <button id="btn-booster-bomb" class="glass-btn booster-btn" title="Bomba Expansiva">
-          <span class="booster-icon">💣</span>
-          <span class="booster-name">Bomba</span>
-          <span class="booster-badge" id="count-booster-bomb">3</span>
-        </button>
-        <button id="btn-booster-rainbow" class="glass-btn booster-btn" title="Burbuja Arcoíris">
-          <span class="booster-icon">🌈</span>
-          <span class="booster-name">Arcoíris</span>
-          <span class="booster-badge" id="count-booster-rainbow">3</span>
-        </button>
-        <button id="btn-booster-aim" class="glass-btn booster-btn" title="Súper Guía Láser">
-          <span class="booster-icon">🎯</span>
-          <span class="booster-name">Súper Mira</span>
-          <span class="booster-badge" id="count-booster-aim">3</span>
-        </button>
+      <!-- Zona inferior: Dock de lanzador con flancos laterales despejando el centro -->
+      <div id="launcher-dock" class="launcher-dock">
+        <!-- Flanco izquierdo: Cambio de munición y Súper Mira -->
+        <div class="dock-flank dock-left" id="dock-left">
+          <button id="btn-swap-ammo" class="glass-btn flank-btn" title="Intercambiar con la siguiente burbuja">
+            <span class="flank-icon">⇄</span>
+            <span class="flank-label">CAMBIAR</span>
+          </button>
+          <button id="btn-booster-aim" class="glass-btn flank-btn booster-btn" title="Súper Guía Láser">
+            <span class="booster-icon">🎯</span>
+            <span class="flank-label">Mira</span>
+            <span class="booster-badge" id="count-booster-aim">3</span>
+          </button>
+        </div>
+
+        <!-- Zona central despejada para el cañón y las dos burbujas (actual y siguiente) -->
+        <div class="dock-center-clearance" id="dock-center-clearance" aria-hidden="true"></div>
+
+        <!-- Flanco derecho: Potenciadores Bomba y Arcoíris -->
+        <div class="dock-flank dock-right" id="dock-right">
+          <button id="btn-booster-bomb" class="glass-btn flank-btn booster-btn" title="Bomba Expansiva">
+            <span class="booster-icon">💣</span>
+            <span class="flank-label">Bomba</span>
+            <span class="booster-badge" id="count-booster-bomb">3</span>
+          </button>
+          <button id="btn-booster-rainbow" class="glass-btn flank-btn booster-btn" title="Burbuja Arcoíris">
+            <span class="booster-icon">🌈</span>
+            <span class="flank-label">Arcoíris</span>
+            <span class="booster-badge" id="count-booster-rainbow">3</span>
+          </button>
+        </div>
       </div>
     </main>
 
@@ -252,6 +260,7 @@
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
   <script src="../../shared/juice.js"></script>
+  <script src="../../shared/tween.js"></script>
   <!-- Lógica y render de Lanzaburbujas -->
   <script src="game.js"></script>
 </body>

@@ -42,6 +42,20 @@
     PROJECTILE_SPEED: 980, // Píxeles por segundo
     BASE_MISSES_TO_DROP: 5,
 
+    // Duraciones y retardos de animación (constantes centralizadas)
+    ANIM: {
+      SHOT_BOUNCE: 0.22,
+      RIPPLE_DURATION: 0.24,
+      POP_STAGGER_MS: 30,
+      POP_DURATION: 0.22,
+      RECOIL_DURATION: 0.18,
+      RELOAD_DURATION: 0.22,
+      SWAP_DURATION: 0.20,
+      CEILING_DROP_DURATION: 0.35,
+      LEVEL_INTRO_STAGGER_MS: 30,
+      SCORE_COUNTUP_SPEED: 1200
+    },
+
     WORLDS: [
       { id: 1, name: 'Laguna Esmeralda', desc: 'Niveles 1 al 15 • Obstáculo: Bombas y Techo descendente', boss: 'Kraken Esmeralda' },
       { id: 2, name: 'Arrecife de Neón', desc: 'Niveles 16 al 30 • Obstáculo: Rocas y Burbujas Cambiantes', boss: 'Leviatán de Coral' },
@@ -194,6 +208,21 @@
       const xOffset = isEven ? bubbleRadius : bubbleRadius * 2;
       const x = c * (bubbleRadius * 2) + xOffset;
       return { x, y };
+    },
+
+    /**
+     * Calcula la distancia métrica hexagonal en coordenadas axiales (even-r).
+     */
+    hexDistance(r1, c1, r2, c2) {
+      const q1 = c1 - Math.floor(r1 / 2);
+      const r_1 = r1;
+      const s1 = -q1 - r_1;
+
+      const q2 = c2 - Math.floor(r2 / 2);
+      const r_2 = r2;
+      const s2 = -q2 - r_2;
+
+      return Math.max(Math.abs(q1 - q2), Math.abs(r_1 - r_2), Math.abs(s1 - s2));
     },
 
     /**
@@ -469,6 +498,123 @@
       if (level.parShots < Math.ceil(totalBubbles / 4)) return false;
 
       return true;
+    },
+
+    /**
+     * Crea e inicializa una rejilla de sprites visuales correspondiente a la lógica.
+     */
+    createVisualGrid(grid, bubbleRadius, maxRows = CONFIG.MAX_ROWS) {
+      const vGrid = [];
+      for (let r = 0; r < maxRows; r++) {
+        const maxCols = (r % 2 === 0) ? CONFIG.COLS_EVEN : CONFIG.COLS_ODD;
+        vGrid[r] = [];
+        for (let c = 0; c < maxCols; c++) {
+          const cell = grid[r]?.[c];
+          const color = cell ? cell.color : 0;
+          const special = cell ? cell.special : 0;
+          const center = this.getCellCenter(r, c, bubbleRadius);
+          vGrid[r][c] = {
+            color,
+            special,
+            x: center.x,
+            y: center.y,
+            targetX: center.x,
+            targetY: center.y,
+            scale: color > 0 ? 1 : 0,
+            alpha: color > 0 ? 1 : 0,
+            rotation: 0,
+            offsetX: 0,
+            offsetY: 0
+          };
+        }
+      }
+      return vGrid;
+    },
+
+    /**
+     * Sincroniza el estado de la rejilla visual con el de la rejilla lógica.
+     */
+    syncVisualGrid(logicGrid, visualGrid, bubbleRadius, maxRows = CONFIG.MAX_ROWS) {
+      for (let r = 0; r < maxRows; r++) {
+        const maxCols = (r % 2 === 0) ? CONFIG.COLS_EVEN : CONFIG.COLS_ODD;
+        if (!visualGrid[r]) visualGrid[r] = [];
+        for (let c = 0; c < maxCols; c++) {
+          const lCell = logicGrid[r]?.[c] || { color: 0, special: 0 };
+          const center = this.getCellCenter(r, c, bubbleRadius);
+          if (!visualGrid[r][c]) {
+            visualGrid[r][c] = {
+              color: lCell.color,
+              special: lCell.special,
+              x: center.x,
+              y: center.y,
+              targetX: center.x,
+              targetY: center.y,
+              scale: lCell.color > 0 ? 1 : 0,
+              alpha: lCell.color > 0 ? 1 : 0,
+              rotation: 0,
+              offsetX: 0,
+              offsetY: 0
+            };
+          } else {
+            visualGrid[r][c].color = lCell.color;
+            visualGrid[r][c].special = lCell.special;
+            visualGrid[r][c].targetX = center.x;
+            visualGrid[r][c].targetY = center.y;
+            if (lCell.color > 0 && visualGrid[r][c].scale <= 0) {
+              visualGrid[r][c].scale = 1;
+              visualGrid[r][c].alpha = 1;
+            } else if (lCell.color === 0) {
+              visualGrid[r][c].scale = 0;
+              visualGrid[r][c].alpha = 0;
+            }
+          }
+        }
+      }
+    },
+
+    /**
+     * Verifica la consistencia matemática entre el estado lógico y el estado visual.
+     * Retorna { valid: boolean, errors: string[] }
+     */
+    verifyVisualLogicConsistency(logicGrid, visualGrid, maxRows = CONFIG.MAX_ROWS) {
+      const errors = [];
+      let logicCount = 0;
+      let visualCount = 0;
+
+      for (let r = 0; r < maxRows; r++) {
+        const maxCols = (r % 2 === 0) ? CONFIG.COLS_EVEN : CONFIG.COLS_ODD;
+        for (let c = 0; c < maxCols; c++) {
+          const lCell = logicGrid[r]?.[c];
+          const vCell = visualGrid[r]?.[c];
+
+          const lHasBubble = lCell && lCell.color > 0;
+          const vHasBubble = vCell && vCell.color > 0 && vCell.scale > 0 && vCell.alpha > 0;
+
+          if (lHasBubble) logicCount++;
+          if (vHasBubble) visualCount++;
+
+          if (lHasBubble && !vHasBubble) {
+            errors.push(`Burbuja perdida en (${r},${c}): lógica color=${lCell.color}, visual escala=${vCell ? vCell.scale : 'null'}`);
+          } else if (!lHasBubble && vHasBubble) {
+            errors.push(`Burbuja fantasma en (${r},${c}): lógica vacía, pero visual activa color=${vCell.color}`);
+          } else if (lHasBubble && vHasBubble) {
+            if (lCell.color !== vCell.color) {
+              errors.push(`Discrepancia de color en (${r},${c}): lógica=${lCell.color}, visual=${vCell.color}`);
+            }
+          }
+        }
+      }
+
+      if (logicCount !== visualCount) {
+        errors.push(`Desincronización en conteo total: lógica=${logicCount}, visual=${visualCount}`);
+      }
+
+      return {
+        valid: errors.length === 0,
+        errors,
+        logicCount,
+        visualCount
+      };
     }
   };
 
@@ -489,15 +635,18 @@
     bubbleRadius: 25,
 
     grid: [],
+    visualGrid: [], // Rejilla visual de sprites { color, special, x, y, targetX, targetY, scale, alpha, rotation, offsetX, offsetY }
     currentLevelIdx: 0,
     currentWorld: 1,
     isEndless: false,
     isDaily: false,
 
     score: 0,
+    displayedScore: 0,
     bestScore: 0,
     missedShots: 0,
     ceilingDropInterval: CONFIG.BASE_MISSES_TO_DROP,
+    ceilingAnimOffset: 0,
     shotsFiredInLevel: 0,
     comboStreak: 0,
 
@@ -523,6 +672,10 @@
 
     currentAmmo: { color: 1, special: 0 },
     nextAmmo: { color: 2, special: 0 },
+    nextAmmoScale: 1,
+    reloadingAmmo: null,
+    swapAnim: null,
+    isSwappingAmmo: false,
     projectile: null,
 
     // Burbujas que caen con física suave
@@ -532,6 +685,12 @@
     floatingTexts: [],
     ambientBubbles: [],
     animTime: 0,
+
+    // Rendimiento y diagnóstico (?debug=1)
+    fps: 60,
+    frameTimeMs: 16.6,
+    lowQualityMode: false,
+    isDebug: typeof window !== 'undefined' && window.location && window.location.search && window.location.search.includes('debug=1'),
 
     lastTime: 0,
     achievements: {},
@@ -548,6 +707,7 @@
 
     scoreVal: document.getElementById('score-val'),
     ceilingShotsVal: document.getElementById('ceiling-shots-val'),
+    shotsFiredVal: document.getElementById('shots-fired-val'),
     levelTitleDisplay: document.getElementById('level-title-display'),
 
     // Barra de Jefe
@@ -557,7 +717,10 @@
     bossHpFill: document.getElementById('boss-hp-fill'),
     bossAttackWarn: document.getElementById('boss-attack-warn'),
 
-    // Boosters dock
+    // Launcher dock & Boosters
+    launcherDock: document.getElementById('launcher-dock'),
+    dockCenterClearance: document.getElementById('dock-center-clearance'),
+    btnSwapAmmo: document.getElementById('btn-swap-ammo'),
     btnBoosterBomb: document.getElementById('btn-booster-bomb'),
     btnBoosterRainbow: document.getElementById('btn-booster-rainbow'),
     btnBoosterAim: document.getElementById('btn-booster-aim'),
@@ -566,7 +729,6 @@
     countBoosterAim: document.getElementById('count-booster-aim'),
 
     // Botones de acción
-    btnSwapAmmo: document.getElementById('btn-swap-ammo'),
     btnPauseHeader: document.getElementById('btn-pause-header'),
     btnSoundToggle: document.getElementById('btn-sound-toggle'),
     iconSoundOn: document.getElementById('icon-sound-on'),
@@ -843,26 +1005,67 @@
     State.isDaily = isDaily;
     const lvl = CONFIG.LEVELS[lvlIdx] || CONFIG.LEVELS[0];
     State.currentWorld = lvl.world;
+    updateBackgroundCache(State.boardW, State.boardH, State.currentWorld);
 
     State.score = 0;
+    State.displayedScore = 0;
     State.missedShots = 0;
     State.shotsFiredInLevel = 0;
     State.comboStreak = 0;
     State.ceilingDropInterval = lvl.world === 4 ? 3 : (lvl.world === 3 ? 4 : CONFIG.BASE_MISSES_TO_DROP);
+    State.ceilingAnimOffset = 0;
     State.activeBooster = null;
+    State.swapAnim = null;
+    State.reloadingAmmo = null;
+    State.isSwappingAmmo = false;
+    State.nextAmmoScale = 1;
     updateBoosterButtons();
 
-    // Copiar tablero hexagonal del nivel
+    window.ArcadeTween?.clear();
+
+    const rad = State.bubbleRadius || (State.boardW / (CONFIG.COLS_EVEN * 2));
+
+    // Copiar tablero hexagonal del nivel y construir visualGrid con entrada en ola
     State.grid = [];
+    State.visualGrid = [];
+
     for (let r = 0; r < CONFIG.MAX_ROWS; r++) {
       const maxCols = (r % 2 === 0) ? CONFIG.COLS_EVEN : CONFIG.COLS_ODD;
       State.grid[r] = [];
+      State.visualGrid[r] = [];
+
       for (let c = 0; c < maxCols; c++) {
         const val = lvl.rows[r]?.[c] || 0;
-        if (val >= 90) {
-          State.grid[r][c] = { color: (val === 92 ? 0 : 1), special: val };
-        } else {
-          State.grid[r][c] = { color: val, special: CONFIG.SPECIALS.NONE };
+        const color = val >= 90 ? (val === 92 ? 0 : 1) : val;
+        const special = val >= 90 ? val : CONFIG.SPECIALS.NONE;
+        State.grid[r][c] = { color, special };
+
+        const center = LanzaburbujasLogic.getCellCenter(r, c, rad);
+        const vb = {
+          color,
+          special,
+          x: center.x,
+          y: center.y - 130, // Desplazamiento inicial superior para ola
+          targetX: center.x,
+          targetY: center.y,
+          scale: color > 0 ? 0 : 1,
+          alpha: color > 0 ? 1 : 0,
+          rotation: 0,
+          offsetX: 0,
+          offsetY: 0
+        };
+        State.visualGrid[r][c] = vb;
+
+        if (color > 0) {
+          const delaySec = (r * CONFIG.ANIM.LEVEL_INTRO_STAGGER_MS + c * 15) * 0.001;
+          window.ArcadeTween?.to(vb, 0.35, {
+            y: center.y,
+            scale: 1.0,
+            alpha: 1.0
+          }, {
+            delay: delaySec,
+            easing: 'easeOutBack'
+          });
         }
       }
     }
@@ -882,6 +1085,8 @@
       dom.bossBanner.classList.add('hidden');
     }
 
+    handleResize();
+
     // Inicializar munición dinámica
     refreshAmmo();
 
@@ -897,6 +1102,7 @@
 
     updateHUD();
     startBGM();
+    window.ArcadeJuice?.trackPlay('lanzaburbujas', 0);
   }
 
   function refreshAmmo() {
@@ -911,24 +1117,46 @@
       color: pool[Math.floor(Math.random() * pool.length)],
       special: CONFIG.SPECIALS.NONE
     };
+    State.nextAmmoScale = 1;
 
     renderNextAmmoPreview();
   }
 
   function swapAmmo() {
-    if (State.state !== 'AIMING') return;
+    if (State.state !== 'AIMING' || State.isSwappingAmmo) return;
+    State.isSwappingAmmo = true;
     playAudio('swap');
     if (State.options.vibration) window.ArcadeCanvas?.haptic(15);
 
-    const temp = { ...State.currentAmmo };
-    State.currentAmmo = { ...State.nextAmmo };
-    State.nextAmmo = temp;
+    const cx = State.cannonX;
+    const cy = State.cannonY;
+    const rad = State.bubbleRadius;
+    const nx = cx - rad * 2.1;
+    const ny = cy;
 
-    State.reloadT = 0;
-    renderNextAmmoPreview();
+    State.swapAnim = {
+      t: 0,
+      cColor: State.currentAmmo.color,
+      cSpecial: State.currentAmmo.special,
+      nColor: State.nextAmmo.color,
+      nSpecial: State.nextAmmo.special
+    };
+
+    window.ArcadeTween?.to(State.swapAnim, CONFIG.ANIM.SWAP_DURATION, { t: 1 }, {
+      easing: 'easeInOutQuad',
+      onComplete: () => {
+        const temp = { ...State.currentAmmo };
+        State.currentAmmo = { ...State.nextAmmo };
+        State.nextAmmo = temp;
+        State.swapAnim = null;
+        State.isSwappingAmmo = false;
+        renderNextAmmoPreview();
+      }
+    });
   }
 
   function renderNextAmmoPreview() {
+    if (!dom.nextCanvas) return;
     const ctx = dom.nextCanvas.getContext('2d');
     if (!ctx) return;
     ctx.clearRect(0, 0, 32, 32);
@@ -941,7 +1169,6 @@
   function shootProjectile() {
     if (State.state !== 'AIMING' || State.projectile) return;
 
-    // Si hay booster activo, asignarlo
     let col = State.currentAmmo.color;
     let spec = State.currentAmmo.special;
 
@@ -973,23 +1200,59 @@
     };
 
     State.shotsFiredInLevel++;
-    State.recoilOffset = 14;
-    State.recoilVel = -80;
-    State.reloadT = 0;
+
+    // Retroceso amortiguado del cañón
+    State.recoilOffset = 16;
+    window.ArcadeTween?.killTweensOf(State);
+    window.ArcadeTween?.to(State, CONFIG.ANIM.RECOIL_DURATION, { recoilOffset: 0 }, {
+      easing: 'easeOutElastic'
+    });
 
     playAudio('shoot');
     if (State.options.vibration) window.ArcadeCanvas?.haptic(20);
 
-    // Desplazar munición siguiente al cañón
+    // Animación de recarga: la siguiente burbuja sube y se coloca en el cañón
+    const rad = State.bubbleRadius;
+    const nx = State.cannonX - rad * 2.1;
+    const ny = State.cannonY;
+
+    State.reloadingAmmo = {
+      x: nx,
+      y: ny,
+      scale: 0.85,
+      color: State.nextAmmo.color,
+      special: State.nextAmmo.special
+    };
+
+    window.ArcadeTween?.to(State.reloadingAmmo, CONFIG.ANIM.RELOAD_DURATION, {
+      x: State.cannonX,
+      y: State.cannonY,
+      scale: 1.0
+    }, {
+      easing: 'easeOutBack',
+      onComplete: () => {
+        State.currentAmmo = {
+          color: State.reloadingAmmo.color,
+          special: State.reloadingAmmo.special
+        };
+        State.reloadingAmmo = null;
+      }
+    });
+
+    // Generar nueva munición siguiente y hacerla emerger en el pedestal con escala
     const active = LanzaburbujasLogic.getActiveColors(State.grid);
     const pool = active.length > 0 ? active : [1, 2, 3];
-    State.currentAmmo = { ...State.nextAmmo };
     State.nextAmmo = {
       color: pool[Math.floor(Math.random() * pool.length)],
       special: CONFIG.SPECIALS.NONE
     };
-    renderNextAmmoPreview();
+    State.nextAmmoScale = 0;
+    window.ArcadeTween?.to(State, CONFIG.ANIM.RELOAD_DURATION, { nextAmmoScale: 1.0 }, {
+      delay: 0.08,
+      easing: 'easeOutBack'
+    });
 
+    renderNextAmmoPreview();
     State.state = 'SHOOTING';
   }
 
@@ -1003,11 +1266,15 @@
     p.x += p.vx * dt;
     p.y += p.vy * dt;
 
+    // Emisión de estela iridiscente
+    spawnProjectileTrail(p.x, p.y, p.color);
+
     // Rebote pared izquierda
     if (p.x <= r) {
       p.x = r;
       p.vx = -p.vx;
       p.bounced = true;
+      spawnWaterSplash(p.x, p.y, p.color, 4);
       playAudio('bounce');
     }
     // Rebote pared derecha
@@ -1015,6 +1282,7 @@
       p.x = w - r;
       p.vx = -p.vx;
       p.bounced = true;
+      spawnWaterSplash(p.x, p.y, p.color, 4);
       playAudio('bounce');
     }
 
@@ -1051,9 +1319,47 @@
       return;
     }
 
+    // Actualización lógica
     State.grid[target.r][target.c] = { color: p.color, special: p.special };
     const shotBounced = p.bounced;
     State.projectile = null;
+
+    // Actualización y animación visual
+    const center = LanzaburbujasLogic.getCellCenter(target.r, target.c, r);
+    const vb = State.visualGrid[target.r]?.[target.c];
+    if (vb) {
+      vb.color = p.color;
+      vb.special = p.special;
+      vb.x = center.x;
+      vb.y = center.y;
+      vb.targetX = center.x;
+      vb.targetY = center.y;
+      vb.scale = 0.65;
+      vb.alpha = 1;
+      vb.rotation = 0;
+      vb.offsetX = 0;
+      vb.offsetY = 0;
+
+      // Rebote elástico al anclarse
+      window.ArcadeTween?.to(vb, CONFIG.ANIM.SHOT_BOUNCE, { scale: 1.0 }, {
+        easing: 'easeOutBack'
+      });
+    }
+
+    // Onda que afecta ligeramente a las vecinas
+    const neighbors = LanzaburbujasLogic.getHexNeighbors(target.r, target.c);
+    neighbors.forEach(n => {
+      const nv = State.visualGrid[n.r]?.[n.c];
+      if (nv && nv.color > 0) {
+        const nCenter = LanzaburbujasLogic.getCellCenter(n.r, n.c, r);
+        const angle = Math.atan2(nCenter.y - center.y, nCenter.x - center.x);
+        nv.offsetX = Math.cos(angle) * 5;
+        nv.offsetY = Math.sin(angle) * 5;
+        window.ArcadeTween?.to(nv, CONFIG.ANIM.RIPPLE_DURATION, { offsetX: 0, offsetY: 0 }, {
+          easing: 'easeOutQuad'
+        });
+      }
+    });
 
     handleImpactActions(target.r, target.c, p, shotBounced);
   }
@@ -1065,7 +1371,7 @@
     if (p.special === CONFIG.SPECIALS.BOMB) {
       playAudio('bomb_blast');
       if (State.options.vibration) window.ArcadeCanvas?.haptic(40);
-      window.ArcadeJuice?.shake(dom.container, 18, 250);
+      window.ArcadeJuice?.shake(18, 0.25);
 
       const toPop = [{ r, c }];
       const neighbors = LanzaburbujasLogic.getHexNeighbors(r, c);
@@ -1075,7 +1381,7 @@
         secondTier.forEach(st => toPop.push(st));
       });
 
-      popBubbles(toPop, true);
+      popBubbles(toPop, true, r, c);
       return;
     }
 
@@ -1090,14 +1396,14 @@
 
       playAudio('pop', State.comboStreak);
       if (State.options.vibration) window.ArcadeCanvas?.haptic(18);
-      window.ArcadeJuice?.shake(dom.container, 6, 150);
+      window.ArcadeJuice?.shake(6, 0.15);
 
       // Si hay jefe activo, cada burbuja reventada le inflige daño
       if (State.bossHp > 0) {
         damageBoss(Math.ceil(cluster.length / 2));
       }
 
-      popBubbles(cluster, false);
+      popBubbles(cluster, false, r, c);
     } else {
       State.comboStreak = 0;
       State.missedShots++;
@@ -1121,7 +1427,7 @@
     dom.bossHpText.textContent = `PV: ${State.bossHp}/${State.bossMaxHp}`;
     dom.bossHpFill.style.width = `${(State.bossHp / State.bossMaxHp) * 100}%`;
 
-    spawnFloatingText(State.boardW / 2, 70, `¡-${dmg} PV!`, '#ff2e63');
+    window.ArcadeJuice?.spawnFloat(`¡-${dmg} PV!`, State.boardW / 2, 70, '#ff2e63', 14);
 
     if (State.bossHp <= 0) {
       if (State.currentLevelIdx === 14) unlockAchievement('KRAKEN_SLAYER');
@@ -1130,36 +1436,70 @@
     }
   }
 
-  function popBubbles(cells, isExplosion = false) {
+  function popBubbles(cells, isExplosion = false, impactR = -1, impactC = -1) {
     let poppedCount = 0;
     const rad = State.bubbleRadius;
 
+    const refR = impactR >= 0 ? impactR : cells[0].r;
+    const refC = impactC >= 0 ? impactC : cells[0].c;
+
+    let maxDelaySec = 0;
+
     cells.forEach(cell => {
       const bubble = State.grid[cell.r]?.[cell.c];
+      const vb = State.visualGrid[cell.r]?.[cell.c];
       if (bubble && bubble.color !== 0) {
         poppedCount++;
+        const dist = LanzaburbujasLogic.hexDistance(refR, refC, cell.r, cell.c);
+        const delaySec = (dist * CONFIG.ANIM.POP_STAGGER_MS) * 0.001;
+        if (delaySec > maxDelaySec) maxDelaySec = delaySec;
+
         const center = LanzaburbujasLogic.getCellCenter(cell.r, cell.c, rad);
+        const bubbleColor = bubble.color;
+        const bubbleSpecial = bubble.special;
 
-        // Spawn de partículas de agua y estallido
-        spawnWaterSplash(center.x, center.y, bubble.color);
-
-        // Si es rayo horizontal
-        if (bubble.special === CONFIG.SPECIALS.LIGHTNING) {
-          playAudio('laser');
-          triggerLightningRow(cell.r);
-        }
-
+        // Limpieza lógica inmediata
         State.grid[cell.r][cell.c] = { color: 0, special: CONFIG.SPECIALS.NONE };
+
+        // Animación visual diferida en ola (destello, encogimiento con giro y salpicadura)
+        if (vb) {
+          window.ArcadeTween?.to(vb, CONFIG.ANIM.POP_DURATION, {
+            scale: 0,
+            alpha: 0,
+            rotation: (Math.random() > 0.5 ? 1 : -1) * 2.2
+          }, {
+            delay: delaySec,
+            easing: 'easeInBack',
+            onComplete: () => {
+              spawnWaterSplash(center.x, center.y, bubbleColor);
+              vb.color = 0;
+              vb.scale = 1;
+              vb.alpha = 1;
+              vb.rotation = 0;
+
+              if (bubbleSpecial === CONFIG.SPECIALS.LIGHTNING) {
+                playAudio('laser');
+                triggerLightningRow(cell.r);
+              }
+            }
+          });
+        }
       }
     });
 
     const pts = poppedCount * 50 * (State.isDaily ? 1.5 : 1);
     State.score += Math.round(pts);
-    spawnFloatingText(State.boardW / 2, State.boardH / 2, `+${pts}`, '#00e5ff');
+    updateHUD();
 
+    if (State.comboStreak > 1) {
+      window.ArcadeJuice?.spawnFloat(`COMBO x${State.comboStreak}!`, State.boardW / 2, State.boardH / 2 - 20, '#ffcc00', 16, -50);
+    }
+    window.ArcadeJuice?.spawnFloat(`+${pts}`, State.boardW / 2, State.boardH / 2 + 10, '#00e5ff', 14, -35);
+
+    const waitTotalMs = Math.round((maxDelaySec + CONFIG.ANIM.POP_DURATION) * 1000) + 40;
     setTimeout(() => {
       dropFloatingBubbles();
-    }, 120);
+    }, waitTotalMs);
   }
 
   function triggerLightningRow(row) {
@@ -1169,6 +1509,9 @@
         const center = LanzaburbujasLogic.getCellCenter(row, c, State.bubbleRadius);
         spawnWaterSplash(center.x, center.y, State.grid[row][c].color);
         State.grid[row][c] = { color: 0, special: CONFIG.SPECIALS.NONE };
+        if (State.visualGrid[row]?.[c]) {
+          State.visualGrid[row][c].color = 0;
+        }
       }
     }
   }
@@ -1183,6 +1526,9 @@
 
       floating.forEach(cell => {
         const bubble = State.grid[cell.r][cell.c];
+        const vb = State.visualGrid[cell.r]?.[cell.c];
+        const color = bubble.color || (vb ? vb.color : 1);
+        const special = bubble.special;
         const center = LanzaburbujasLogic.getCellCenter(cell.r, cell.c, rad);
 
         State.fallingBubbles.push({
@@ -1190,17 +1536,25 @@
           y: center.y,
           vx: (center.x - State.boardW / 2) * 0.4 + (Math.random() - 0.5) * 80,
           vy: Math.random() * -60 - 30,
-          color: bubble.color,
-          special: bubble.special,
-          wobble: Math.random() * Math.PI
+          color,
+          special,
+          scale: 1,
+          alpha: 1,
+          rotation: 0,
+          rotSpeed: (Math.random() - 0.5) * 4,
+          bounceCount: 1
         });
 
+        // Limpieza lógica y visual de la celda
         State.grid[cell.r][cell.c] = { color: 0, special: CONFIG.SPECIALS.NONE };
+        if (vb) {
+          vb.color = 0;
+        }
       });
 
       const dropBonus = floating.length * 100 * (State.isDaily ? 1.5 : 1);
       State.score += Math.round(dropBonus);
-      spawnFloatingText(State.boardW / 2, State.boardH / 2 + 30, `¡Lluvia +${dropBonus}!`, '#ffea00');
+      window.ArcadeJuice?.spawnFloat(`¡Lluvia +${dropBonus}!`, State.boardW / 2, State.boardH / 2 + 30, '#ffea00', 14, -45);
       updateHUD();
     }
 
@@ -1212,9 +1566,17 @@
     dom.bossAttackWarn.classList.add('hidden');
     playAudio('game_over');
     if (State.options.vibration) window.ArcadeCanvas?.haptic(35);
-    window.ArcadeJuice?.shake(dom.container, 10, 200);
+    window.ArcadeJuice?.shake(8, 0.22);
 
-    // Desplazar filas hacia abajo
+    const rowHeight = State.bubbleRadius * Math.sqrt(3);
+
+    // Animación de descenso suave del techo
+    State.ceilingAnimOffset = -rowHeight;
+    window.ArcadeTween?.to(State, CONFIG.ANIM.CEILING_DROP_DURATION, { ceilingAnimOffset: 0 }, {
+      easing: 'easeInOutQuad'
+    });
+
+    // Desplazar filas hacia abajo lógicamente
     for (let r = CONFIG.MAX_ROWS - 1; r > 0; r--) {
       const maxCols = (r % 2 === 0) ? CONFIG.COLS_EVEN : CONFIG.COLS_ODD;
       const prevCols = ((r - 1) % 2 === 0) ? CONFIG.COLS_EVEN : CONFIG.COLS_ODD;
@@ -1227,14 +1589,36 @@
       }
     }
 
+    // Desplazar filas visualmente
+    for (let r = CONFIG.MAX_ROWS - 1; r > 0; r--) {
+      const maxCols = (r % 2 === 0) ? CONFIG.COLS_EVEN : CONFIG.COLS_ODD;
+      const prevCols = ((r - 1) % 2 === 0) ? CONFIG.COLS_EVEN : CONFIG.COLS_ODD;
+      for (let c = 0; c < maxCols; c++) {
+        if (c < prevCols) {
+          State.visualGrid[r][c].color = State.visualGrid[r - 1][c].color;
+          State.visualGrid[r][c].special = State.visualGrid[r - 1][c].special;
+          State.visualGrid[r][c].scale = State.visualGrid[r - 1][c].scale;
+          State.visualGrid[r][c].alpha = State.visualGrid[r - 1][c].alpha;
+        } else {
+          State.visualGrid[r][c].color = 0;
+          State.visualGrid[r][c].special = 0;
+        }
+      }
+    }
+
     // Nueva fila en techo
     const active = LanzaburbujasLogic.getActiveColors(State.grid);
     const pool = active.length > 0 ? active : [1, 2, 3, 4];
     for (let c = 0; c < CONFIG.COLS_EVEN; c++) {
+      const colr = pool[Math.floor(Math.random() * pool.length)];
       State.grid[0][c] = {
-        color: pool[Math.floor(Math.random() * pool.length)],
+        color: colr,
         special: CONFIG.SPECIALS.NONE
       };
+      State.visualGrid[0][c].color = colr;
+      State.visualGrid[0][c].special = CONFIG.SPECIALS.NONE;
+      State.visualGrid[0][c].scale = 1;
+      State.visualGrid[0][c].alpha = 1;
     }
 
     // Si hay burbujas shifter (94), mutan su color
@@ -1243,6 +1627,9 @@
       for (let c = 0; c < maxCols; c++) {
         if (State.grid[r]?.[c] && State.grid[r][c].special === CONFIG.SPECIALS.SHIFTER) {
           State.grid[r][c].color = (State.grid[r][c].color % 6) + 1;
+          if (State.visualGrid[r]?.[c]) {
+            State.visualGrid[r][c].color = State.grid[r][c].color;
+          }
         }
       }
     }
@@ -1414,7 +1801,396 @@
   }
 
   // ==========================================
-  // RENDERIZADO VECTORIAL Y ESTÉTICA ACUÁTICA
+  // SPRITES PRE-RENDERIZADOS Y FONDOS EN OFFSCREEN CANVAS
+  // ==========================================
+  const bubbleSprites = {};
+  let bgCacheCanvas = null;
+  let bgCacheCtx = null;
+
+  function buildBubbleSprites(rad) {
+    if (typeof document === 'undefined') return;
+    const diameter = Math.ceil(rad * 2 + 10);
+    const center = diameter / 2;
+
+    // Colores regulares 1..6
+    for (const col of CONFIG.COLORS) {
+      const cvs = document.createElement('canvas');
+      cvs.width = diameter;
+      cvs.height = diameter;
+      const cctx = cvs.getContext('2d');
+      renderBubble3DVector(cctx, center, center, rad, col.id, CONFIG.SPECIALS.NONE);
+      bubbleSprites[`col_${col.id}`] = cvs;
+    }
+
+    // Piezas especiales
+    const specials = [
+      CONFIG.SPECIALS.BOMB,
+      CONFIG.SPECIALS.RAINBOW,
+      CONFIG.SPECIALS.ROCK,
+      CONFIG.SPECIALS.LIGHTNING,
+      CONFIG.SPECIALS.SHIFTER
+    ];
+    for (const spec of specials) {
+      const cvs = document.createElement('canvas');
+      cvs.width = diameter;
+      cvs.height = diameter;
+      const cctx = cvs.getContext('2d');
+      renderBubble3DVector(cctx, center, center, rad, 1, spec);
+      bubbleSprites[`spec_${spec}`] = cvs;
+    }
+  }
+
+  function drawBubbleSprite(ctx, cx, cy, r, colorId, special = CONFIG.SPECIALS.NONE, scale = 1, alpha = 1, rotation = 0) {
+    if (alpha <= 0.01 || scale <= 0.01) return;
+    const key = (special && special !== CONFIG.SPECIALS.NONE) ? `spec_${special}` : `col_${colorId || 1}`;
+    const sprite = bubbleSprites[key];
+
+    if (!sprite) {
+      ctx.save();
+      ctx.globalAlpha = Math.min(1, Math.max(0, alpha));
+      renderBubble3DVector(ctx, cx, cy, r * scale, colorId, special);
+      ctx.restore();
+      return;
+    }
+
+    const drawSize = sprite.width * scale;
+    ctx.save();
+    ctx.globalAlpha = Math.min(1, Math.max(0, alpha));
+    ctx.translate(cx, cy);
+    if (rotation !== 0) ctx.rotate(rotation);
+    ctx.drawImage(sprite, -drawSize / 2, -drawSize / 2, drawSize, drawSize);
+    ctx.restore();
+  }
+
+  function updateBackgroundCache(w, h, world) {
+    if (typeof document === 'undefined') return;
+    if (!bgCacheCanvas) {
+      bgCacheCanvas = document.createElement('canvas');
+    }
+    bgCacheCanvas.width = Math.max(1, Math.round(w));
+    bgCacheCanvas.height = Math.max(1, Math.round(h));
+    bgCacheCtx = bgCacheCanvas.getContext('2d');
+
+    const grad = bgCacheCtx.createLinearGradient(0, 0, 0, h);
+    if (world === 1) {
+      grad.addColorStop(0, '#021828');
+      grad.addColorStop(0.5, '#042838');
+      grad.addColorStop(1, '#02121e');
+    } else if (world === 2) {
+      grad.addColorStop(0, '#150528');
+      grad.addColorStop(0.5, '#1e0a3d');
+      grad.addColorStop(1, '#080114');
+    } else if (world === 3) {
+      grad.addColorStop(0, '#010915');
+      grad.addColorStop(0.5, '#021226');
+      grad.addColorStop(1, '#00040a');
+    } else {
+      grad.addColorStop(0, '#1a0505');
+      grad.addColorStop(0.5, '#260a0a');
+      grad.addColorStop(1, '#0d0202');
+    }
+    bgCacheCtx.fillStyle = grad;
+    bgCacheCtx.fillRect(0, 0, w, h);
+  }
+
+  // ==========================================
+  // RENDERIZADO VECTORIAL BASE (Para el Offscreen Canvas)
+  // ==========================================
+  function renderBubble3DVector(ctx, cx, cy, r, colorId, special = CONFIG.SPECIALS.NONE) {
+    ctx.save();
+
+    // Sombra suave
+    ctx.beginPath();
+    ctx.arc(cx + r * 0.1, cy + r * 0.12, r * 0.9, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
+    ctx.fill();
+
+    // Especiales
+    if (special === CONFIG.SPECIALS.ROCK) {
+      renderRockBubble(ctx, cx, cy, r);
+      ctx.restore();
+      return;
+    }
+    if (special === CONFIG.SPECIALS.BOMB) {
+      renderBombBubble(ctx, cx, cy, r);
+      ctx.restore();
+      return;
+    }
+    if (special === CONFIG.SPECIALS.LIGHTNING) {
+      renderLightningBubble(ctx, cx, cy, r);
+      ctx.restore();
+      return;
+    }
+
+    const isRainbow = (special === CONFIG.SPECIALS.RAINBOW || colorId === CONFIG.SPECIALS.RAINBOW);
+    const colCfg = isRainbow
+      ? { main: '#ffffff', dark: '#00e5ff', light: '#ffea00', glow: 'rgba(255, 234, 0, 0.8)' }
+      : (CONFIG.COLORS.find(c => c.id === colorId) || CONFIG.COLORS[0]);
+
+    // Película de jabón translúcida con relieve 3D iridiscente
+    const sphereGrad = ctx.createRadialGradient(cx - r * 0.35, cy - r * 0.35, r * 0.05, cx, cy, r);
+    sphereGrad.addColorStop(0, '#ffffff');
+    sphereGrad.addColorStop(0.25, colCfg.light);
+    sphereGrad.addColorStop(0.7, colCfg.main);
+    sphereGrad.addColorStop(0.95, colCfg.dark);
+    sphereGrad.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = sphereGrad;
+    ctx.fill();
+
+    // Anillo exterior de jabón
+    ctx.strokeStyle = colCfg.light;
+    ctx.lineWidth = 1.2;
+    ctx.stroke();
+
+    // Reflejo especular blanco curvado superior
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
+    ctx.beginPath();
+    ctx.ellipse(cx - r * 0.28, cy - r * 0.32, r * 0.32, r * 0.18, -Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Reflejo secundario inferior
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+    ctx.beginPath();
+    ctx.ellipse(cx + r * 0.25, cy + r * 0.3, r * 0.2, r * 0.1, -Math.PI / 4, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.restore();
+  }
+
+  function renderRockBubble(ctx, cx, cy, r) {
+    const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+    grad.addColorStop(0, '#e0e0e0');
+    grad.addColorStop(0.5, '#757575');
+    grad.addColorStop(1, '#212121');
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#424242';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.strokeStyle = '#111';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.4, cy - r * 0.2);
+    ctx.lineTo(cx, cy);
+    ctx.lineTo(cx + r * 0.3, cy - r * 0.3);
+    ctx.moveTo(cx, cy);
+    ctx.lineTo(cx - r * 0.1, cy + r * 0.5);
+    ctx.stroke();
+  }
+
+  function renderBombBubble(ctx, cx, cy, r) {
+    const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+    grad.addColorStop(0, '#ff334b');
+    grad.addColorStop(0.4, '#380208');
+    grad.addColorStop(1, '#0d0103');
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#ff334b';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.fillStyle = '#ffea00';
+    ctx.beginPath();
+    ctx.arc(cx, cy - r * 0.6, 3, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  function renderLightningBubble(ctx, cx, cy, r) {
+    const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
+    grad.addColorStop(0, '#ffffff');
+    grad.addColorStop(0.4, '#00e5ff');
+    grad.addColorStop(1, '#004488');
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fillStyle = grad;
+    ctx.fill();
+    ctx.strokeStyle = '#00e5ff';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+
+    ctx.strokeStyle = '#ffff00';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(cx - r * 0.3, cy - r * 0.4);
+    ctx.lineTo(cx + r * 0.1, cy);
+    ctx.lineTo(cx - r * 0.1, cy + r * 0.1);
+    ctx.lineTo(cx + r * 0.3, cy + r * 0.5);
+    ctx.stroke();
+  }
+
+  // ==========================================
+  // POOLING DE PARTÍCULAS (LÍMITE ESTRICTO DE 150)
+  // ==========================================
+  const MAX_PARTICLES = 150;
+  const particlePool = [];
+  for (let i = 0; i < MAX_PARTICLES; i++) {
+    particlePool.push({
+      active: false,
+      x: 0,
+      y: 0,
+      vx: 0,
+      vy: 0,
+      r: 2,
+      color: '#00e5ff',
+      life: 0,
+      decay: 2.0,
+      type: 'splash'
+    });
+  }
+
+  function spawnWaterSplash(x, y, colorId, count = 12) {
+    const colCfg = CONFIG.COLORS.find(c => c.id === colorId) || { main: '#00e5ff' };
+    const actualCount = State.lowQualityMode ? Math.floor(count * 0.5) : count;
+
+    for (let i = 0; i < actualCount; i++) {
+      let p = null;
+      for (let k = 0; k < MAX_PARTICLES; k++) {
+        if (!particlePool[k].active) {
+          p = particlePool[k];
+          break;
+        }
+      }
+      if (!p) break;
+
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 140 + 40;
+      p.active = true;
+      p.x = x;
+      p.y = y;
+      p.vx = Math.cos(angle) * speed;
+      p.vy = Math.sin(angle) * speed - 35;
+      p.r = Math.random() * 2.8 + 1.2;
+      p.color = colCfg.main;
+      p.life = 1.0;
+      p.decay = Math.random() * 2.2 + 2.0;
+      p.type = 'splash';
+    }
+  }
+
+  function spawnProjectileTrail(x, y, colorId) {
+    if (State.lowQualityMode && Math.random() > 0.4) return;
+    const colCfg = CONFIG.COLORS.find(c => c.id === colorId) || { main: '#00e5ff' };
+
+    for (let k = 0; k < MAX_PARTICLES; k++) {
+      if (!particlePool[k].active) {
+        const p = particlePool[k];
+        p.active = true;
+        p.x = x + (Math.random() - 0.5) * 6;
+        p.y = y + (Math.random() - 0.5) * 6;
+        p.vx = (Math.random() - 0.5) * 20;
+        p.vy = (Math.random() - 0.5) * 20;
+        p.r = Math.random() * 2.6 + 1.2;
+        p.color = colCfg.light || '#fff';
+        p.life = 0.45;
+        p.decay = 2.4;
+        p.type = 'trail';
+        break;
+      }
+    }
+  }
+
+  function updateParticles(dt) {
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const p = particlePool[i];
+      if (!p.active) continue;
+
+      p.x += p.vx * dt;
+      p.y += p.vy * dt;
+      if (p.type === 'splash') {
+        p.vy += 260 * dt;
+      }
+      p.life -= p.decay * dt;
+      if (p.life <= 0) {
+        p.active = false;
+      }
+    }
+  }
+
+  function renderParticles(ctx) {
+    ctx.save();
+    for (let i = 0; i < MAX_PARTICLES; i++) {
+      const p = particlePool[i];
+      if (!p.active) continue;
+
+      ctx.globalAlpha = Math.max(0, p.life);
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+
+  // ==========================================
+  // TEXTOS FLOTANTES Y BURBUJAS QUE CAEN
+  // ==========================================
+  function spawnFloatingText(x, y, text, color = '#fff') {
+    State.floatingTexts.push({ x, y, text, color, life: 1.0 });
+  }
+
+  function renderFloatingTexts(ctx) {
+    for (let i = State.floatingTexts.length - 1; i >= 0; i--) {
+      const ft = State.floatingTexts[i];
+      ft.y -= 35 * 0.016;
+      ft.life -= 1.4 * 0.016;
+
+      if (ft.life <= 0) {
+        State.floatingTexts.splice(i, 1);
+        continue;
+      }
+
+      ctx.save();
+      ctx.globalAlpha = Math.max(0, ft.life);
+      ctx.fillStyle = ft.color;
+      ctx.font = 'bold 15px -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.shadowColor = 'rgba(0,0,0,0.8)';
+      ctx.shadowBlur = 6;
+      ctx.fillText(ft.text, ft.x, ft.y);
+      ctx.restore();
+    }
+  }
+
+  function updateFallingBubbles(dt) {
+    const floorY = State.boardH - State.bubbleRadius * 1.5;
+
+    for (let i = State.fallingBubbles.length - 1; i >= 0; i--) {
+      const fb = State.fallingBubbles[i];
+      fb.vy += 850 * dt;
+      fb.x += fb.vx * dt;
+      fb.y += fb.vy * dt;
+      fb.rotation += (fb.rotSpeed || 1) * dt;
+
+      if (fb.y >= floorY && fb.bounceCount > 0) {
+        fb.y = floorY;
+        fb.vy = -Math.abs(fb.vy) * 0.45;
+        fb.vx *= 0.8;
+        fb.bounceCount--;
+        spawnWaterSplash(fb.x, fb.y, fb.color, 4);
+        playAudio('bounce');
+      }
+
+      if (fb.y > State.boardH + 30) {
+        window.ArcadeJuice?.spawnFloat('+100', fb.x, floorY - 10, '#ffea00', 13, -30);
+        spawnWaterSplash(fb.x, floorY, fb.color, 6);
+        State.fallingBubbles.splice(i, 1);
+      }
+    }
+  }
+
+  // ==========================================
+  // RENDERIZADO PRINCIPAL
   // ==========================================
   function render(time) {
     const ctx = State.ctx;
@@ -1426,7 +2202,7 @@
 
     State.animTime = time * 0.001;
 
-    // 1. Fondo dinámico según mundo
+    // 1. Fondo cacheado según mundo
     renderAtmosphereBackground(ctx, w, h);
 
     const rad = State.bubbleRadius;
@@ -1452,14 +2228,15 @@
       renderAimGuide(ctx, w, rad);
     }
 
-    // 4. Renderizar burbujas en cuadrícula hexagonal
+    // 4. Rejilla hexagonal usando visualGrid desacoplada
     for (let r = 0; r < CONFIG.MAX_ROWS; r++) {
       const maxCols = (r % 2 === 0) ? CONFIG.COLS_EVEN : CONFIG.COLS_ODD;
       for (let c = 0; c < maxCols; c++) {
-        const bubble = State.grid[r]?.[c];
-        if (bubble && bubble.color !== 0) {
-          const center = LanzaburbujasLogic.getCellCenter(r, c, rad);
-          renderBubble3D(ctx, center.x, center.y, rad * 0.95, bubble.color, bubble.special, r, c);
+        const vb = State.visualGrid[r]?.[c];
+        if (vb && vb.color > 0 && vb.scale > 0.01 && vb.alpha > 0.01) {
+          const drawX = vb.x + (vb.offsetX || 0);
+          const drawY = vb.y + (vb.offsetY || 0) + State.ceilingAnimOffset;
+          drawBubbleSprite(ctx, drawX, drawY, rad * 0.95, vb.color, vb.special, vb.scale, vb.alpha, vb.rotation);
         }
       }
     }
@@ -1467,36 +2244,35 @@
     // 5. Proyectil en vuelo
     if (State.projectile) {
       const p = State.projectile;
-      renderBubble3D(ctx, p.x, p.y, rad * 0.95, p.color, p.special);
+      drawBubbleSprite(ctx, p.x, p.y, rad * 0.95, p.color, p.special, 1.0, 1.0);
     }
 
-    // 6. Burbujas flotantes que caen con física
+    // 6. Burbujas flotantes que caen con física y rebote
     for (const fb of State.fallingBubbles) {
-      renderBubble3D(ctx, fb.x, fb.y, rad * 0.95, fb.color, fb.special);
+      drawBubbleSprite(ctx, fb.x, fb.y, rad * 0.95, fb.color, fb.special, fb.scale || 1, fb.alpha || 1, fb.rotation || 0);
     }
 
-    // 7. Lanzador original "Hydro-Nautilo" con animación de retroceso
+    // 7. Lanzador Hydro-Nautilo, pedestal de siguiente burbuja e intercambios
     renderHydroLauncher(ctx, w, rad);
 
     // 8. Partículas y textos flotantes
     renderParticles(ctx);
     renderFloatingTexts(ctx);
+
+    // 9. Overlay de diagnóstico si está en modo ?debug=1
+    renderDebugOverlay(ctx);
   }
 
   function renderAtmosphereBackground(ctx, w, h) {
     ctx.save();
+    if (bgCacheCanvas) {
+      ctx.drawImage(bgCacheCanvas, 0, 0);
+    }
+
     const t = State.animTime;
 
+    // Rayos de luz submarinos sutiles
     if (State.currentWorld === 1) {
-      // Laguna Esmeralda: rayos solares caústicos y gradiente esmeralda
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, '#021828');
-      grad.addColorStop(0.5, '#042838');
-      grad.addColorStop(1, '#02121e');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
-
-      // Rayos de luz submarinos
       ctx.fillStyle = 'rgba(0, 229, 255, 0.04)';
       ctx.beginPath();
       ctx.moveTo(w * 0.3 + Math.sin(t * 0.8) * 40, 0);
@@ -1504,38 +2280,14 @@
       ctx.lineTo(w * 0.2 + Math.sin(t * 0.8) * 30, h);
       ctx.closePath();
       ctx.fill();
-    } else if (State.currentWorld === 2) {
-      // Arrecife de Neón: gradiente púrpura/violeta
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, '#150528');
-      grad.addColorStop(0.5, '#1e0a3d');
-      grad.addColorStop(1, '#080114');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
-    } else if (State.currentWorld === 3) {
-      // Fosa Abisal: azul medianoche con siluetas de medusas flotantes
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, '#010915');
-      grad.addColorStop(0.5, '#021226');
-      grad.addColorStop(1, '#00040a');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
-    } else {
-      // Caldera Submarina: obsidiana y brasas geotérmicas
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, '#1a0505');
-      grad.addColorStop(0.5, '#260a0a');
-      grad.addColorStop(1, '#0d0202');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
     }
 
     // Burbujas ambientales que ascienden
-    if (State.ambientBubbles.length < 24) {
+    if (State.ambientBubbles.length < 20) {
       State.ambientBubbles.push({
         x: Math.random() * w,
         y: h + 10,
-        r: Math.random() * 3 + 1.5,
+        r: Math.random() * 2.8 + 1.2,
         speed: Math.random() * 25 + 20,
         drift: Math.random() * 2
       });
@@ -1579,7 +2331,6 @@
     }
     ctx.stroke();
 
-    // Fantasma de la burbuja en destino
     if (trajectory.targetCell) {
       const center = LanzaburbujasLogic.getCellCenter(trajectory.targetCell.r, trajectory.targetCell.c, rad);
       ctx.strokeStyle = State.activeBooster === 'aim' ? '#ffea00' : 'rgba(255, 255, 255, 0.6)';
@@ -1595,17 +2346,66 @@
   function renderHydroLauncher(ctx, w, rad) {
     const cx = State.cannonX;
     const cy = State.cannonY;
+    const nextX = State.cannonX - rad * 1.7;
+    const nextY = State.cannonY;
 
-    // Amortiguación elástica de retroceso
-    const spring = 160;
-    const damping = 12;
-    const force = -spring * State.recoilOffset;
-    State.recoilVel += (force - damping * State.recoilVel) * 0.016;
-    State.recoilOffset += State.recoilVel * 0.016;
-
+    // 1. Pedestal de latón Nautilus para la siguiente burbuja
     ctx.save();
+    ctx.beginPath();
+    ctx.ellipse(nextX, nextY + rad * 0.75, rad * 0.85, rad * 0.3, 0, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+    ctx.fill();
 
-    // Base circular Nautilus de latón y titanio
+    const pedGrad = ctx.createRadialGradient(nextX - 3, nextY - 3, 2, nextX, nextY, rad * 1.05);
+    pedGrad.addColorStop(0, '#ffffff');
+    pedGrad.addColorStop(0.3, '#29b6f6');
+    pedGrad.addColorStop(0.8, '#0d47a1');
+    pedGrad.addColorStop(1, '#051937');
+    ctx.beginPath();
+    ctx.arc(nextX, nextY, rad * 1.02, 0, Math.PI * 2);
+    ctx.fillStyle = pedGrad;
+    ctx.fill();
+    ctx.strokeStyle = 'rgba(0, 229, 255, 0.65)';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+
+    ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+    ctx.font = 'bold 8px -apple-system, sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText('SIG', nextX, nextY + rad * 1.45);
+    ctx.restore();
+
+    // 2. Siguiente burbuja descansando sobre el pedestal
+    if (!State.swapAnim && State.nextAmmo && State.nextAmmo.color > 0) {
+      const scale = (State.nextAmmoScale !== undefined ? State.nextAmmoScale : 1) * 0.85;
+      drawBubbleSprite(ctx, nextX, nextY, rad, State.nextAmmo.color, State.nextAmmo.special, scale, 1);
+    }
+
+    // 3. Burbuja de recarga animada que sube desde el pedestal al cañón
+    if (State.reloadingAmmo) {
+      drawBubbleSprite(ctx, State.reloadingAmmo.x, State.reloadingAmmo.y, rad, State.reloadingAmmo.color, State.reloadingAmmo.special, State.reloadingAmmo.scale, 1);
+    }
+
+    // 4. Intercambio animado en arco parabólico entre cañón y pedestal
+    if (State.swapAnim) {
+      const t = State.swapAnim.t;
+      const arcH = Math.sin(t * Math.PI) * 22;
+
+      // De cañón a pedestal (arco arriba)
+      const b1x = cx + (nextX - cx) * t;
+      const b1y = cy + (nextY - cy) * t - arcH;
+      const b1scale = 1.0 - 0.15 * t;
+      drawBubbleSprite(ctx, b1x, b1y, rad, State.swapAnim.cColor, State.swapAnim.cSpecial, b1scale, 1);
+
+      // De pedestal a cañón (arco abajo)
+      const b2x = nextX + (cx - nextX) * t;
+      const b2y = nextY + (cy - nextY) * t + arcH * 0.6;
+      const b2scale = 0.85 + 0.15 * t;
+      drawBubbleSprite(ctx, b2x, b2y, rad, State.swapAnim.nColor, State.swapAnim.nSpecial, b2scale, 1);
+    }
+
+    // 5. Cañón con retroceso elástico
+    ctx.save();
     const baseGrad = ctx.createRadialGradient(cx - 4, cy - 4, 3, cx, cy, rad * 1.5);
     baseGrad.addColorStop(0, '#ffffff');
     baseGrad.addColorStop(0.2, '#64b5f6');
@@ -1620,12 +2420,10 @@
     ctx.lineWidth = 2;
     ctx.stroke();
 
-    // Cañón giratorio con retroceso
     ctx.translate(cx, cy);
     ctx.rotate(State.aimAngle + Math.PI / 2);
     ctx.translate(0, State.recoilOffset);
 
-    // Boquilla cilíndrica de vidrio y anillos de bronce
     ctx.fillStyle = 'rgba(0, 210, 255, 0.35)';
     ctx.strokeStyle = '#00e5ff';
     ctx.lineWidth = 2.5;
@@ -1633,232 +2431,67 @@
     ctx.roundRect(-rad * 0.6, -rad * 1.6, rad * 1.2, rad * 1.25, 8);
     ctx.fill();
     ctx.stroke();
-
     ctx.restore();
 
-    // Burbuja cargada actualmente
-    if (State.state === 'AIMING' || State.state === 'POPPING') {
-      renderBubble3D(ctx, cx, cy + State.recoilOffset * 0.4, rad * 0.9, State.currentAmmo.color, State.currentAmmo.special);
+    // 6. Burbuja actualmente cargada en la recámara
+    if (!State.reloadingAmmo && !State.swapAnim && (State.state === 'AIMING' || State.state === 'POPPING')) {
+      drawBubbleSprite(ctx, cx, cy + State.recoilOffset * 0.4, rad * 0.92, State.currentAmmo.color, State.currentAmmo.special, 1.0, 1.0);
     }
   }
 
-  /**
-   * Renderizado vectorial de burbujas de jabón iridiscentes con relieve 3D y brillo móvil.
-   */
-  function renderBubble3D(ctx, cx, cy, r, colorId, special = CONFIG.SPECIALS.NONE, row = 0, col = 0) {
+  // ==========================================
+  // DIAGNÓSTICO Y TUNER DE RENDIMIENTO (?debug=1)
+  // ==========================================
+  let frameCount = 0;
+  let lastFpsUpdate = 0;
+  const fpsHistory = [];
+
+  function updatePerfTuner(dt, time) {
+    frameCount++;
+    if (time - lastFpsUpdate >= 300) {
+      const currentFps = Math.round((frameCount * 1000) / (time - lastFpsUpdate));
+      State.fps = currentFps;
+      State.frameTimeMs = parseFloat((dt * 1000).toFixed(1));
+      frameCount = 0;
+      lastFpsUpdate = time;
+
+      fpsHistory.push(currentFps);
+      if (fpsHistory.length > 6) fpsHistory.shift();
+
+      if (fpsHistory.length >= 4) {
+        const avgFps = fpsHistory.reduce((a, b) => a + b, 0) / fpsHistory.length;
+        if (avgFps < 55 && !State.lowQualityMode) {
+          State.lowQualityMode = true;
+          if (State.isDebug) console.warn('[Lanzaburbujas] Auto-Tuner: Activando lowQualityMode (< 55 FPS)');
+        } else if (avgFps >= 58 && State.lowQualityMode) {
+          State.lowQualityMode = false;
+          if (State.isDebug) console.info('[Lanzaburbujas] Auto-Tuner: Restaurando calidad alta (>= 58 FPS)');
+        }
+      }
+    }
+  }
+
+  function renderDebugOverlay(ctx) {
+    if (!State.isDebug) return;
     ctx.save();
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
+    ctx.fillRect(8, 8, 175, 100);
+    ctx.strokeStyle = State.fps >= 55 ? '#00e676' : '#ff3d00';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(8, 8, 175, 100);
 
-    // Deformación de jabón elástica
-    const wobble = Math.sin(State.animTime * 4 + row * 1.5 + col * 0.8) * 0.8;
-    const finalR = r + wobble;
+    const activeTweens = window.ArcadeTween ? window.ArcadeTween.activeCount : 0;
+    const activeParts = particlePool.filter(p => p.active).length;
 
-    // Sombra suave
-    ctx.beginPath();
-    ctx.arc(cx + r * 0.1, cy + r * 0.12, finalR * 0.9, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(0, 0, 0, 0.28)';
-    ctx.fill();
-
-    // Especial: ROCA
-    if (special === CONFIG.SPECIALS.ROCK) {
-      renderRockBubble(ctx, cx, cy, finalR);
-      ctx.restore();
-      return;
-    }
-
-    // Especial: BOMBA
-    if (special === CONFIG.SPECIALS.BOMB) {
-      renderBombBubble(ctx, cx, cy, finalR);
-      ctx.restore();
-      return;
-    }
-
-    // Especial: RAYO
-    if (special === CONFIG.SPECIALS.LIGHTNING) {
-      renderLightningBubble(ctx, cx, cy, finalR);
-      ctx.restore();
-      return;
-    }
-
-    // Burbuja de jabón normal o arcoíris
-    const isRainbow = (special === CONFIG.SPECIALS.RAINBOW || colorId === CONFIG.SPECIALS.RAINBOW);
-    const colCfg = isRainbow
-      ? { main: '#ffffff', dark: '#00e5ff', light: '#ffea00', glow: 'rgba(255, 234, 0, 0.8)' }
-      : (CONFIG.COLORS.find(c => c.id === colorId) || CONFIG.COLORS[0]);
-
-    // Película de jabón translúcida con interferencia de colores
-    const sphereGrad = ctx.createRadialGradient(cx - finalR * 0.35, cy - finalR * 0.35, finalR * 0.05, cx, cy, finalR);
-    sphereGrad.addColorStop(0, '#ffffff');
-    sphereGrad.addColorStop(0.25, colCfg.light);
-    sphereGrad.addColorStop(0.7, colCfg.main);
-    sphereGrad.addColorStop(0.95, colCfg.dark);
-    sphereGrad.addColorStop(1, 'rgba(0, 0, 0, 0.35)');
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, finalR, 0, Math.PI * 2);
-    ctx.fillStyle = sphereGrad;
-    ctx.fill();
-
-    // Anillo exterior iridiscente
-    ctx.strokeStyle = colCfg.light;
-    ctx.lineWidth = 1.2;
-    ctx.stroke();
-
-    // Reflejo especular blanco curvado superior
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-    ctx.beginPath();
-    ctx.ellipse(cx - finalR * 0.28, cy - finalR * 0.32, finalR * 0.32, finalR * 0.18, -Math.PI / 4, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Reflejo secundario inferior
-    ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
-    ctx.beginPath();
-    ctx.ellipse(cx + finalR * 0.25, cy + finalR * 0.3, finalR * 0.2, finalR * 0.1, -Math.PI / 4, 0, Math.PI * 2);
-    ctx.fill();
-
+    ctx.fillStyle = '#fff';
+    ctx.font = '10px monospace';
+    ctx.fillText(`FPS: ${State.fps} (${State.frameTimeMs}ms)`, 14, 24);
+    ctx.fillText(`Tweens activos: ${activeTweens}`, 14, 38);
+    ctx.fillText(`Partículas: ${activeParts}/${MAX_PARTICLES}`, 14, 52);
+    ctx.fillText(`Calidad: ${State.lowQualityMode ? 'BAJA (auto)' : 'ALTA (60fps)'}`, 14, 66);
+    ctx.fillText(`Estado: ${State.state}`, 14, 80);
+    ctx.fillText(`Score anim: ${State.displayedScore}/${State.score}`, 14, 94);
     ctx.restore();
-  }
-
-  function renderRockBubble(ctx, cx, cy, r) {
-    const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
-    grad.addColorStop(0, '#e0e0e0');
-    grad.addColorStop(0.5, '#757575');
-    grad.addColorStop(1, '#212121');
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.strokeStyle = '#424242';
-    ctx.lineWidth = 1.5;
-    ctx.stroke();
-
-    // Grietas
-    ctx.strokeStyle = '#111';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.moveTo(cx - r * 0.4, cy - r * 0.2);
-    ctx.lineTo(cx, cy);
-    ctx.lineTo(cx + r * 0.3, cy - r * 0.3);
-    ctx.moveTo(cx, cy);
-    ctx.lineTo(cx - r * 0.1, cy + r * 0.5);
-    ctx.stroke();
-  }
-
-  function renderBombBubble(ctx, cx, cy, r) {
-    const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
-    grad.addColorStop(0, '#ff334b');
-    grad.addColorStop(0.4, '#380208');
-    grad.addColorStop(1, '#0d0103');
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.strokeStyle = '#ff334b';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Mecha brillante
-    ctx.fillStyle = '#ffea00';
-    ctx.beginPath();
-    ctx.arc(cx, cy - r * 0.6, 3, 0, Math.PI * 2);
-    ctx.fill();
-  }
-
-  function renderLightningBubble(ctx, cx, cy, r) {
-    const grad = ctx.createRadialGradient(cx - r * 0.3, cy - r * 0.3, r * 0.1, cx, cy, r);
-    grad.addColorStop(0, '#ffffff');
-    grad.addColorStop(0.4, '#00e5ff');
-    grad.addColorStop(1, '#004488');
-
-    ctx.beginPath();
-    ctx.arc(cx, cy, r, 0, Math.PI * 2);
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.strokeStyle = '#00e5ff';
-    ctx.lineWidth = 2;
-    ctx.stroke();
-
-    // Rayo zigzag
-    ctx.strokeStyle = '#ffff00';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx - r * 0.3, cy - r * 0.4);
-    ctx.lineTo(cx + r * 0.1, cy);
-    ctx.lineTo(cx - r * 0.1, cy + r * 0.1);
-    ctx.lineTo(cx + r * 0.3, cy + r * 0.5);
-    ctx.stroke();
-  }
-
-  // ==========================================
-  // PARTÍCULAS Y TEXTOS FLOTANTES
-  // ==========================================
-  const particles = [];
-  function spawnWaterSplash(x, y, colorId) {
-    const colCfg = CONFIG.COLORS.find(c => c.id === colorId) || { main: '#00e5ff' };
-    for (let i = 0; i < 14; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 140 + 40;
-      particles.push({
-        x, y,
-        vx: Math.cos(angle) * speed,
-        vy: Math.sin(angle) * speed - 40,
-        r: Math.random() * 3 + 1.5,
-        color: colCfg.main,
-        life: 1.0,
-        decay: Math.random() * 2.5 + 2.0
-      });
-    }
-  }
-
-  function renderParticles(ctx) {
-    for (let i = particles.length - 1; i >= 0; i--) {
-      const p = particles[i];
-      p.x += p.vx * 0.016;
-      p.y += p.vy * 0.016;
-      p.vy += 220 * 0.016; // Gravedad
-      p.life -= p.decay * 0.016;
-
-      if (p.life <= 0) {
-        particles.splice(i, 1);
-        continue;
-      }
-
-      ctx.save();
-      ctx.globalAlpha = p.life;
-      ctx.fillStyle = p.color;
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.restore();
-    }
-  }
-
-  function spawnFloatingText(x, y, text, color = '#fff') {
-    State.floatingTexts.push({ x, y, text, color, life: 1.0 });
-  }
-
-  function renderFloatingTexts(ctx) {
-    for (let i = State.floatingTexts.length - 1; i >= 0; i--) {
-      const ft = State.floatingTexts[i];
-      ft.y -= 35 * 0.016;
-      ft.life -= 1.4 * 0.016;
-
-      if (ft.life <= 0) {
-        State.floatingTexts.splice(i, 1);
-        continue;
-      }
-
-      ctx.save();
-      ctx.globalAlpha = Math.max(0, ft.life);
-      ctx.fillStyle = ft.color;
-      ctx.font = 'bold 15px -apple-system, sans-serif';
-      ctx.textAlign = 'center';
-      ctx.shadowColor = 'rgba(0,0,0,0.8)';
-      ctx.shadowBlur = 6;
-      ctx.fillText(ft.text, ft.x, ft.y);
-      ctx.restore();
-    }
   }
 
   // ==========================================
@@ -1888,11 +2521,9 @@
 
     function getCanvasCoords(clientX, clientY) {
       const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
       return {
-        x: (clientX - rect.left) * scaleX,
-        y: (clientY - rect.top) * scaleY
+        x: clientX - rect.left,
+        y: clientY - rect.top
       };
     }
 
@@ -2146,51 +2777,110 @@
 
   function handleResize() {
     const canvas = dom.canvas;
-    const container = dom.container;
+    const canvasContainer = canvas.parentElement;
+    if (!canvasContainer) return;
 
-    const rect = container.getBoundingClientRect();
+    const cRect = canvasContainer.getBoundingClientRect();
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
-    const availableH = rect.height - dom.header.offsetHeight - dom.subBar.offsetHeight;
-    canvas.width = rect.width * dpr;
-    canvas.height = availableH * dpr;
+    const w = cRect.width;
+    const h = cRect.height;
 
-    State.boardW = rect.width;
-    State.boardH = availableH;
-    State.bubbleRadius = rect.width / (CONFIG.COLS_EVEN * 2);
-    State.cannonX = State.boardW / 2;
-    State.cannonY = State.boardH - State.bubbleRadius * 1.5;
+    canvas.width = Math.round(w * dpr);
+    canvas.height = Math.round(h * dpr);
+
+    State.boardW = w;
+    State.boardH = h;
+    State.bubbleRadius = w / (CONFIG.COLS_EVEN * 2);
+    State.cannonX = w / 2;
+    State.cannonY = h - State.bubbleRadius * 1.42 - 6;
 
     State.ctx = canvas.getContext('2d');
     State.ctx.scale(dpr, dpr);
+
+    buildBubbleSprites(State.bubbleRadius);
+    updateBackgroundCache(State.boardW, State.boardH, State.currentWorld);
   }
 
   // Bucle principal de simulación fija y render con requestAnimationFrame
   function gameLoop(time) {
     if (!State.lastTime) State.lastTime = time;
-    const dt = Math.min((time - State.lastTime) * 0.001, 0.1);
+    const dt = Math.min((time - State.lastTime) * 0.001, 0.08);
     State.lastTime = time;
 
+    updatePerfTuner(dt, time);
+
     if (State.state !== 'PAUSED') {
+      window.ArcadeTween?.update(dt);
+
       if (State.projectile) {
         updateProjectile(dt);
       }
 
-      // Actualizar burbujas que caen con física suave
-      for (let i = State.fallingBubbles.length - 1; i >= 0; i--) {
-        const fb = State.fallingBubbles[i];
-        fb.vy += 850 * dt;
-        fb.x += fb.vx * dt;
-        fb.y += fb.vy * dt;
+      updateFallingBubbles(dt);
+      updateParticles(dt);
 
-        if (fb.y > State.boardH + 50) {
-          State.fallingBubbles.splice(i, 1);
-        }
+      // Score count-up progresivo
+      if (State.displayedScore < State.score) {
+        const diff = State.score - State.displayedScore;
+        const step = Math.max(1, Math.ceil(diff * Math.min(1, dt * 10)));
+        State.displayedScore = Math.min(State.score, State.displayedScore + step);
+        dom.scoreVal.textContent = State.displayedScore.toLocaleString();
       }
     }
 
     render(time);
     requestAnimationFrame(gameLoop);
+  }
+
+  function getCannonAndBubbleRects() {
+    const canvas = dom.canvas;
+    const canvasRect = canvas.getBoundingClientRect();
+    const rad = State.bubbleRadius;
+
+    // Cañón
+    const cannonCenterX = canvasRect.left + State.cannonX;
+    const cannonCenterY = canvasRect.top + State.cannonY;
+    const cannonR = rad * 1.35;
+    const cannonRect = {
+      left: cannonCenterX - cannonR,
+      right: cannonCenterX + cannonR,
+      top: cannonCenterY - cannonR,
+      bottom: cannonCenterY + cannonR,
+      width: cannonR * 2,
+      height: cannonR * 2
+    };
+
+    // Burbuja actual
+    const currentBubbleRect = {
+      left: cannonCenterX - rad,
+      right: cannonCenterX + rad,
+      top: cannonCenterY - rad,
+      bottom: cannonCenterY + rad,
+      width: rad * 2,
+      height: rad * 2
+    };
+
+    // Siguiente burbuja (pedestal)
+    const nextX = State.cannonX - rad * 1.7;
+    const nextY = State.cannonY;
+    const nextR = rad * 0.85;
+    const nextCenterX = canvasRect.left + nextX;
+    const nextCenterY = canvasRect.top + nextY;
+    const nextBubbleRect = {
+      left: nextCenterX - nextR,
+      right: nextCenterX + nextR,
+      top: nextCenterY - nextR,
+      bottom: nextCenterY + nextR,
+      width: nextR * 2,
+      height: nextR * 2
+    };
+
+    return {
+      cannon: cannonRect,
+      currentBubble: currentBubbleRect,
+      nextBubble: nextBubbleRect
+    };
   }
 
   function init() {
@@ -2201,6 +2891,12 @@
     renderLevelSelector(1);
     renderNextAmmoPreview();
     requestAnimationFrame(gameLoop);
+  }
+
+  if (typeof window !== 'undefined') {
+    window.getCannonAndBubbleRects = getCannonAndBubbleRects;
+    window.LanzaburbujasState = State;
+    window.LanzaburbujasLogic = LanzaburbujasLogic;
   }
 
   window.addEventListener('DOMContentLoaded', init);
