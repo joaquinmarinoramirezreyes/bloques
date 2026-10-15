@@ -490,6 +490,7 @@ html, body {
   transition: opacity 0.2s ease;
 }
 
+.hidden,
 .neon-modal.hidden {
   display: none !important;
 }

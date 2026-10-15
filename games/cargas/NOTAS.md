@@ -73,3 +73,52 @@
 - **FPS Medido en PC / Simulador Móvil**: 60.0 FPS estables.
 - **Tasa de fotogramas mínima**: 59.2 FPS en combos masivos x5 con 140 partículas activas.
 - **Uso de Memoria**: Estable sin asignaciones por frame (pooling de 160 partículas y reciclado de objetos).
+
+---
+
+## 4. Actualización de Control Bomberman y Gráficos Pseudo-3D (15 de Octubre de 2026)
+
+### A) Movimiento y Deslizamiento en Esquinas (Corner-Assist)
+- **Eliminación Total de la Ambigüedad en Giros**:
+  - Implementación de asistencia en esquinas en `updatePlayer`: cuando el jugador presiona una dirección perpendicular y colisiona con un bloque o pilar pero está a menos de 12px de la embocadura del pasillo adyacente, el motor desliza automáticamente al personaje alrededor de la esquina.
+  - Centrado dinámico en el carril: la marcha horizontal atrae suavemente la coordenada Y hacia el centro de la fila (`cellCenterY`), y la marcha vertical atrae la coordenada X hacia el centro de la columna (`cellCenterX`).
+  - Inversión instantánea de 180° sin retraso ni enganches.
+
+### B) Gráficos Volumétricos Pseudo-3D (Estilo Bomberman Clásico)
+- **Personaje Principal con Perspectiva Isométrica 3/4**:
+  - Casco blanco abovedado 3D con brillo radial especular y sombra inferior.
+  - Pompón / antena esférica rosa elástica sobre la coronilla que rebota y oscila al compás de los pasos.
+  - Visor ovalado azul profundo con reflejo vítreo y ojos animados estilo caricatura que parpadean periódicamente y miran hacia la dirección de avance.
+  - Traje blanco y cian con cinturón utilitario y hebilla dorada.
+  - Botas redondeadas rosas con balanceo rítmico en animación de zancadas (`walkTimer`).
+  - 4 poses dedicadas por punto cardinal: Frontal (hacia abajo), Dorsal (hacia arriba), Perfil Izquierdo y Perfil Derecho.
+- **Cuadrícula y Bloques Tridimensionales**:
+  - Pilares de concreto con cara frontal extruida de 6px, bisel superior y remaches metálicos.
+  - Cajas y bloques destruibles con textura de madera tecnológica, ensambles en esquinas y cara frontal 3D.
+  - Suelo en damero de alta resolución con contraste nítido y sensación de profundidad de arena arcade.
+- **Bombas / Cargas con Mecha y Respiración Dinámica**:
+  - Esfera metálica negra brillante con relieve especular.
+  - Mecha de cordel curvada ardiendo con chispas incandescentes continuas y partículas de humo.
+  - Animación de respiración / pulso elástico que se acelera progresivamente a medida que la mecha se extingue (< 0.8s).
+- **Llamaradas Volumétricas en Cruz**:
+  - Explosión de tres capas concéntricas: núcleo de plasma blanco incandescente, cuerpo de fuego naranja brillante y crestas exteriores amarillas con dispersión de chispas.
+- **Enemigos Pseudo-3D Reestilizados**:
+  - Patrulla: criatura esférica naranja gelatinosa con squash and stretch y ojos de caricatura.
+  - Cazador: robot cilíndrico cian con visor óptico y patas mecánicas en movimiento.
+  - Blindado: mecha cúbico de titanio 3D con cara frontal biselada y ranura óptica roja.
+
+---
+
+## 5. Mecánica Clásica de Bombas y Power-up de Patada (15 de Octubre de 2026)
+
+### A) Eliminación de Empuje por Defecto
+- **Comportamiento Bomberman Clásico**:
+  - Las bombas plantadas actúan por defecto como obstáculos sólidos que bloquean al jugador, impidiendo empujar o lanzar cargas accidentalmente.
+  - Al chocar con una bomba sin el power-up de patada, el jugador se detiene en seco o se desliza limpiamente por el pasillo lateral contiguo si existe (corner-assist).
+
+### B) Power-up "K" (Patada de Bombas / Guantelete)
+- **Generación y Recolección**:
+  - Se incorporó el ítem `K` a la rotación de power-ups destruibles (`maybeSpawnPowerup`).
+  - Al recogerlo, el jugador desbloquea `p.canKick = true` con notificación en pantalla (*"¡PATADA DE BOMBAS OBTENIDA!"*).
+  - Con el power-up activo, caminar hacia una carga la impulsa deslizándose a toda velocidad hasta topar con un muro, otra bomba o detonar en cadena.
+

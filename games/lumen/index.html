@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#050811">
   <title>Lumen - Arcade 80s</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23050811'/%3E%3Ccircle cx='16' cy='16' r='7' fill='%23ffd700'/%3E%3Ccircle cx='16' cy='16' r='3' fill='%23ffffff'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -56,39 +57,10 @@
       </div>
     </header>
 
-    <!-- Sub-barra: Mundo, Nivel y Habilidades -->
+    <!-- Sub-barra: Mundo y Nivel -->
     <div id="sub-bar">
       <div class="level-indicator">
         <span id="level-display">M1 • Nivel 1: El Atrio Oscuro</span>
-      </div>
-
-      <div class="abilities-bar">
-        <div class="ability-slot">
-          <span class="ability-label">CHISPAS [J]:</span>
-          <div class="sparks-pills" id="sparks-pills">
-            <span class="spark-pip ready" id="pip-spark-1">✨</span>
-            <span class="spark-pip ready" id="pip-spark-2">✨</span>
-          </div>
-        </div>
-        <div class="ability-slot">
-          <span class="ability-label">DESTELLO [K]:</span>
-          <span class="flash-pip ready" id="pip-flash">⚡ LISTO</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Barra de Jefe de Mundo (Activa solo en niveles de jefe) -->
-    <div id="boss-banner" class="boss-banner hidden">
-      <div class="boss-header-row">
-        <span class="boss-icon">👹</span>
-        <span class="boss-name" id="boss-name">Espíritu de las Ramas</span>
-        <span class="boss-hp-label" id="boss-hp-text">PV: 6/6</span>
-      </div>
-      <div class="boss-hp-track">
-        <div class="boss-hp-fill" id="boss-hp-fill" style="width: 100%;"></div>
-      </div>
-      <div class="boss-attack-warn hidden" id="boss-attack-warn">
-        ⚠️ ¡ATAQUE DE SOMBRAS TELEGRAFIADO!
       </div>
     </div>
 
@@ -109,23 +81,12 @@
         <button class="dpad-btn dpad-right" id="btn-dpad-right" aria-label="Derecha">▶</button>
         <button class="dpad-btn dpad-down" id="btn-dpad-down" aria-label="Abajo">▼</button>
       </div>
-
-      <!-- Botones de Acción Táctiles -->
-      <div class="action-buttons-container">
-        <button id="btn-action-spark" class="action-btn btn-spark" title="Soltar Chispa Temporal">
-          <span class="btn-glyph">✨</span>
-          <span class="btn-subtext">CHISPA</span>
-        </button>
-        <button id="btn-action-flash" class="action-btn btn-flash" title="Destello de Emergencia">
-          <span class="btn-glyph">⚡</span>
-          <span class="btn-subtext">DESTELLO</span>
-        </button>
-      </div>
     </footer>
 
     <!-- Modal de Inicio y Selector de 30 Niveles en 5 Mundos -->
-    <div id="start-card" class="neon-modal">
-      <div class="modal-content neon-panel map-panel">
+    <div id="start-card" class="neon-modal hidden">
+      <div class="modal-content neon-panel map-panel" style="position:relative;">
+        <button id="btn-close-start-card" style="position:absolute;top:10px;right:14px;background:none;border:none;color:#94a3b8;font-size:22px;cursor:pointer;line-height:1;" title="Cerrar">✕</button>
         <div class="lantern-logo-wrapper">
           <div class="lantern-glow-icon">🏮</div>
         </div>
@@ -154,8 +115,8 @@
         </div>
 
         <div class="modal-footer-actions">
+          <button id="btn-back-to-game" class="neon-btn">VOLVER AL JUEGO</button>
           <button id="btn-open-daily" class="neon-btn btn-secondary">🎁 Desafío Diario</button>
-          <button id="btn-start-endless" class="neon-btn glow-btn">Noche Perpetua (Sin Fin)</button>
         </div>
       </div>
     </div>

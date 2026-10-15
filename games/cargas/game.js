@@ -1130,11 +1130,9 @@
 
       try {
         let raw = null;
-        if (window.ArcadeStorage) {
-          raw = window.ArcadeStorage.getItem(CONFIG.STORAGE_KEY);
-        } else {
+        try {
           raw = localStorage.getItem(CONFIG.STORAGE_KEY);
-        }
+        } catch (e) {}
 
         if (raw) {
           const parsed = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -1165,14 +1163,18 @@
     },
 
     save(data) {
+      if (!data) return;
       try {
-        const json = JSON.stringify(data);
-        if (window.ArcadeStorage) {
-          window.ArcadeStorage.setItem(CONFIG.STORAGE_KEY, json);
-        } else {
-          localStorage.setItem(CONFIG.STORAGE_KEY, json);
+        if (window.ArcadeStorage && typeof window.ArcadeStorage.setHighScore === 'function') {
+          window.ArcadeStorage.setHighScore(CONFIG.STORAGE_KEY, data.highScore || 0);
         }
       } catch (e) {}
+
+      try {
+        localStorage.setItem(CONFIG.STORAGE_KEY, JSON.stringify(data));
+      } catch (e) {
+        console.warn('Error guardando en localStorage:', e);
+      }
     }
   };
 
@@ -1422,14 +1424,19 @@
       this.speedMult = 1.0;
       this.slideSpeedMult = 1.0;
       this.hasRemote = false;
+      this.canKick = false;
 
       this.invulnTimer = 0;
       this.dir = { r: 0, c: 0 };
       this.bufferedDir = { r: 0, c: 0 };
       this.isAlive = true;
 
-      // Mecánica de empuje táctil
+      // Mecánica de empuje táctil y animación 3D
       this.pushTargetCharge = null;
+      this.facingAngle = 0;
+      this.isMoving = false;
+      this.walkTimer = 0;
+      this.pushAnimTimer = 0;
     }
 
     applyUpgrades(upgrades) {
@@ -1450,6 +1457,11 @@
       this.invulnTimer = 1.6;
       this.isAlive = true;
       this.pushTargetCharge = null;
+      this.facingAngle = 0;
+      this.isMoving = false;
+      this.walkTimer = 0;
+      this.pushAnimTimer = 0;
+      this.canKick = false;
     }
   }
 
@@ -1633,6 +1645,7 @@
     const newCharge = {
       id: chargeIdCounter++,
       ownerId: player.id,
+      unsolidFor: player.id,
       r: player.r,
       c: player.c,
       x: player.c * CONFIG.TILE_SIZE + CONFIG.TILE_SIZE / 2,
@@ -1741,7 +1754,7 @@
 
   function maybeSpawnPowerup(r, c) {
     if (Math.random() < 0.3) {
-      const types = ['R', 'C', 'S', 'D'];
+      const types = ['R', 'C', 'S', 'D', 'K'];
       const picked = types[Math.floor(Math.random() * types.length)];
       State.powerups.push({ r, c, type: picked });
     }
@@ -1905,111 +1918,204 @@
   /**
    * Movimiento de jugador con Corner-Slipping (deslizamiento de esquinas)
    */
+  /**
+   * Movimiento de jugador preciso y sin ambigüedad estilo arcade:
+   * - Alineación estricta de carril (cero desvío diagonal).
+   * - Búfer de giro en esquinas con ventana de tolerancia de medio bloque.
+   * - Empuje cinético de cargas con animación de fuerza y sonido mecánico.
+   * - Orientación y rotación visual suave del personaje.
+   */
   function updatePlayer(p, dt) {
     if (!p || !p.isAlive) return;
 
     if (p.invulnTimer > 0) p.invulnTimer -= dt;
+    if (p.pushAnimTimer > 0) p.pushAnimTimer -= dt;
 
-    const requestedDir = p.bufferedDir.r !== 0 || p.bufferedDir.c !== 0 ? p.bufferedDir : p.dir;
+    const T = CONFIG.TILE_SIZE;
+    const cellCenterX = p.c * T + T / 2;
+    const cellCenterY = p.r * T + T / 2;
 
-    if (requestedDir.r !== 0 || requestedDir.c !== 0) {
-      const T = CONFIG.TILE_SIZE;
-      const speed = CONFIG.BASE_PLAYER_SPEED * p.speedMult * T * dt;
+    const rawSpeed = CONFIG.BASE_PLAYER_SPEED * p.speedMult * T * dt;
+    const curTile = State.grid[p.r] ? State.grid[p.r][p.c] : 0;
+    const speed = curTile === 3 ? rawSpeed * 1.35 : rawSpeed; // Suelo de hielo
 
-      // Suelo de hielo: mayor inercia / velocidad
-      const curTile = State.grid[p.r] ? State.grid[p.r][p.c] : 0;
-      const effectiveSpeed = curTile === 3 ? speed * 1.3 : speed;
+    const req = p.bufferedDir;
+    const hasInput = req.r !== 0 || req.c !== 0;
 
-      // Posición del centro de la celda actual
-      const cellCenterX = p.c * T + T / 2;
-      const cellCenterY = p.r * T + T / 2;
+    // Actualizar fila y columna según coordenadas continuas
+    p.c = Math.max(0, Math.min(CONFIG.COLS - 1, Math.floor(p.x / T)));
+    p.r = Math.max(0, Math.min(CONFIG.ROWS - 1, Math.floor(p.y / T)));
 
-      // CORNER-SLIPPING: Si se mueve horizontalmente pero no está centrado verticalmente
-      if (requestedDir.c !== 0 && requestedDir.r === 0) {
+    p.pushTargetCharge = null;
+
+    if (hasInput) {
+      p.isMoving = true;
+      p.walkTimer = (p.walkTimer || 0) + dt;
+
+      const dr = req.r;
+      const dc = req.c;
+
+      p.facingDir = { r: dr, c: dc };
+      p.facingAngle = dc > 0 ? 0 : dc < 0 ? Math.PI : dr > 0 ? Math.PI / 2 : -Math.PI / 2;
+
+      if (dc !== 0) {
+        // --- DESPLAZAMIENTO HORIZONTAL ---
+        // Asistencia de carril: centrar Y suavemente hacia el centro de la fila
         const diffY = cellCenterY - p.y;
-        if (Math.abs(diffY) > 0.8 && Math.abs(diffY) < T * 0.45) {
-          p.y += Math.sign(diffY) * Math.min(Math.abs(diffY), speed * 0.8);
+        if (Math.abs(diffY) > 0.5) {
+          p.y += Math.sign(diffY) * Math.min(speed, Math.abs(diffY));
         }
-      }
-      // Si se mueve verticalmente pero no está centrado horizontalmente
-      if (requestedDir.r !== 0 && requestedDir.c === 0) {
-        const diffX = cellCenterX - p.x;
-        if (Math.abs(diffX) > 0.8 && Math.abs(diffX) < T * 0.45) {
-          p.x += Math.sign(diffX) * Math.min(Math.abs(diffX), speed * 0.8);
-        }
-      }
 
-      const targetR = p.r + requestedDir.r;
-      const targetC = p.c + requestedDir.c;
+        const nextX = p.x + dc * speed;
+        const targetC = Math.floor((nextX + dc * (T * 0.38)) / T);
+        const canPass = CargasLogic.isPassable(State.grid, p.r, targetC, State.doors);
+        const chargeAhead = State.charges.find(c => !c.detonated && c.r === p.r && c.c === targetC && c.unsolidFor !== p.id && (targetC !== p.c || c.sliding));
 
-      // 1. Detección y empuje de Cargas
-      const chargeInFront = State.charges.find(c => !c.detonated && !c.sliding && c.r === targetR && c.c === targetC);
-      p.pushTargetCharge = chargeInFront || null;
-
-      if (chargeInFront) {
-        const behindR = targetR + requestedDir.r;
-        const behindC = targetC + requestedDir.c;
-
-        if (CargasLogic.isPassable(State.grid, behindR, behindC, State.doors) &&
-            !State.charges.some(c => !c.detonated && c.r === behindR && c.c === behindC)) {
-          // Deslizar carga
-          chargeInFront.sliding = true;
-          chargeInFront.slideDir = { r: requestedDir.r, c: requestedDir.c };
-          SynthSound.sfxSlide();
-        }
-      }
-
-      // 2. Comprobar si la casilla objetivo es transitable para el jugador
-      const canEnter = CargasLogic.isPassable(State.grid, targetR, targetC, State.doors) &&
-                       !State.charges.some(c => !c.detonated && c.r === targetR && c.c === targetC);
-
-      if (canEnter) {
-        const destX = targetC * T + T / 2;
-        const destY = targetR * T + T / 2;
-        const dx = destX - p.x;
-        const dy = destY - p.y;
-        const dist = Math.hypot(dx, dy);
-
-        if (dist <= effectiveSpeed) {
-          p.x = destX;
-          p.y = destY;
-          p.r = targetR;
-          p.c = targetC;
+        if (chargeAhead) {
+          p.pushTargetCharge = chargeAhead;
+          const behindC = targetC + dc;
+          const canSlide = p.canKick &&
+                           CargasLogic.isPassable(State.grid, p.r, behindC, State.doors) &&
+                           !State.charges.some(c => !c.detonated && c.r === p.r && c.c === behindC);
+          if (canSlide && !chargeAhead.sliding) {
+            chargeAhead.sliding = true;
+            chargeAhead.slideDir = { r: 0, c: dc };
+            SynthSound.sfxSlide();
+            p.pushAnimTimer = 0.25;
+            spawnDebris(p.x + dc * 12, p.y, '#f59e0b', 8);
+          }
+          if ((dc > 0 && p.x < cellCenterX) || (dc < 0 && p.x > cellCenterX)) {
+            p.x += dc * speed;
+          } else {
+            p.x = cellCenterX;
+            // Si no tiene powerup de patada, la bomba bloquea y permite deslizarse alrededor si hay pasillo
+            if (!p.canKick || !canSlide) {
+              const canUp = CargasLogic.isPassable(State.grid, p.r - 1, targetC, State.doors) &&
+                            !State.charges.some(c => !c.detonated && c.r === p.r - 1 && c.c === targetC);
+              const canDown = CargasLogic.isPassable(State.grid, p.r + 1, targetC, State.doors) &&
+                              !State.charges.some(c => !c.detonated && c.r === p.r + 1 && c.c === targetC);
+              if (canUp && !canDown && p.y <= cellCenterY + 12) {
+                p.y -= speed * 0.9;
+              } else if (canDown && !canUp && p.y >= cellCenterY - 12) {
+                p.y += speed * 0.9;
+              }
+            }
+          }
+        } else if (!canPass) {
+          // Bloqueado horizontalmente: Corner-Slide hacia arriba o abajo si hay hueco
+          const atCenter = (dc > 0 && p.x >= cellCenterX) || (dc < 0 && p.x <= cellCenterX);
+          if (atCenter) {
+            p.x = cellCenterX;
+            const canUp = CargasLogic.isPassable(State.grid, p.r - 1, targetC, State.doors);
+            const canDown = CargasLogic.isPassable(State.grid, p.r + 1, targetC, State.doors);
+            if (canUp && !canDown && p.y <= cellCenterY + 12) {
+              p.y -= speed * 0.9;
+            } else if (canDown && !canUp && p.y >= cellCenterY - 12) {
+              p.y += speed * 0.9;
+            }
+          } else {
+            p.x += dc * speed;
+          }
         } else {
-          p.x += (dx / dist) * effectiveSpeed;
-          p.y += (dy / dist) * effectiveSpeed;
-          p.r = Math.floor(p.y / T);
-          p.c = Math.floor(p.x / T);
+          p.x = nextX;
+        }
+      } else if (dr !== 0) {
+        // --- DESPLAZAMIENTO VERTICAL ---
+        // Asistencia de carril: centrar X suavemente hacia el centro de la columna
+        const diffX = cellCenterX - p.x;
+        if (Math.abs(diffX) > 0.5) {
+          p.x += Math.sign(diffX) * Math.min(speed, Math.abs(diffX));
+        }
+
+        const nextY = p.y + dr * speed;
+        const targetR = Math.floor((nextY + dr * (T * 0.38)) / T);
+        const canPass = CargasLogic.isPassable(State.grid, targetR, p.c, State.doors);
+        const chargeAhead = State.charges.find(c => !c.detonated && c.r === targetR && c.c === p.c && c.unsolidFor !== p.id && (targetR !== p.r || c.sliding));
+
+        if (chargeAhead) {
+          p.pushTargetCharge = chargeAhead;
+          const behindR = targetR + dr;
+          const canSlide = p.canKick &&
+                           CargasLogic.isPassable(State.grid, behindR, p.c, State.doors) &&
+                           !State.charges.some(c => !c.detonated && c.r === behindR && c.c === p.c);
+          if (canSlide && !chargeAhead.sliding) {
+            chargeAhead.sliding = true;
+            chargeAhead.slideDir = { r: dr, c: 0 };
+            SynthSound.sfxSlide();
+            p.pushAnimTimer = 0.25;
+            spawnDebris(p.x, p.y + dr * 12, '#f59e0b', 8);
+          }
+          if ((dr > 0 && p.y < cellCenterY) || (dr < 0 && p.y > cellCenterY)) {
+            p.y += dr * speed;
+          } else {
+            p.y = cellCenterY;
+            // Si no tiene powerup de patada, la bomba bloquea y permite deslizarse alrededor si hay pasillo
+            if (!p.canKick || !canSlide) {
+              const canLeft = CargasLogic.isPassable(State.grid, targetR, p.c - 1, State.doors) &&
+                              !State.charges.some(c => !c.detonated && c.r === targetR && c.c === p.c - 1);
+              const canRight = CargasLogic.isPassable(State.grid, targetR, p.c + 1, State.doors) &&
+                               !State.charges.some(c => !c.detonated && c.r === targetR && c.c === p.c + 1);
+              if (canLeft && !canRight && p.x <= cellCenterX + 12) {
+                p.x -= speed * 0.9;
+              } else if (canRight && !canLeft && p.x >= cellCenterX - 12) {
+                p.x += speed * 0.9;
+              }
+            }
+          }
+        } else if (!canPass) {
+          // Bloqueado verticalmente: Corner-Slide hacia la izquierda o derecha si hay hueco
+          const atCenter = (dr > 0 && p.y >= cellCenterY) || (dr < 0 && p.y <= cellCenterY);
+          if (atCenter) {
+            p.y = cellCenterY;
+            const canLeft = CargasLogic.isPassable(State.grid, targetR, p.c - 1, State.doors);
+            const canRight = CargasLogic.isPassable(State.grid, targetR, p.c + 1, State.doors);
+            if (canLeft && !canRight && p.x <= cellCenterX + 12) {
+              p.x -= speed * 0.9;
+            } else if (canRight && !canLeft && p.x >= cellCenterX - 12) {
+              p.x += speed * 0.9;
+            }
+          } else {
+            p.y += dr * speed;
+          }
+        } else {
+          p.y = nextY;
         }
       }
-
-      // Interacción con Teletransportadores para el jugador
-      const tKey = `${p.r},${p.c}`;
-      if (State.teleporterPairs.has(tKey)) {
-        const partner = State.teleporterPairs.get(tKey);
-        p.r = partner.r;
-        p.c = partner.c;
-        p.x = partner.c * T + T / 2;
-        p.y = partner.r * T + T / 2;
-        SynthSound.sfxTeleport();
-        spawnDebris(p.x, p.y, '#a855f7', 14);
-      }
-
-      // Interacción con Cintas Transportadoras
-      const onTile = State.grid[p.r] ? State.grid[p.r][p.c] : 0;
-      if (onTile >= 4 && onTile <= 7) {
-        const convDir = onTile === 4 ? { r: -1, c: 0 } : onTile === 5 ? { r: 1, c: 0 } : onTile === 6 ? { r: 0, c: -1 } : { r: 0, c: 1 };
-        const convNextR = p.r + convDir.r;
-        const convNextC = p.c + convDir.c;
-        if (CargasLogic.isPassable(State.grid, convNextR, convNextC, State.doors)) {
-          p.x += convDir.c * speed * 0.7;
-          p.y += convDir.r * speed * 0.7;
-          p.r = Math.floor(p.y / T);
-          p.c = Math.floor(p.x / T);
-        }
-      }
+      p.dir = { r: dr, c: dc };
     } else {
-      p.pushTargetCharge = null;
+      p.isMoving = false;
+      p.dir = { r: 0, c: 0 };
+      // Sin input: recentrar suavemente al carril
+      const diffX = cellCenterX - p.x;
+      const diffY = cellCenterY - p.y;
+      if (Math.abs(diffX) < speed) p.x = cellCenterX;
+      if (Math.abs(diffY) < speed) p.y = cellCenterY;
+    }
+
+    // 3. INTERACCIÓN CON TELETRANSPORTADORES
+    const tKey = `${p.r},${p.c}`;
+    if (State.teleporterPairs.has(tKey)) {
+      const partner = State.teleporterPairs.get(tKey);
+      p.r = partner.r;
+      p.c = partner.c;
+      p.x = partner.c * T + T / 2;
+      p.y = partner.r * T + T / 2;
+      SynthSound.sfxTeleport();
+      spawnDebris(p.x, p.y, '#a855f7', 16);
+    }
+
+    // 4. INTERACCIÓN CON CINTAS TRANSPORTADORAS
+    const onTile = State.grid[p.r] ? State.grid[p.r][p.c] : 0;
+    if (onTile >= 4 && onTile <= 7) {
+      const convDir = onTile === 4 ? { r: -1, c: 0 } : onTile === 5 ? { r: 1, c: 0 } : onTile === 6 ? { r: 0, c: -1 } : { r: 0, c: 1 };
+      const convNextR = p.r + convDir.r;
+      const convNextC = p.c + convDir.c;
+      if (CargasLogic.isPassable(State.grid, convNextR, convNextC, State.doors)) {
+        p.x += convDir.c * speed * 0.7;
+        p.y += convDir.r * speed * 0.7;
+        p.r = Math.floor(p.y / T);
+        p.c = Math.floor(p.x / T);
+      }
     }
   }
 
@@ -2022,6 +2128,18 @@
 
     for (const ch of State.charges) {
       if (ch.detonated) continue;
+
+      if (ch.unsolidFor) {
+        const p = ch.unsolidFor === 1 ? State.p1 : State.p2;
+        if (!p || !p.isAlive) {
+          ch.unsolidFor = null;
+        } else {
+          const dist = Math.hypot(p.x - ch.x, p.y - ch.y);
+          if (dist >= T * 0.75) {
+            ch.unsolidFor = null;
+          }
+        }
+      }
 
       if (ch.sliding) {
         const slideSpeed = CONFIG.BASE_CHARGE_SLIDE_SPEED * T * dt;
@@ -2349,6 +2467,9 @@
           } else if (pow.type === 'D') {
             p.hasRemote = true;
             showToast('¡DETONADOR REMOTO ACTIVO!', 1.5);
+          } else if (pow.type === 'K') {
+            p.canKick = true;
+            showToast('¡PATADA DE BOMBAS OBTENIDA! Camina hacia una bomba para patearla.', 2.0);
           }
           State.powerups.splice(i, 1);
           updateHUD();
@@ -2392,6 +2513,7 @@
   function render() {
     const ctx = State.ctx;
     if (!ctx) return;
+    if (!State.grid || State.grid.length === 0) return;
 
     ctx.save();
 
@@ -2459,29 +2581,42 @@
   }
 
   function drawFloor(ctx) {
+    if (!State.grid || State.grid.length === 0) return;
     const T = CONFIG.TILE_SIZE;
-    const lvl = CONFIG.LEVELS[State.currentLevelIdx];
-    const isCryo = lvl.world === 2;
-    const isQuantum = lvl.world === 3;
-
-    ctx.strokeStyle = isCryo ? '#0e243a' : isQuantum ? '#231536' : '#161e2e';
-    ctx.lineWidth = 1;
+    const lvl = CONFIG.LEVELS[State.currentLevelIdx] || CONFIG.LEVELS[0];
+    const isCryo = lvl && lvl.world === 2;
+    const isQuantum = lvl && lvl.world === 3;
 
     for (let r = 0; r < CONFIG.ROWS; r++) {
+      if (!State.grid[r]) continue;
       for (let c = 0; c < CONFIG.COLS; c++) {
         const tile = State.grid[r][c];
         const x = c * T;
         const y = r * T;
+        const isAlt = (r + c) % 2 === 0;
 
         if (tile === 3) {
           // Suelo de Hielo
-          ctx.fillStyle = '#082f49';
+          ctx.fillStyle = isAlt ? '#082f49' : '#0c4a6e';
           ctx.fillRect(x, y, T, T);
-          ctx.fillStyle = '#38bdf8';
+          ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
           ctx.fillRect(x + 4, y + 4, 3, 3);
           ctx.fillRect(x + T - 8, y + T - 8, 4, 2);
         } else {
-          ctx.strokeRect(x, y, T, T);
+          // Arena arcade Bomberman con baldosas de alto contraste
+          if (isCryo) {
+            ctx.fillStyle = isAlt ? '#081726' : '#0c2238';
+          } else if (isQuantum) {
+            ctx.fillStyle = isAlt ? '#160d26' : '#1f1335';
+          } else {
+            ctx.fillStyle = isAlt ? '#0f172a' : '#162032';
+          }
+          ctx.fillRect(x, y, T, T);
+
+          // Línea de bisel suave entre baldosas
+          ctx.strokeStyle = isCryo ? '#0a2e4a' : isQuantum ? '#2e1948' : '#1e293b';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x + 0.5, y + 0.5, T - 1, T - 1);
         }
       }
     }
@@ -2598,7 +2733,10 @@
       ctx.arc(cx, cy, 9, 0, Math.PI * 2);
       ctx.fill();
 
-      ctx.strokeStyle = pow.type === 'R' ? '#06b6d4' : pow.type === 'C' ? '#f59e0b' : pow.type === 'S' ? '#10b981' : '#a855f7';
+      ctx.strokeStyle = pow.type === 'R' ? '#06b6d4' :
+                        pow.type === 'C' ? '#f59e0b' :
+                        pow.type === 'S' ? '#10b981' :
+                        pow.type === 'K' ? '#ec4899' : '#a855f7';
       ctx.lineWidth = 2;
       ctx.stroke();
 
@@ -2611,62 +2749,98 @@
   }
 
   function drawGridBlocks(ctx) {
+    if (!State.grid || State.grid.length === 0) return;
     const T = CONFIG.TILE_SIZE;
+    const time = Date.now() * 0.004;
 
     for (let r = 0; r < CONFIG.ROWS; r++) {
+      if (!State.grid[r]) continue;
       for (let c = 0; c < CONFIG.COLS; c++) {
         const tile = State.grid[r][c];
         const x = c * T;
         const y = r * T;
 
         if (tile === 1) {
-          // Pilar indestructible con bisel metálico 90s
-          ctx.fillStyle = '#334155';
-          ctx.fillRect(x, y, T, T);
+          // --- PILAR INDESTRUCTIBLE 3D BOMBERMAN ---
+          // 1. Sombra arrojada al suelo inferior
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+          ctx.fillRect(x + 1, y + T - 3, T - 2, 4);
 
-          ctx.fillStyle = '#64748b';
-          ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo(x + T, y);
-          ctx.lineTo(x + T - 4, y + 4);
-          ctx.lineTo(x + 4, y + 4);
-          ctx.lineTo(x + 4, y + T - 4);
-          ctx.lineTo(x, y + T);
-          ctx.fill();
+          // 2. Cara frontal vertical 3D (profundidad en Z de 6px)
+          const frontGrad = ctx.createLinearGradient(x, y + T - 7, x, y + T);
+          frontGrad.addColorStop(0, '#334155');
+          frontGrad.addColorStop(1, '#0f172a');
+          ctx.fillStyle = frontGrad;
+          ctx.fillRect(x + 1, y + T - 7, T - 2, 6);
 
-          ctx.fillStyle = '#0f172a';
-          ctx.beginPath();
-          ctx.moveTo(x + T, y);
-          ctx.lineTo(x + T, y + T);
-          ctx.lineTo(x, y + T);
-          ctx.lineTo(x + 4, y + T - 4);
-          ctx.lineTo(x + T - 4, y + T - 4);
-          ctx.lineTo(x + T - 4, y + 4);
-          ctx.fill();
+          // 3. Cara superior elevada con bisel metálico
+          const topGrad = ctx.createLinearGradient(x, y, x + T, y + T - 7);
+          topGrad.addColorStop(0, '#94a3b8');
+          topGrad.addColorStop(0.3, '#64748b');
+          topGrad.addColorStop(1, '#334155');
+          ctx.fillStyle = topGrad;
+          ctx.fillRect(x + 1, y + 1, T - 2, T - 8);
 
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(x + 5, y + 5, T - 10, T - 10);
+          // Borde biselado brillante en la cara superior
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(x + 2, y + 2, T - 4, T - 10);
+
+          // Cuatro remaches metálicos en las esquinas
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(x + 4, y + 4, 2, 2);
+          ctx.fillRect(x + T - 6, y + 4, 2, 2);
+          ctx.fillRect(x + 4, y + T - 12, 2, 2);
+          ctx.fillRect(x + T - 6, y + T - 12, 2, 2);
+
         } else if (tile === 2) {
-          // Comprobar si es bloque regenerativo
+          // --- BLOQUE BLANDO DESTRUCTIBLE 3D (Ladrillo / Caja) ---
           const isRegen = State.regenBlocks.some(rb => rb.r === r && rb.c === c);
 
+          // 1. Sombra arrojada al suelo
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+          ctx.fillRect(x + 2, y + T - 2, T - 4, 3);
+
           if (isRegen) {
+            // Bloque nanotecnológico regenerativo
+            const pulse = (Math.sin(time * 6 + (r + c)) + 1) * 0.15 + 0.7;
             ctx.fillStyle = '#0369a1';
             ctx.fillRect(x + 1, y + 1, T - 2, T - 2);
-            ctx.strokeStyle = '#38bdf8';
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(x + 3, y + 3, T - 6, T - 6);
+            ctx.strokeStyle = `rgba(56, 189, 248, ${pulse})`;
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 2, y + 2, T - 4, T - 4);
           } else {
-            // Bloque blando normal anaranjado con textura
-            ctx.fillStyle = '#78350f';
-            ctx.fillRect(x + 1, y + 1, T - 2, T - 2);
-            ctx.fillStyle = '#b45309';
-            ctx.fillRect(x + 3, y + 3, T - 6, T - 6);
-            ctx.strokeStyle = '#d97706';
-            ctx.lineWidth = 1.5;
-            ctx.strokeRect(x + 3, y + 3, T - 6, T - 6);
+            // Cara frontal con relieve (profundidad 5px)
+            const frontGrad = ctx.createLinearGradient(x, y + T - 6, x, y + T);
+            frontGrad.addColorStop(0, '#78350f');
+            frontGrad.addColorStop(1, '#451a03');
+            ctx.fillStyle = frontGrad;
+            ctx.fillRect(x + 2, y + T - 6, T - 4, 5);
+
+            // Cara superior del bloque de madera/ladrillo
+            const topGrad = ctx.createLinearGradient(x, y, x, y + T - 6);
+            topGrad.addColorStop(0, '#f59e0b');
+            topGrad.addColorStop(0.5, '#d97706');
+            topGrad.addColorStop(1, '#92400e');
+            ctx.fillStyle = topGrad;
+            ctx.fillRect(x + 2, y + 2, T - 4, T - 8);
+
+            // Tablones / Ranuras de ladrillo
+            ctx.strokeStyle = '#78350f';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x + 3, y + (T - 8) / 2);
+            ctx.lineTo(x + T - 3, y + (T - 8) / 2);
+            ctx.moveTo(x + T / 2, y + 2);
+            ctx.lineTo(x + T / 2, y + (T - 8) / 2);
+            ctx.stroke();
+
+            // Refuerzo en las esquinas
             ctx.fillStyle = '#fbbf24';
-            ctx.fillRect(x + T / 2 - 2, y + T / 2 - 2, 4, 4);
+            ctx.fillRect(x + 3, y + 3, 2, 2);
+            ctx.fillRect(x + T - 5, y + 3, 2, 2);
+            ctx.fillRect(x + 3, y + T - 9, 2, 2);
+            ctx.fillRect(x + T - 5, y + T - 9, 2, 2);
           }
         }
       }
@@ -2674,49 +2848,86 @@
   }
 
   function drawCharges(ctx) {
-    const pulse = Math.sin(Date.now() * 0.01) * 2;
+    const time = Date.now() * 0.005;
+
     for (const ch of State.charges) {
       if (ch.detonated) continue;
 
       ctx.save();
       ctx.translate(ch.x, ch.y);
 
-      // Sombra
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      // Sombra volumétrica proyectada
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
       ctx.beginPath();
-      ctx.ellipse(0, 8, 10, 5, 0, 0, Math.PI * 2);
+      ctx.ellipse(0, 9, 10, 4.5, 0, 0, Math.PI * 2);
       ctx.fill();
 
-      // Esfera de energía
-      const radius = 10 + pulse;
-      const grad = ctx.createRadialGradient(0, 0, 2, 0, 0, radius);
-      grad.addColorStop(0, '#fef08a');
-      grad.addColorStop(0.5, '#f59e0b');
-      grad.addColorStop(1, '#b45309');
+      const isUrgent = ch.timer < 0.8;
+      // Rhythmic breathing / throbbing (palpitar acelerado en peligro)
+      const pulse = isUrgent ? Math.sin(time * 26) * 2.2 : Math.sin(time * 7) * 1.0;
+      const R = 9.5 + pulse;
 
-      ctx.fillStyle = grad;
+      // 1. Esfera volumétrica negra metálica 3D
+      const bombGrad = ctx.createRadialGradient(-3, -3, 1, 0, 0, R);
+      if (isUrgent) {
+        bombGrad.addColorStop(0, '#ffffff');
+        bombGrad.addColorStop(0.25, '#ef4444');
+        bombGrad.addColorStop(0.7, '#991b1b');
+        bombGrad.addColorStop(1, '#18040a');
+      } else {
+        bombGrad.addColorStop(0, '#ffffff');
+        bombGrad.addColorStop(0.18, '#cbd5e1');
+        bombGrad.addColorStop(0.55, '#1e293b');
+        bombGrad.addColorStop(1, '#020617');
+      }
+
+      ctx.fillStyle = bombGrad;
       ctx.beginPath();
-      ctx.arc(0, 0, radius, 0, Math.PI * 2);
+      ctx.arc(0, 0, R, 0, Math.PI * 2);
       ctx.fill();
-
-      // Diamante exterior
-      ctx.strokeStyle = '#fbbf24';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.moveTo(0, -radius - 3);
-      ctx.lineTo(radius + 3, 0);
-      ctx.lineTo(0, radius + 3);
-      ctx.lineTo(-radius - 3, 0);
-      ctx.closePath();
+      ctx.strokeStyle = isUrgent ? '#ffffff' : '#64748b';
+      ctx.lineWidth = 1;
       ctx.stroke();
 
-      // Cuenta regresiva
+      // 2. Casquillo superior de la mecha
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(-2.5, -R - 2.5, 5, 3.5);
+
+      // 3. Mecha encendida con chispas de fuego animadas
+      ctx.strokeStyle = '#fbbf24';
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.moveTo(0, -R - 2);
+      ctx.quadraticCurveTo(2, -R - 5, 3, -R - 7);
+      ctx.stroke();
+
+      // Chispa de fuego parpadeante
+      const sparkFlame = (Math.sin(time * 30) + 1) * 1.5 + 2.5;
+      ctx.fillStyle = '#ffffff';
+      ctx.shadowColor = '#f59e0b';
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(3, -R - 7, sparkFlame * 0.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#ef4444';
+      ctx.beginPath();
+      ctx.arc(3, -R - 7, sparkFlame, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      // 4. Temporizador digital / indicador
       if (!ch.remote) {
-        ctx.fillStyle = '#000';
+        ctx.fillStyle = isUrgent ? '#ffffff' : '#38bdf8';
         ctx.font = 'bold 9px monospace';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.fillText(Math.ceil(ch.timer), 0, 1);
+        ctx.fillText(Math.ceil(ch.timer), 0, 0.5);
+      } else {
+        ctx.fillStyle = '#a855f7';
+        ctx.beginPath();
+        ctx.arc(0, 0, 3, 0, Math.PI * 2);
+        ctx.fill();
       }
 
       ctx.restore();
@@ -2725,6 +2936,8 @@
 
   function drawActiveBlasts(ctx) {
     const T = CONFIG.TILE_SIZE;
+    const time = Date.now() * 0.008;
+
     for (const b of State.activeBlasts) {
       const alpha = Math.max(0, b.timer / b.maxTimer);
 
@@ -2735,19 +2948,32 @@
         ctx.save();
         ctx.translate(cx, cy);
 
-        // Rombo Manhattan
-        ctx.fillStyle = `rgba(245, 158, 11, ${alpha * 0.75})`;
+        // Llamas volumétricas de 3 capas estilo Bomberman
+        // Capa 1: Resplandor ígneo exterior
+        const flamePulse = (Math.sin(time * 14 + (cell.r + cell.c)) + 1) * 1.5;
+        const rOuter = (T * 0.44 + flamePulse) * alpha;
+
+        const outerGrad = ctx.createRadialGradient(0, 0, 2, 0, 0, rOuter);
+        outerGrad.addColorStop(0, `rgba(254, 240, 138, ${alpha})`);
+        outerGrad.addColorStop(0.35, `rgba(245, 158, 11, ${alpha * 0.9})`);
+        outerGrad.addColorStop(0.8, `rgba(239, 68, 68, ${alpha * 0.75})`);
+        outerGrad.addColorStop(1, 'rgba(185, 28, 28, 0)');
+
+        ctx.fillStyle = outerGrad;
         ctx.beginPath();
-        ctx.moveTo(0, -T * 0.45);
-        ctx.lineTo(T * 0.45, 0);
-        ctx.lineTo(0, T * 0.45);
-        ctx.lineTo(-T * 0.45, 0);
-        ctx.closePath();
+        ctx.arc(0, 0, rOuter, 0, Math.PI * 2);
         ctx.fill();
 
-        ctx.strokeStyle = `rgba(254, 240, 138, ${alpha})`;
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        // Capa 2: Lenguas de fuego en cruz a lo largo del pasillo
+        ctx.fillStyle = `rgba(245, 158, 11, ${alpha * 0.85})`;
+        ctx.fillRect(-T * 0.42, -5, T * 0.84, 10);
+        ctx.fillRect(-5, -T * 0.42, 10, T * 0.84);
+
+        // Capa 3: Núcleo de plasma blanco incandescente
+        ctx.fillStyle = `rgba(255, 255, 255, ${alpha * 0.95})`;
+        ctx.beginPath();
+        ctx.arc(0, 0, (T * 0.22) * alpha, 0, Math.PI * 2);
+        ctx.fill();
 
         ctx.restore();
       }
@@ -2755,20 +2981,172 @@
   }
 
   function drawGuardians(ctx) {
+    const time = Date.now() * 0.005;
+
     for (const g of State.guardians) {
       if (g.destroyed) continue;
 
       ctx.save();
       ctx.translate(g.x, g.y);
 
-      ctx.fillStyle = g.type === 'patrol' ? '#10b981' : g.type === 'hunter' ? '#ef4444' : g.type === 'armored' ? (g.hp === 2 ? '#64748b' : '#f97316') : '#9333ea';
-      ctx.fillRect(-8, -8, 16, 16);
-      ctx.strokeStyle = '#000';
-      ctx.lineWidth = 1.5;
-      ctx.strokeRect(-8, -8, 16, 16);
+      // Sombra proyectada en el suelo
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.beginPath();
+      ctx.ellipse(0, 10, 10, 4.5, 0, 0, Math.PI * 2);
+      ctx.fill();
 
-      ctx.fillStyle = '#fef08a';
-      ctx.fillRect(-3, -3, 6, 6);
+      // Flotación / Oscilación vertical
+      const floatY = Math.sin(time * 3 + (g.r + g.c)) * 2.2;
+      ctx.translate(0, -floatY);
+
+      if (g.type === 'patrol') {
+        // --- 1. PATRULLERO (Burbuja Saltarina estilo Balom Bomberman - Naranja/Coral) ---
+        const bounce = Math.abs(Math.sin(time * 5 + g.r + g.c));
+        const squashX = 1.0 + (1.0 - bounce) * 0.22;
+        const squashY = 1.0 - (1.0 - bounce) * 0.18;
+        ctx.scale(squashX, squashY);
+
+        // Chasis esférico volumétrico 3D
+        const balomGrad = ctx.createRadialGradient(-3, -3, 1, 0, 0, 9);
+        balomGrad.addColorStop(0, '#ffffff');
+        balomGrad.addColorStop(0.3, '#fb923c');
+        balomGrad.addColorStop(0.7, '#ea580c');
+        balomGrad.addColorStop(1, '#7c2d12');
+        ctx.fillStyle = balomGrad;
+        ctx.beginPath();
+        ctx.arc(0, 0, 8.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#fdba74';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // Cuernitos / antenitas superiores
+        ctx.fillStyle = '#f59e0b';
+        ctx.beginPath();
+        ctx.arc(-4, -8, 2, 0, Math.PI * 2);
+        ctx.arc(4, -8, 2, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ojos grandes expresivos tipo cartoon
+        const eyeLookX = (g.vx || 0) * 1.5;
+        const eyeLookY = (g.vy || 0) * 1.5;
+
+        // Ojo izquierdo
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(-3 + eyeLookX * 0.3, -1 + eyeLookY * 0.3, 2.5, 3.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(-2.8 + eyeLookX, -0.8 + eyeLookY, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(-3.2 + eyeLookX, -1.2 + eyeLookY, 0.6, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Ojo derecho
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.ellipse(3 + eyeLookX * 0.3, -1 + eyeLookY * 0.3, 2.5, 3.2, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.arc(3.2 + eyeLookX, -0.8 + eyeLookY, 1.4, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(2.8 + eyeLookX, -1.2 + eyeLookY, 0.6, 0, Math.PI * 2);
+        ctx.fill();
+
+      } else if (g.type === 'hunter') {
+        // --- 2. CAZADOR (Mech Rápido estilo Onil Bomberman - Azul Cian) ---
+        // Patitas robóticas que corretean
+        const pitter = Math.sin(time * 18) * 3;
+        ctx.fillStyle = '#0284c7';
+        ctx.beginPath();
+        ctx.arc(-4, 7 + pitter, 2.5, 0, Math.PI * 2);
+        ctx.arc(4, 7 - pitter, 2.5, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Cuerpo en gota/cebolla con sombreado 3D
+        const onilGrad = ctx.createRadialGradient(-2, -4, 1, 0, 0, 9);
+        onilGrad.addColorStop(0, '#ffffff');
+        onilGrad.addColorStop(0.3, '#38bdf8');
+        onilGrad.addColorStop(0.7, '#0284c7');
+        onilGrad.addColorStop(1, '#082f49');
+        ctx.fillStyle = onilGrad;
+        ctx.beginPath();
+        ctx.moveTo(0, -9.5);
+        ctx.quadraticCurveTo(8.5, -4, 8, 4);
+        ctx.quadraticCurveTo(5, 8, 0, 8);
+        ctx.quadraticCurveTo(-5, 8, -8, 4);
+        ctx.quadraticCurveTo(-8.5, -4, 0, -9.5);
+        ctx.fill();
+        ctx.strokeStyle = '#bae6fd';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        // Visor de rastreo rojo amenazante
+        ctx.fillStyle = '#ef4444';
+        ctx.shadowColor = '#ef4444';
+        ctx.shadowBlur = 6;
+        ctx.fillRect(-4.5, -1, 9, 3);
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(-2, -0.5, 4, 2);
+
+      } else if (g.type === 'armored') {
+        // --- 3. BLINDADO (Juggernaut Acorazado 3D - Titanio) ---
+        const armorGrad = ctx.createLinearGradient(-9, -9, 9, 9);
+        armorGrad.addColorStop(0, g.hp === 2 ? '#cbd5e1' : '#f97316');
+        armorGrad.addColorStop(0.5, g.hp === 2 ? '#64748b' : '#c2410c');
+        armorGrad.addColorStop(1, '#0f172a');
+
+        ctx.fillStyle = armorGrad;
+        ctx.beginPath();
+        ctx.roundRect(-9, -9, 18, 18, 4);
+        ctx.fill();
+        ctx.strokeStyle = '#f8fafc';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+
+        // Plancha de blindaje remachada
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(-6, -6, 12, 12);
+        ctx.fillStyle = '#cbd5e1';
+        ctx.fillRect(-8, -8, 2, 2);
+        ctx.fillRect(6, -8, 2, 2);
+        ctx.fillRect(-8, 6, 2, 2);
+        ctx.fillRect(6, 6, 2, 2);
+
+        // Visor de combate
+        ctx.fillStyle = g.hp === 2 ? '#f59e0b' : '#ef4444';
+        ctx.shadowColor = ctx.fillStyle;
+        ctx.shadowBlur = 6;
+        ctx.fillRect(-4, -2, 8, 3);
+        ctx.shadowBlur = 0;
+
+      } else {
+        // --- 4. CONSTRUCTOR (Dron Nanotecnológico - Púrpura) ---
+        ctx.fillStyle = '#a855f7';
+        ctx.shadowColor = '#a855f7';
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.arc(0, 0, 7.5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.shadowBlur = 0;
+
+        // Anillos orbitales giratorios
+        ctx.strokeStyle = '#e9d5ff';
+        ctx.lineWidth = 1.5;
+        for (let i = 0; i < 3; i++) {
+          const a = time * 2 + (i * Math.PI * 2) / 3;
+          ctx.beginPath();
+          ctx.arc(Math.cos(a) * 8.5, Math.sin(a) * 8.5, 2, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+      }
 
       ctx.restore();
     }
@@ -2780,30 +3158,84 @@
 
     ctx.save();
     ctx.translate(boss.x, boss.y);
-    const time = Date.now() * 0.004;
+    const time = Date.now() * 0.003;
 
-    ctx.fillStyle = boss.type === 'titan' ? '#1e1b4b' : boss.type === 'cryo' ? '#082f49' : '#3b0764';
+    // Sombra del jefe
+    ctx.fillStyle = 'rgba(0,0,0,0.5)';
     ctx.beginPath();
-    ctx.arc(0, 0, 16, 0, Math.PI * 2);
+    ctx.ellipse(0, 18, 20, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Aspas giratorias
-    ctx.strokeStyle = boss.type === 'titan' ? '#ef4444' : boss.type === 'cryo' ? '#38bdf8' : '#c084fc';
-    ctx.lineWidth = 3;
+    // 1. Corona exterior dentada giratoria (Sentido Horario)
+    ctx.save();
+    ctx.rotate(time * 0.8);
+    const outerRadius = 18;
+    const teeth = 8;
+    ctx.fillStyle = '#1e293b';
+    ctx.beginPath();
+    for (let i = 0; i < teeth * 2; i++) {
+      const r = i % 2 === 0 ? outerRadius + 3 : outerRadius - 2;
+      const a = (i * Math.PI) / teeth;
+      ctx.lineTo(Math.cos(a) * r, Math.sin(a) * r);
+    }
+    ctx.closePath();
+    ctx.fill();
+    ctx.strokeStyle = boss.type === 'titan' ? '#ef4444' : boss.type === 'cryo' ? '#00f0ff' : '#c084fc';
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    ctx.restore();
+
+    // 2. Anillo de blindaje intermedio (Sentido Anti-horario)
+    ctx.save();
+    ctx.rotate(-time * 1.2);
+    const ringGrad = ctx.createRadialGradient(0, 0, 5, 0, 0, 14);
+    ringGrad.addColorStop(0, '#475569');
+    ringGrad.addColorStop(1, '#0f172a');
+    ctx.fillStyle = ringGrad;
+    ctx.beginPath();
+    ctx.arc(0, 0, 14, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.restore();
+
+    // 3. Núcleo palpitante de plasma
+    const pulse = Math.sin(time * 6) * 2;
+    const coreGrad = ctx.createRadialGradient(-2, -2, 1, 0, 0, 9 + pulse);
+    coreGrad.addColorStop(0, '#ffffff');
+    coreGrad.addColorStop(0.4, boss.type === 'titan' ? '#f59e0b' : boss.type === 'cryo' ? '#38bdf8' : '#e879f9');
+    coreGrad.addColorStop(1, boss.type === 'titan' ? '#b91c1c' : boss.type === 'cryo' ? '#0369a1' : '#6b21a8');
+
+    ctx.fillStyle = coreGrad;
+    ctx.shadowColor = boss.type === 'titan' ? '#f59e0b' : '#38bdf8';
+    ctx.shadowBlur = 10;
+    ctx.beginPath();
+    ctx.arc(0, 0, 8 + pulse, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // 4. Cañones de plasma en cruz
+    ctx.strokeStyle = '#f8fafc';
+    ctx.lineWidth = 2.5;
     for (let i = 0; i < 4; i++) {
-      const angle = time + (i * Math.PI) / 2;
+      const a = (i * Math.PI) / 2;
       ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.lineTo(Math.cos(angle) * 19, Math.sin(angle) * 19);
+      ctx.moveTo(Math.cos(a) * 12, Math.sin(a) * 12);
+      ctx.lineTo(Math.cos(a) * 20, Math.sin(a) * 20);
       ctx.stroke();
     }
 
-    // Barra de salud sobre el jefe
-    const hpRatio = boss.hp / boss.maxHp;
-    ctx.fillStyle = '#000';
-    ctx.fillRect(-14, -24, 28, 5);
-    ctx.fillStyle = '#ef4444';
-    ctx.fillRect(-13, -23, 26 * hpRatio, 3);
+    // 5. Barra de vida futurista sobre el jefe
+    const hpRatio = Math.max(0, boss.hp / boss.maxHp);
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-18, -26, 36, 6);
+    ctx.strokeStyle = '#475569';
+    ctx.lineWidth = 1;
+    ctx.strokeRect(-18, -26, 36, 6);
+
+    ctx.fillStyle = hpRatio > 0.4 ? '#ef4444' : '#f59e0b';
+    ctx.fillRect(-17, -25, 34 * hpRatio, 4);
 
     ctx.restore();
   }
@@ -2811,31 +3243,255 @@
   function drawPlayer(ctx, p) {
     if (!p || !p.isAlive) return;
 
-    if (p.invulnTimer > 0 && Math.floor(Date.now() / 80) % 2 === 0) return;
+    // Titileo de invulnerabilidad
+    if (p.invulnTimer > 0 && Math.floor(Date.now() / 90) % 2 === 0) return;
 
     ctx.save();
     ctx.translate(p.x, p.y);
 
-    ctx.fillStyle = p.color;
+    const time = Date.now() * 0.005;
+    const isMoving = p.isMoving && (p.dir.r !== 0 || p.dir.c !== 0);
+    const walkTimer = p.walkTimer || 0;
+
+    // 1. Sombra volumétrica en el suelo
+    ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
     ctx.beginPath();
-    ctx.arc(0, 0, 9, 0, Math.PI * 2);
+    ctx.ellipse(0, 10, 10, 4.5, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.strokeStyle = '#000';
-    ctx.lineWidth = 1.5;
+
+    // 2. Elevación Z de marcha (bobbing 3D)
+    const zBob = isMoving ? Math.abs(Math.sin(walkTimer * 16)) * 2.2 : Math.sin(time * 3) * 0.6;
+    ctx.translate(0, -zBob);
+
+    // Dirección cardinal canónica
+    let facing = 'DOWN';
+    if (p.facingDir) {
+      if (p.facingDir.r === -1) facing = 'UP';
+      else if (p.facingDir.r === 1) facing = 'DOWN';
+      else if (p.facingDir.c === -1) facing = 'LEFT';
+      else if (p.facingDir.c === 1) facing = 'RIGHT';
+    } else if (p.dir.r === -1) facing = 'UP';
+    else if (p.dir.r === 1) facing = 'DOWN';
+    else if (p.dir.c === -1) facing = 'LEFT';
+    else if (p.dir.c === 1) facing = 'RIGHT';
+
+    // Paleta de personaje (P1 = Blanco/Cian clásico, P2 = Negro/Carmesí)
+    const isP1 = p.id === 1;
+    const suitColor = isP1 ? '#0284c7' : '#1e1b4b';
+    const helmetColor = isP1 ? '#f8fafc' : '#0f172a';
+    const pompomColor = isP1 ? '#f43f5e' : '#fbbf24';
+    const gloveColor = isP1 ? '#fb7185' : '#f59e0b';
+    const bootColor = isP1 ? '#f43f5e' : '#d97706';
+
+    // 3. Botas esféricas 3D con zancada animada
+    const stride = isMoving ? Math.sin(walkTimer * 16) * 3.5 : 0;
+    const drawBoot = (bx, by) => {
+      const bootGrad = ctx.createRadialGradient(bx - 1, by - 1, 0.5, bx, by, 4.5);
+      bootGrad.addColorStop(0, '#ffffff');
+      bootGrad.addColorStop(0.3, bootColor);
+      bootGrad.addColorStop(1, '#881337');
+      ctx.fillStyle = bootGrad;
+      ctx.beginPath();
+      ctx.arc(bx, by, 4, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    if (facing === 'DOWN' || facing === 'UP') {
+      drawBoot(-5, 9 + (facing === 'DOWN' ? stride : -stride));
+      drawBoot(5, 9 - (facing === 'DOWN' ? stride : -stride));
+    } else if (facing === 'LEFT') {
+      drawBoot(-2 - stride, 9);
+      drawBoot(4 + stride, 9);
+    } else {
+      drawBoot(-4 - stride, 9);
+      drawBoot(2 + stride, 9);
+    }
+
+    // 4. Mochila generadora de fusión (vista desde atrás o perfil)
+    if (facing === 'UP') {
+      const packGrad = ctx.createLinearGradient(-6, -2, 6, 6);
+      packGrad.addColorStop(0, '#64748b');
+      packGrad.addColorStop(1, '#1e293b');
+      ctx.fillStyle = packGrad;
+      ctx.beginPath();
+      ctx.roundRect(-6, 0, 12, 8, 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#00f0ff';
+      ctx.shadowColor = '#00f0ff';
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(0, 4, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.shadowBlur = 0;
+    } else if (facing === 'LEFT') {
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.roundRect(3, 1, 4, 7, 2);
+      ctx.fill();
+    } else if (facing === 'RIGHT') {
+      ctx.fillStyle = '#334155';
+      ctx.beginPath();
+      ctx.roundRect(-7, 1, 4, 7, 2);
+      ctx.fill();
+    }
+
+    // 5. Torso cilíndrico / Traje de salto
+    const torsoGrad = ctx.createLinearGradient(-6, 0, 6, 8);
+    torsoGrad.addColorStop(0, '#38bdf8');
+    torsoGrad.addColorStop(0.4, suitColor);
+    torsoGrad.addColorStop(1, '#082f49');
+    ctx.fillStyle = torsoGrad;
+    ctx.beginPath();
+    ctx.roundRect(-6, 0, 12, 9, 3);
+    ctx.fill();
+
+    // Cinturón con hebilla dorada
+    ctx.fillStyle = '#0f172a';
+    ctx.fillRect(-6, 5, 12, 2.5);
+    ctx.fillStyle = '#fbbf24';
+    ctx.fillRect(-1.5, 5, 3, 2.5);
+
+    // 6. Guantes / Manos
+    const drawHand = (hx, hy) => {
+      const handGrad = ctx.createRadialGradient(hx - 1, hy - 1, 0.5, hx, hy, 3);
+      handGrad.addColorStop(0, '#ffffff');
+      handGrad.addColorStop(0.35, gloveColor);
+      handGrad.addColorStop(1, '#881337');
+      ctx.fillStyle = handGrad;
+      ctx.beginPath();
+      ctx.arc(hx, hy, 3, 0, Math.PI * 2);
+      ctx.fill();
+    };
+
+    if (p.pushAnimTimer > 0 || p.pushTargetCharge) {
+      if (facing === 'DOWN') { drawHand(-4, 6); drawHand(4, 6); }
+      else if (facing === 'UP') { drawHand(-4, -6); drawHand(4, -6); }
+      else if (facing === 'LEFT') { drawHand(-8, 3); drawHand(-5, 4); }
+      else { drawHand(8, 3); drawHand(5, 4); }
+    } else {
+      const armSwing = isMoving ? Math.sin(walkTimer * 16) * 2.5 : 0;
+      if (facing === 'DOWN' || facing === 'UP') {
+        drawHand(-7.5, 4 - armSwing);
+        drawHand(7.5, 4 + armSwing);
+      } else if (facing === 'LEFT') {
+        drawHand(-4 + armSwing, 4);
+      } else {
+        drawHand(4 - armSwing, 4);
+      }
+    }
+
+    // 7. Cabeza / Casco esférico volumétrico 3D (Cúpula blanca brillante)
+    const headY = -6;
+    const headRadius = 9.5;
+    const helmetGrad = ctx.createRadialGradient(-3, headY - 3, 1, 0, headY, headRadius);
+    helmetGrad.addColorStop(0, '#ffffff');
+    helmetGrad.addColorStop(0.3, isP1 ? '#f8fafc' : '#334155');
+    helmetGrad.addColorStop(0.8, isP1 ? '#cbd5e1' : '#0f172a');
+    helmetGrad.addColorStop(1, isP1 ? '#64748b' : '#020617');
+
+    ctx.fillStyle = helmetGrad;
+    ctx.beginPath();
+    ctx.arc(0, headY, headRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = isP1 ? 'rgba(255, 255, 255, 0.6)' : 'rgba(100, 116, 139, 0.6)';
+    ctx.lineWidth = 1;
     ctx.stroke();
 
-    ctx.fillStyle = '#fde047';
-    ctx.fillRect(-4, -4, 8, 4);
+    // 8. Antena y pompón saltarín en la cima
+    const antennaTilt = isMoving ? Math.sin(walkTimer * 16) * 1.5 : 0;
+    ctx.strokeStyle = '#94a3b8';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(0, headY - headRadius);
+    ctx.lineTo(antennaTilt, headY - headRadius - 4);
+    ctx.stroke();
 
-    ctx.fillStyle = '#334155';
-    ctx.fillRect(-6, 4, 12, 4);
+    const pomX = antennaTilt;
+    const pomY = headY - headRadius - 5.5;
+    const pomGrad = ctx.createRadialGradient(pomX - 1, pomY - 1, 0.5, pomX, pomY, 3.5);
+    pomGrad.addColorStop(0, '#ffffff');
+    pomGrad.addColorStop(0.4, pompomColor);
+    pomGrad.addColorStop(1, '#881337');
+    ctx.fillStyle = pomGrad;
+    ctx.beginPath();
+    ctx.arc(pomX, pomY, 3, 0, Math.PI * 2);
+    ctx.fill();
 
-    // Indicador visual de empuje cuando está frente a una carga
-    if (p.pushTargetCharge) {
-      ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 9px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('EMPUJE', 0, -12);
+    // 9. Visor y Expresión facial según orientación
+    if (facing === 'DOWN') {
+      // Visor frontal ovalado azul marino
+      const visorGrad = ctx.createLinearGradient(0, headY - 4, 0, headY + 3);
+      visorGrad.addColorStop(0, '#0284c7');
+      visorGrad.addColorStop(0.5, '#0369a1');
+      visorGrad.addColorStop(1, '#082f49');
+      ctx.fillStyle = visorGrad;
+      ctx.beginPath();
+      ctx.ellipse(0, headY, 6, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      // Dos ojos verticales tipo Bomberman clásico con destello
+      const drawEye = (ex) => {
+        ctx.fillStyle = '#0f172a';
+        ctx.beginPath();
+        ctx.ellipse(ex, headY, 1.4, 2.6, 0, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(ex - 0.5, headY - 1, 0.7, 0, Math.PI * 2);
+        ctx.fill();
+      };
+      drawEye(-2.5);
+      drawEye(2.5);
+
+    } else if (facing === 'LEFT') {
+      ctx.fillStyle = '#0369a1';
+      ctx.beginPath();
+      ctx.ellipse(-3.5, headY, 4.5, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.ellipse(-4, headY, 1.3, 2.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(-4.5, headY - 0.8, 0.6, 0, Math.PI * 2);
+      ctx.fill();
+
+    } else if (facing === 'RIGHT') {
+      ctx.fillStyle = '#0369a1';
+      ctx.beginPath();
+      ctx.ellipse(3.5, headY, 4.5, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#0f172a';
+      ctx.beginPath();
+      ctx.ellipse(4, headY, 1.3, 2.4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(3.5, headY - 0.8, 0.6, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    // 10. Aura de escudo en invulnerabilidad
+    if (p.invulnTimer > 0) {
+      const shieldPulse = (Math.sin(time * 18) + 1) * 0.2 + 0.3;
+      ctx.strokeStyle = `rgba(56, 189, 248, ${shieldPulse})`;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(0, -2, 15, 0, Math.PI * 2);
+      ctx.stroke();
     }
 
     ctx.restore();
@@ -3030,6 +3686,11 @@
       let icons = '';
       for (let i = 0; i < State.p1.lives; i++) icons += '⚙️';
       document.getElementById('lives-val').textContent = icons || '💀';
+
+      const btnDetonate = document.getElementById('btn-action-detonate');
+      if (btnDetonate) {
+        btnDetonate.classList.toggle('hidden', !State.p1.hasRemote);
+      }
     }
   }
 
@@ -3045,6 +3706,20 @@
     // Teclado
     window.addEventListener('keydown', (e) => {
       SynthSound.resume();
+
+      if (e.key.toLowerCase() === 'p' || e.key === 'Escape') {
+        const modalPause = document.getElementById('modal-pause');
+        if (State.state === 'PLAYING') {
+          State.state = 'PAUSED';
+          if (modalPause) modalPause.classList.remove('hidden');
+        } else if (State.state === 'PAUSED') {
+          State.state = 'PLAYING';
+          if (modalPause) modalPause.classList.add('hidden');
+        }
+        e.preventDefault();
+        return;
+      }
+
       if (State.state !== 'PLAYING') return;
 
       switch (e.key.toLowerCase()) {
@@ -3276,6 +3951,9 @@
       if (State.state === 'PLAYING') {
         State.state = 'PAUSED';
         modalPause.classList.remove('hidden');
+      } else if (State.state === 'PAUSED') {
+        State.state = 'PLAYING';
+        modalPause.classList.add('hidden');
       }
     });
 
@@ -3421,18 +4099,51 @@
     State.ctx.scale(dpr, dpr);
   }
 
-  function init() {
-    // Comprobar parámetro ?debug=1 en la URL
-    const urlParams = new URLSearchParams(window.location.search);
-    State.debugMode = urlParams.get('debug') === '1';
-
-    State.storage = CargasStorage.load();
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    setupInputs();
-    setupUI();
-    requestAnimationFrame(gameLoop);
+  function showFatalError(title, err) {
+    console.error('Fatal Cargas Error:', err);
+    let box = document.getElementById('arcade-error-overlay');
+    if (!box) {
+      box = document.createElement('div');
+      box.id = 'arcade-error-overlay';
+      box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(10,14,23,0.96);color:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:monospace,system-ui,sans-serif;';
+      box.innerHTML = `
+        <div style="max-width:420px;background:#1e293b;border:2px solid #ef4444;border-radius:8px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.8);">
+          <div style="font-size:2.2rem;margin-bottom:8px;">⚠️</div>
+          <h2 style="color:#ef4444;font-size:1.1rem;margin-bottom:8px;text-transform:uppercase;">Error al iniciar el juego</h2>
+          <p id="arcade-error-msg" style="font-size:0.82rem;color:#cbd5e1;margin-bottom:16px;word-break:break-word;background:#0f172a;padding:8px;border-radius:4px;"></p>
+          <div style="display:flex;gap:8px;justify-content:center;">
+            <button onclick="location.reload()" style="background:#f59e0b;color:#000;border:none;font-weight:bold;padding:10px 16px;border-radius:4px;cursor:pointer;min-height:44px;">REINTENTAR</button>
+            <a href="../../index.html" style="background:#334155;color:#fff;text-decoration:none;font-weight:bold;padding:10px 16px;border-radius:4px;display:inline-flex;align-items:center;min-height:44px;">VOLVER AL MENÚ</a>
+          </div>
+        </div>
+      `;
+      document.body.appendChild(box);
+    }
+    const msgEl = document.getElementById('arcade-error-msg');
+    if (msgEl) msgEl.textContent = err && err.message ? err.message : String(err);
   }
+
+  function init() {
+    try {
+      // Comprobar parámetro ?debug=1 en la URL
+      const urlParams = new URLSearchParams(window.location.search);
+      State.debugMode = urlParams.get('debug') === '1';
+
+      State.storage = CargasStorage.load();
+      loadLevel(0); // Carga inicial del nivel 0 antes de redimensionar o dibujar
+      handleResize();
+      window.addEventListener('resize', handleResize);
+      setupInputs();
+      setupUI();
+      requestAnimationFrame(gameLoop);
+    } catch (err) {
+      showFatalError('Error al iniciar Cargas', err);
+    }
+  }
+
+  window.addEventListener('error', (e) => {
+    showFatalError('Error en ejecución', e.error || e.message);
+  });
 
   window.addEventListener('DOMContentLoaded', init);
 })();

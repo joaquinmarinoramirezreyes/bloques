@@ -56,3 +56,30 @@
   - Cálculo de rutas BFS escalonado en intervalos temporales para no sobrecargar el frame.
   - Object pooling estricto de partículas y textos flotantes.
   - Modo diagnóstico (`?debug=1`) con monitor de FPS, frame time y recuento de entidades; si baja de 55 FPS sostenidos se activa el perfil de bajo consumo automático.
+
+### 5. Actualización de Conectividad y Comportamiento Clásico (15 de Octubre de 2026)
+- **Laberintos 100% Conexos y Puntos Accesibles**:
+  - Se rediseñaron los 6 templates de laberinto (`CONFIG.LEVEL_TEMPLATES`) abriendo accesos en las filas 6 y 12 que antes dejaban aisladas las columnas laterales.
+  - Validación con solver BFS en Node (`scripts/check_lumen_maze.js`): 0 puntos inalcanzables en todos los niveles (134 a 144 puntos 100% alcanzables desde el origen).
+- **Puerta de la Casa de Sombras y Salida Fluida**:
+  - Incorporación de celda tipo puerta (`-` / código 5) en la coordenada (fila 8, col 7) sobre la casa de sombras.
+  - Transición de salida en 2 fases para sombras en estado `EXITING`: alineación horizontal hacia col 7 y deslizamiento vertical hacia el exterior atravesando la compuerta.
+- **Inteligencia Artificial de Sombras Mejorada**:
+  - Eliminación de bloqueos y congelamientos: soporte de giro de 180° si la sombra llega a un callejón sin salida o no tiene salidas perpendiculares.
+  - Alternancia de fases Dispersión (Scatter, 7s) y Persecución (Chase, 20s):
+    * Sombra Roja (Líder / Acechador): Persecución directa hacia la casilla del jugador. Mecánica Cruise Elroy con aceleración progresiva al quedar menos de 20 y menos de 10 puntos.
+    * Sombra Rosa (Emboscador): Apunta a 4 casillas adelante del jugador para interceptarlo.
+    * Sombra Cian (Flanqueador): Cruza vector entre la sombra roja y el jugador para encerrarlo.
+    * Sombra Naranja (Acechante): Persigue al jugador a distancia, pero si se acerca a menos de 4 casillas huye a su esquina de dispersión.
+- **Corrección de Banners HUD**:
+  - Regla global `.hidden { display: none !important; }` en `style.css` para evitar visibilidad indebida de avisos de jefes en niveles regulares.
+
+### 6. Corrección de Congelamiento y Arranque Directo (15 de Octubre de 2026)
+- **Separación de Estados READY y PLAYING en `gameLoop`**:
+  - Se corrigió la causa raíz por la que ni el protagonista ni los fantasmas se movían: el bloque `gameLoop` evaluaba erróneamente toda la actualización dentro de `if (State.gameState === 'READY')`. Al pasar a `'PLAYING'`, el bucle no llamaba a `updatePlayer` ni `updateShadows`.
+  - Ahora `READY` gestiona la cuenta regresiva con aviso "¡LISTO!", y `PLAYING` ejecuta la simulación continua de movimiento, persecución, recolección y colisiones a 60 FPS.
+- **Navegación Fluida en Cuadrícula de Sombras**:
+  - Se solucionó el reinicio de coordenadas en `cellCenterX`: ahora la toma de decisiones se dispara con comprobación de cruce de umbral (`crossedX` / `crossedY`) y colisión anticipada contra muros, garantizando que las sombras recorran todos los corredores sin trabarse.
+- **Arranque Inmediato sin Pantallas de Bloqueo**:
+  - Se añadió la clase `hidden` a `#start-card` en `index.html` e `init()` llama directamente a `startLevel(0)`, permitiendo jugar inmediatamente al cargar la página tanto en PC como en móviles.
+
