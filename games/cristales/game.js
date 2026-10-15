@@ -867,6 +867,10 @@
   function executeDoubleSpecial(r1, c1, r2, c2) {
     const s1 = State.grid[r1][c1].special;
     const s2 = State.grid[r2][c2].special;
+    const type1 = State.grid[r1][c1].type;
+    const type2 = State.grid[r2][c2].type;
+    const targetColor = type1 || type2 || 1;
+
     State.grid[r1][c1] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
     State.grid[r2][c2] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
 
@@ -893,7 +897,7 @@
     }
     // Prisma + Cualquier Especial: Dispersión total
     else {
-      clearAllOfType(State.grid[r1][c1].type || 1);
+      clearAllOfType(targetColor);
     }
 
     setTimeout(resolveMatches, 300);
@@ -949,11 +953,82 @@
     }
   }
 
+  function hasEmptyCells(grid) {
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (grid[r][c].type === 0 && grid[r][c].obstacle !== CONFIG.OBSTACLES.LOCKED) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  function refillEmptyCells(grid) {
+    for (let r = 0; r < 8; r++) {
+      for (let c = 0; c < 8; c++) {
+        if (grid[r][c].type === 0 && grid[r][c].obstacle !== CONFIG.OBSTACLES.LOCKED) {
+          grid[r][c] = {
+            type: Math.floor(Math.random() * CONFIG.NUM_GEM_TYPES) + 1,
+            special: CONFIG.SPECIALS.NONE,
+            obstacle: CONFIG.OBSTACLES.NONE
+          };
+        }
+      }
+    }
+  }
+
+  function verifyBoardSync() {
+    let hasDiscrepancy = false;
+    const discrepancyDetails = [];
+
+    for (let r = 0; r < CONFIG.ROWS; r++) {
+      for (let c = 0; c < CONFIG.COLS; c++) {
+        const cell = State.grid[r][c];
+        if (!cell) {
+          hasDiscrepancy = true;
+          discrepancyDetails.push(`Celda nula en (${r},${c})`);
+          continue;
+        }
+
+        // Si no es piedra bloqueada, debe tener un tipo de gema válido 1..6 y no estar vacía
+        if (cell.obstacle !== CONFIG.OBSTACLES.LOCKED) {
+          if (cell.type < 1 || cell.type > CONFIG.NUM_GEM_TYPES) {
+            hasDiscrepancy = true;
+            discrepancyDetails.push(`Celda vacía o tipo inválido en (${r},${c}): type=${cell.type}`);
+          }
+        }
+      }
+    }
+
+    const isDebug = typeof window !== 'undefined' && window.location && window.location.search.includes('debug=1');
+    if (hasDiscrepancy) {
+      console.error('[Cristales Desincronización] Discrepancia detectada en tablero:', discrepancyDetails);
+      if (isDebug) {
+        window.ArcadeJuice?.spawnFloat('⚠️ DESINCRONIZACIÓN DETECTADA', CONFIG.VIRTUAL_W / 2, 120, '#ff0055', 16);
+      }
+    } else if (isDebug) {
+      console.log('[Cristales Debug] Sincronización tablero verificada: OK (0 celdas desincronizadas).');
+    }
+
+    return !hasDiscrepancy;
+  }
+
   function resolveMatches() {
     State.isCascading = true;
     const matches = CristalesLogic.findMatches(State.grid);
 
     if (matches.length === 0) {
+      // Si quedaron casillas vacías (por especiales o martillo), compactar y rellenar obligatoriamente
+      if (hasEmptyCells(State.grid)) {
+        setTimeout(() => {
+          CristalesLogic.applyGravity(State.grid);
+          refillEmptyCells(State.grid);
+          setTimeout(resolveMatches, 220);
+        }, 180);
+        return;
+      }
+
       State.isSwapping = false;
       State.isCascading = false;
       State.comboCount = 1;
@@ -962,13 +1037,28 @@
       // Transformar piezas Shifters
       transformShifters();
 
+      // Verificación de integridad entre matriz lógica y visual (?debug=1)
+      verifyBoardSync();
+
       // Verificar condición de victoria o derrota
       checkLevelState();
       return;
     }
 
-    // Hay matches: procesar
+    // Hay matches: procesar de forma atómica y no destructiva
     let matchedGemsCount = 0;
+    const eliminatedCells = new Set();
+    const createdSpecialsThisStep = new Map();
+
+    // Detectar intersecciones (cruces, L-shape, T-shape)
+    const cellMatchCount = new Map();
+    for (const m of matches) {
+      for (const cell of m.cells) {
+        const key = `${cell.r},${cell.c}`;
+        cellMatchCount.set(key, (cellMatchCount.get(key) || 0) + 1);
+      }
+    }
+
     for (const m of matches) {
       const len = m.cells.length;
       let specialToCreate = CONFIG.SPECIALS.NONE;
@@ -978,21 +1068,59 @@
         specialToCreate = CONFIG.SPECIALS.COLOR_BOMB;
       }
 
+      // Si una celda es intersección de dos matches, se crea una Bomba de área
+      let targetSpecialCell = m.cells[0];
+      for (const cell of m.cells) {
+        const key = `${cell.r},${cell.c}`;
+        if (cellMatchCount.get(key) > 1) {
+          targetSpecialCell = cell;
+          specialToCreate = CONFIG.SPECIALS.BOMB;
+          break;
+        }
+      }
+
       for (let i = 0; i < len; i++) {
         const cell = m.cells[i];
         matchedGemsCount++;
-
-        // Quitar hielo
         State.iceGrid[cell.r][cell.c] = 0;
+        eliminatedCells.add(`${cell.r},${cell.c}`);
 
-        if (i === 0 && specialToCreate !== CONFIG.SPECIALS.NONE) {
-          State.grid[cell.r][cell.c] = { type: m.type, special: specialToCreate, obstacle: CONFIG.OBSTACLES.NONE };
-        } else {
-          State.grid[cell.r][cell.c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+        // Si la celda contenía un especial previo, detonar sus efectos en cadena
+        const currentGem = State.grid[cell.r][cell.c];
+        if (currentGem.special === CONFIG.SPECIALS.LINE_H) {
+          for (let c = 0; c < 8; c++) eliminatedCells.add(`${cell.r},${c}`);
+        } else if (currentGem.special === CONFIG.SPECIALS.LINE_V) {
+          for (let r = 0; r < 8; r++) eliminatedCells.add(`${r},${cell.c}`);
+        } else if (currentGem.special === CONFIG.SPECIALS.BOMB) {
+          for (let dr = -1; dr <= 1; dr++) {
+            for (let dc = -1; dc <= 1; dc++) {
+              const nr = cell.r + dr, nc = cell.c + dc;
+              if (nr >= 0 && nr < 8 && nc >= 0 && nc < 8) eliminatedCells.add(`${nr},${nc}`);
+            }
+          }
         }
-
-        spawnGlow(cell.c, cell.r, CONFIG.GEMS[m.type - 1]?.base || '#fff');
       }
+
+      if (specialToCreate !== CONFIG.SPECIALS.NONE) {
+        createdSpecialsThisStep.set(`${targetSpecialCell.r},${targetSpecialCell.c}`, {
+          type: m.type,
+          special: specialToCreate,
+          obstacle: CONFIG.OBSTACLES.NONE
+        });
+      }
+    }
+
+    // Aplicar eliminaciones y asignación atómica de especiales creados sin sobrescrituras destructivas
+    for (const key of eliminatedCells) {
+      const [r, c] = key.split(',').map(Number);
+      if (State.grid[r][c].obstacle === CONFIG.OBSTACLES.LOCKED) continue;
+
+      if (createdSpecialsThisStep.has(key)) {
+        State.grid[r][c] = createdSpecialsThisStep.get(key);
+      } else {
+        State.grid[r][c] = { type: 0, special: CONFIG.SPECIALS.NONE, obstacle: CONFIG.OBSTACLES.NONE };
+      }
+      spawnGlow(c, r, '#ffffff');
     }
 
     // Puntuación
@@ -1015,18 +1143,7 @@
     // Aplicar gravedad y rellenar
     setTimeout(() => {
       CristalesLogic.applyGravity(State.grid);
-      // Rellenar vacíos
-      for (let r = 0; r < 8; r++) {
-        for (let c = 0; c < 8; c++) {
-          if (State.grid[r][c].type === 0 && State.grid[r][c].obstacle !== CONFIG.OBSTACLES.LOCKED) {
-            State.grid[r][c] = {
-              type: Math.floor(Math.random() * CONFIG.NUM_GEM_TYPES) + 1,
-              special: CONFIG.SPECIALS.NONE,
-              obstacle: CONFIG.OBSTACLES.NONE
-            };
-          }
-        }
-      }
+      refillEmptyCells(State.grid);
       setTimeout(resolveMatches, 220);
     }, 180);
   }
@@ -1165,12 +1282,14 @@
   }
 
   function applyShufflePowerup() {
+    if (State.isSwapping || State.isCascading) return;
     if (State.saveData.powerups.shuffle <= 0) return;
     State.saveData.powerups.shuffle--;
     updatePowerupCounts();
     saveGameData();
 
     CristalesLogic.shuffleUntilValid(State.grid, CONFIG.NUM_GEM_TYPES);
+    verifyBoardSync();
     playAudio('special_prism');
     window.ArcadeJuice?.shake(5, 0.2);
     window.ArcadeJuice?.spawnFloat('¡MEZCLA CÓSMICA!', CONFIG.VIRTUAL_W / 2, 200, '#00e5ff', 13);
@@ -1441,6 +1560,7 @@
 
     // Potenciadores
     dom.btnPowerupHammer.addEventListener('click', () => {
+      if (State.isSwapping || State.isCascading) return;
       if (State.activePowerupTool === 'hammer') {
         State.activePowerupTool = null;
         dom.btnPowerupHammer.classList.remove('active');
@@ -1452,6 +1572,7 @@
     });
 
     dom.btnPowerupSwap.addEventListener('click', () => {
+      if (State.isSwapping || State.isCascading) return;
       if (State.activePowerupTool === 'swap') {
         State.activePowerupTool = null;
         dom.btnPowerupSwap.classList.remove('active');
@@ -1657,6 +1778,12 @@
     setupInputs();
     setupUI();
     renderWorldMap(1);
+
+    if (typeof window !== 'undefined') {
+      window.verifyBoardSync = verifyBoardSync;
+      window.CristalesState = State;
+      window.CristalesLogic = CristalesLogic;
+    }
 
     requestAnimationFrame(gameLoop);
   }

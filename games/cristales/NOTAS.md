@@ -52,3 +52,32 @@
   8. *Coleccionista Resplandeciente*
 - **Persistencia Versionada**: Clave `cristales:v2` con migración de progreso previo, estrellas por nivel y récord histórico.
 - **Opciones y Accesibilidad**: Ajuste de SFX, BGM, vibración háptica, modo de alto contraste y soporte de depuración con `?debug=1`.
+
+## Fecha: 15 de Octubre de 2026
+## Corrección de Raíz: Desaparición de Cristales y Verificación de Invariantes
+
+### 1. Diagnóstico y Causa Raíz
+Se detectaron y corrigieron 3 causas raíz concretas en `games/cristales/game.js`:
+1. **Retorno prematuro en `resolveMatches` dejando celdas vacías (`type: 0`)**:
+   - Cuando se detonaban especiales cruzados (`executeDoubleSpecial`), prismas de color (`executeColorPrism`) o martillos (`applyHammer`), las casillas afectadas se marcaban como vacías (`type: 0`) y luego se llamaba a `resolveMatches()`. Si el estado resultante no formaba inmediatamente un trío ordinario adicional (`matches.length === 0`), `resolveMatches()` salía inmediatamente sin invocar la compactación por gravedad (`applyGravity`) ni el relleno de celdas (`refillEmptyCells`). Como resultado, el render omitía dibujar gemas en casillas con `type: 0` y, en la siguiente jugada del usuario, la gravedad diferida hacía caer las piezas superiores de forma imprevista, simulando que cristales previos habían desaparecido.
+2. **Sobrescritura destructiva en cruces e intersecciones (L-shape / T-shape)**:
+   - En combinaciones solapadas en forma de L o T, el primer trío creaba un cristal especial en `cell[0]`, pero el segundo match que compartía esa coordenada ejecutaba la rama `else` y reseteaba la casilla a `type: 0`, evaporando el cristal especial recién creado.
+3. **Pérdida de color en combinaciones de Prisma de Color**:
+   - En `executeDoubleSpecial`, la celda del prisma se vaciaba a `type: 0` antes de consultar el tipo de gema de la celda vecina, lo que provocaba que la lectura del color cayera a un valor por defecto (1) independientemente del cristal seleccionado.
+
+### 2. Solución Aplicada
+- En `resolveMatches()` se introdujo `hasEmptyCells(grid)` y `refillEmptyCells(grid)`. Si `matches.length === 0` pero existen celdas vacías (`type === 0`), el juego compacta y rellena obligatoriamente antes de desbloquear el turno del jugador.
+- Se implementó recolección y asignación atómica con `eliminatedCells` (Set) y `createdSpecialsThisStep` (Map), garantizando que las gemas especiales en intersecciones nunca se sobrescriban destructivamente con `type: 0`.
+- Se añadieron detonaciones en cadena para especiales preexistentes en casillas emparejadas (Líneas H/V y Bombas).
+- Se implementó `verifyBoardSync()`, el cual valida que no existan celdas nulas o vacías tras cada resolución. En modo `?debug=1`, genera alertas visuales flotantes y logs detallados en la consola si ocurre cualquier desincronización.
+- Se blindaron los potenciadores (Martillo, Intercambio libre y Mezcla cósmica) contra activaciones durante secuencias de intercambio o cascadas (`State.isSwapping || State.isCascading`).
+
+### 3. Suite de Verificación de Invariantes
+- Guardada en `scripts/test_cristales_invariants.js`.
+- Simula 5,000 partidas completas (35,000+ movimientos con obstáculos y especiales) verificando paso a paso:
+  - **Invariante A**: Ninguna celda queda vacía tras finalizar la resolución.
+  - **Invariante B**: Las piezas supervivientes conservan su tipo y conteo estricto.
+  - **Invariante C**: El relleno escribe exclusivamente en celdas vacías.
+  - **Invariante D**: El orden relativo de las piezas por columna se preserva al caer.
+- Verificación end-to-end adicional en navegador real mediante `scripts/test_browser_cristales.js` (20 turnos con eventos pointerdown e inspección con Chrome Headless).
+
