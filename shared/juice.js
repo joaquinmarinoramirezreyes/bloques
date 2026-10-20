@@ -227,7 +227,7 @@
     /**
      * Desbloquea un logro con aviso banner animado y persistencia
      */
-    unlockAchievement(gameId, achId, title, desc, icon = '🏆') {
+    unlockAchievement(gameId, achId, title, desc, icon = 'trophy') {
       if (!gameId || !achId) return;
       const key = `arcade_ach_${gameId}_${achId}`;
       try {
@@ -255,7 +255,7 @@
     /**
      * Muestra banner animado de logro desbloqueado
      */
-    showAchievementBanner(title, desc, icon = '🏆') {
+    showAchievementBanner(title, desc, icon = 'trophy') {
       let banner = document.getElementById('arcade-achievement-toast');
       if (!banner) {
         banner = document.createElement('div');
@@ -265,15 +265,15 @@
           top: 14px;
           left: 50%;
           transform: translateX(-50%) translateY(-100px);
-          background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-          border: 2px solid #f59e0b;
-          box-shadow: 0 8px 24px rgba(0,0,0,0.8), 0 0 12px rgba(245, 158, 11, 0.4);
+          background: #1e293b;
+          border: 1.5px solid #f59e0b;
+          box-shadow: 0 4px 16px rgba(0,0,0,0.6);
           color: #fff;
           padding: 8px 16px;
           border-radius: 8px;
           display: flex;
           align-items: center;
-          gap: 10px;
+          gap: 12px;
           z-index: 9999;
           font-family: monospace, system-ui;
           transition: transform 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
@@ -283,10 +283,19 @@
         document.body.appendChild(banner);
       }
 
+      let iconHtml = '';
+      if (window.ArcadeIcons && window.ArcadeIcons.has(icon)) {
+        iconHtml = window.ArcadeIcons.get(icon, { size: 24, color: '#f59e0b' });
+      } else if (typeof icon === 'string' && icon.startsWith('<svg')) {
+        iconHtml = icon;
+      } else if (window.ArcadeIcons) {
+        iconHtml = window.ArcadeIcons.get('trophy', { size: 24, color: '#f59e0b' });
+      }
+
       banner.innerHTML = `
-        <span style="font-size: 24px;">${icon}</span>
+        <span style="display: flex; align-items: center; color: #f59e0b;">${iconHtml}</span>
         <div style="display: flex; flex-direction: column;">
-          <span style="color: #f59e0b; font-weight: 900; font-size: 11px; letter-spacing: 1px;">¡LOGRO DESBLOQUEADO!</span>
+          <span style="color: #f59e0b; font-weight: 800; font-size: 11px; letter-spacing: 0.5px;">LOGRO DESBLOQUEADO</span>
           <span style="font-weight: 800; font-size: 13px;">${title}</span>
           <span style="color: #94a3b8; font-size: 10px;">${desc}</span>
         </div>

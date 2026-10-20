@@ -1084,12 +1084,19 @@
         ctx.arc(e.slamTargetX, e.slamTargetY, e.slamRadius * progress, 0, Math.PI * 2);
         ctx.fill();
 
-        // Icono de advertencia en el epicentro
-        ctx.font = 'bold 16px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
+        // Indicador de advertencia en el epicentro
+        ctx.strokeStyle = '#f87171';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(e.slamTargetX - 8, e.slamTargetY);
+        ctx.lineTo(e.slamTargetX + 8, e.slamTargetY);
+        ctx.moveTo(e.slamTargetX, e.slamTargetY - 8);
+        ctx.lineTo(e.slamTargetX, e.slamTargetY + 8);
+        ctx.stroke();
         ctx.fillStyle = '#f87171';
-        ctx.fillText('⚠️', e.slamTargetX, e.slamTargetY);
+        ctx.beginPath();
+        ctx.arc(e.slamTargetX, e.slamTargetY, 3, 0, Math.PI * 2);
+        ctx.fill();
 
         ctx.restore();
       }
@@ -1123,11 +1130,19 @@
           ctx.arc(0, -z, e.radius + 6 + auraPulse, 0, Math.PI * 2);
           ctx.stroke();
 
-          // Corona / Marca 3D sobre la cabeza
+          // Corona / Marca sobre la cabeza (vector 2D)
           ctx.fillStyle = '#f59e0b';
-          ctx.font = 'bold 12px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.fillText('👑', 0, -z - e.radius - 12);
+          const cy = -z - e.radius - 12;
+          ctx.beginPath();
+          ctx.moveTo(-6, cy + 4);
+          ctx.lineTo(-7, cy - 3);
+          ctx.lineTo(-3, cy);
+          ctx.lineTo(0, cy - 5);
+          ctx.lineTo(3, cy);
+          ctx.lineTo(7, cy - 3);
+          ctx.lineTo(6, cy + 4);
+          ctx.closePath();
+          ctx.fill();
           ctx.restore();
         }
 
@@ -2468,12 +2483,16 @@
           }
           ctx.stroke();
 
-          // Símbolo de candado
+          // Símbolo de candado vectorial
+          ctx.strokeStyle = '#f43f5e';
           ctx.fillStyle = '#f43f5e';
-          ctx.font = 'bold 12px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText('🔒', x + w / 2, y + h / 2);
+          ctx.lineWidth = 1.5;
+          const lx = x + w / 2;
+          const ly = y + h / 2;
+          ctx.beginPath();
+          ctx.arc(lx, ly - 3, 3.5, Math.PI, 0, false);
+          ctx.stroke();
+          ctx.fillRect(lx - 5, ly - 1, 10, 8);
         } else {
           // Portal abierto con resplandor cyan etéreo pulsante
           const pulse = Math.sin(performance.now() * 0.007) * 0.15 + 0.35;
@@ -2484,16 +2503,22 @@
           ctx.fillRect(x, y, w, h);
           ctx.strokeRect(x, y, w, h);
 
-          // Flecha direccional animada indicando paso libre
+          // Flecha direccional animada indicando paso libre (vectorial)
           ctx.fillStyle = '#ffffff';
-          ctx.font = 'bold 13px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          let arrow = '▲';
-          if (dir === 'S') arrow = '▼';
-          else if (dir === 'E') arrow = '►';
-          else if (dir === 'W') arrow = '◄';
-          ctx.fillText(arrow, x + w / 2, y + h / 2);
+          const fx = x + w / 2;
+          const fy = y + h / 2;
+          ctx.beginPath();
+          if (dir === 'N') {
+            ctx.moveTo(fx, fy - 4); ctx.lineTo(fx - 4, fy + 4); ctx.lineTo(fx + 4, fy + 4);
+          } else if (dir === 'S') {
+            ctx.moveTo(fx, fy + 4); ctx.lineTo(fx - 4, fy - 4); ctx.lineTo(fx + 4, fy - 4);
+          } else if (dir === 'E') {
+            ctx.moveTo(fx + 4, fy); ctx.lineTo(fx - 4, fy - 4); ctx.lineTo(fx - 4, fy + 4);
+          } else {
+            ctx.moveTo(fx - 4, fy); ctx.lineTo(fx + 4, fy - 4); ctx.lineTo(fx + 4, fy + 4);
+          }
+          ctx.closePath();
+          ctx.fill();
         }
         ctx.restore();
       };
@@ -2547,9 +2572,9 @@
         ctx.restore();
       } else if (this.cachedRoomData.type === 'tienda') {
         const items = this.cachedRoomData.shopItems || [
-          { id: 'potion', name: 'Poción de Vida', cost: 30, icon: '💚', bought: false },
-          { id: 'upgrade_1', name: 'Bendición Ofensiva', cost: 45, icon: '⚔️', bought: false },
-          { id: 'upgrade_2', name: 'Reliquia Arcana', cost: 65, icon: '💎', bought: false }
+          { id: 'potion', name: 'Poción de Vida', cost: 30, icon: 'heart', bought: false },
+          { id: 'upgrade_1', name: 'Bendición Ofensiva', cost: 45, icon: 'swords', bought: false },
+          { id: 'upgrade_2', name: 'Reliquia Arcana', cost: 65, icon: 'gem', bought: false }
         ];
 
         const offsets = [-130, 0, 130];
@@ -2576,10 +2601,21 @@
 
           // Ícono del objeto flotando
           const bob = item.bought ? 0 : Math.sin(performance.now() * 0.005 + i) * 4;
-          ctx.font = '22px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(item.bought ? '✓' : item.icon, 0, -18 + bob);
+          if (item.bought) {
+            ctx.strokeStyle = '#94a3b8';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(-6, -18); ctx.lineTo(-2, -14); ctx.lineTo(6, -22);
+            ctx.stroke();
+          } else if (typeof window !== 'undefined' && window.ArcadeIcons && typeof window.ArcadeIcons.drawToCanvas === 'function') {
+            const iconCol = item.icon === 'heart' ? '#4ade80' : (item.icon === 'gem' ? '#fbbf24' : '#e11d48');
+            window.ArcadeIcons.drawToCanvas(ctx, item.icon || 'gem', 0, -18 + bob, 22, iconCol, true);
+          } else {
+            ctx.fillStyle = '#38bdf8';
+            ctx.beginPath();
+            ctx.arc(0, -18 + bob, 8, 0, Math.PI * 2);
+            ctx.fill();
+          }
 
           // Etiqueta de precio o estado
           ctx.font = 'bold 10px sans-serif';
@@ -2588,7 +2624,7 @@
             ctx.fillText('COMPRADO', 0, 28);
           } else {
             ctx.fillStyle = '#fbbf24';
-            ctx.fillText(`🪙 ${item.cost}`, 0, 28);
+            ctx.fillText(`${item.cost} ORO`, 0, 28);
           }
           ctx.restore();
         }
@@ -2783,34 +2819,42 @@
             // Sala visitada
             let color = '#334155';
             let strokeColor = r.cleared ? 'rgba(255, 255, 255, 0.25)' : '#e11d48';
-            let icon = '';
+            let iconKey = '';
+            let iconText = '';
 
             if (r.type === 'inicio') {
               color = '#0284c7';
-              icon = '🏛️';
+              iconKey = 'flag';
+              iconText = 'I';
             } else if (r.type === 'jefe') {
               color = '#7e22ce';
               strokeColor = '#c084fc';
-              icon = '👑';
+              iconKey = 'crown';
+              iconText = 'J';
             } else if (r.type === 'tesoro') {
               color = '#d97706';
               strokeColor = '#fcd34d';
-              icon = '💎';
+              iconKey = 'gem';
+              iconText = 'T';
             } else if (r.type === 'tienda') {
               color = '#0891b2';
               strokeColor = '#67e8f9';
-              icon = '🪙';
+              iconKey = 'coin';
+              iconText = 'M';
             } else if (r.type === 'descanso') {
               color = '#15803d';
               strokeColor = '#86efac';
-              icon = '💚';
+              iconKey = 'heart';
+              iconText = 'S';
             } else if (r.type === 'elite') {
               color = '#9f1239';
               strokeColor = '#fda4af';
-              icon = '💀';
+              iconKey = 'skull';
+              iconText = 'E';
             } else if (r.type === 'combate') {
               color = r.cleared ? '#1e293b' : '#be123c';
-              icon = r.cleared ? '' : '⚔️';
+              iconKey = r.cleared ? '' : 'swords';
+              iconText = r.cleared ? '' : 'C';
             }
 
             ctx.fillStyle = color;
@@ -2822,11 +2866,17 @@
             ctx.strokeRect(rx, ry, rSize, rSize);
 
             // Icono en modal expandido o si hay espacio suficiente
-            if (isExpanded && icon) {
-              ctx.font = `${Math.floor(rSize * 0.48)}px sans-serif`;
-              ctx.textAlign = 'center';
-              ctx.textBaseline = 'middle';
-              ctx.fillText(icon, rx + rSize / 2, ry + rSize / 2);
+            if (isExpanded && iconKey) {
+              if (typeof window !== 'undefined' && window.ArcadeIcons && typeof window.ArcadeIcons.drawToCanvas === 'function' && typeof ctx.save === 'function') {
+                const iconSize = Math.floor(rSize * 0.5);
+                window.ArcadeIcons.drawToCanvas(ctx, iconKey, rx + (rSize - iconSize) / 2, ry + (rSize - iconSize) / 2, iconSize, '#ffffff');
+              } else if (typeof ctx.fillText === 'function') {
+                ctx.font = `${Math.floor(rSize * 0.48)}px sans-serif`;
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillStyle = '#ffffff';
+                ctx.fillText(iconText, rx + rSize / 2, ry + rSize / 2);
+              }
             }
           } else if (r.mapped) {
             // Sala adyacente descubierta (fog of war)
@@ -3241,7 +3291,11 @@
       if (roomData.type === 'jefe') {
         if (this.bossHudContainer) this.bossHudContainer.classList.remove('hidden');
         if (this.bossNameEl) this.bossNameEl.textContent = this.floor % 10 === 0 ? 'GÓLEM DEL NÚCLEO' : 'SEÑOR DEL ABISMO';
-        if (this.bossIconEl) this.bossIconEl.textContent = this.floor % 10 === 0 ? '🌋' : '👑';
+        if (this.bossIconEl) {
+          this.bossIconEl.innerHTML = (typeof window !== 'undefined' && window.ArcadeIcons)
+            ? window.ArcadeIcons.get(this.floor % 10 === 0 ? 'meteor' : 'crown', { size: 18 })
+            : '';
+        }
       } else if (this.bossHudContainer && !this.activeBoss) {
         this.bossHudContainer.classList.add('hidden');
       }
@@ -3258,7 +3312,9 @@
         this.roomBadgeNameEl.textContent = roomData.typeData.name;
       }
       if (this.roomBadgeIconEl && roomData.typeData) {
-        this.roomBadgeIconEl.textContent = roomData.typeData.icon || '⚔️';
+        this.roomBadgeIconEl.innerHTML = (typeof window !== 'undefined' && window.ArcadeIcons)
+          ? window.ArcadeIcons.get(roomData.typeData.icon || 'swords', { size: 16 })
+          : '';
       }
 
       // Si la sala no está despejada y tiene oleadas, bloquear puertas y empezar oleada 1
@@ -3267,23 +3323,23 @@
         this.currentWaveIndex = 0;
         if (this.state === 'PLAYING') {
           this.spawnWave(this.currentWaveIndex);
-          this.showWaveBanner(`¡OLEADA 1/${roomData.waves.length}!`, '⚔️', false);
+          this.showWaveBanner(`Oleada 1/${roomData.waves.length}`, 'swords', false);
         }
       } else {
         this.doorsLocked = false;
         if (roomData.type === 'tesoro') {
-          this.showWaveBanner('BÓVEDA DE RELIQUIAS', '💎', true);
+          this.showWaveBanner('Bóveda de Reliquias', 'gem', true);
         } else if (roomData.type === 'tienda') {
-          this.showWaveBanner('MERCADER UMBRÍO', '🪙', true);
+          this.showWaveBanner('Mercader Umbrío', 'coin', true);
           if (!roomData.shopItems) {
             roomData.shopItems = [
-              { id: 'potion', name: 'Poción de Vida', cost: CFG.SHOP_POTION_COST || 30, icon: '💚', bought: false },
-              { id: 'upgrade_1', name: 'Bendición Ofensiva', cost: CFG.SHOP_UPGRADE_COST || 45, icon: '⚔️', bought: false },
-              { id: 'upgrade_2', name: 'Reliquia Arcana', cost: CFG.SHOP_ELITE_UPGRADE_COST || 65, icon: '💎', bought: false }
+              { id: 'potion', name: 'Poción de Vida', cost: CFG.SHOP_POTION_COST || 30, icon: 'heart', bought: false },
+              { id: 'upgrade_1', name: 'Bendición Ofensiva', cost: CFG.SHOP_UPGRADE_COST || 45, icon: 'swords', bought: false },
+              { id: 'upgrade_2', name: 'Reliquia Arcana', cost: CFG.SHOP_ELITE_UPGRADE_COST || 65, icon: 'gem', bought: false }
             ];
           }
         } else if (roomData.type === 'descanso') {
-          this.showWaveBanner('SANTUARIO DE ALMAS', '💚', true);
+          this.showWaveBanner('Santuario de Almas', 'heart', true);
           // Curar al jugador un 40% si no ha usado el santuario
           if (!roomData.shrineUsed) {
             roomData.shrineUsed = true;
@@ -3322,10 +3378,14 @@
       }
     }
 
-    showWaveBanner(text, icon = '⚔️', isClear = false) {
+    showWaveBanner(text, icon = 'swords', isClear = false) {
       if (!this.waveBannerEl) return;
       if (this.waveBannerTextEl) this.waveBannerTextEl.textContent = text;
-      if (this.waveBannerIconEl) this.waveBannerIconEl.textContent = icon;
+      if (this.waveBannerIconEl) {
+        this.waveBannerIconEl.innerHTML = (typeof window !== 'undefined' && window.ArcadeIcons)
+          ? window.ArcadeIcons.get(icon, { size: 18 })
+          : '';
+      }
 
       this.waveBannerEl.className = isClear ? 'wave-banner clear-banner' : 'wave-banner';
       this.waveBannerEl.classList.remove('hidden');
@@ -3431,7 +3491,14 @@
         btnSound.addEventListener('click', () => {
           if (this.audio && this.audio.toggleMute) {
             const isMuted = this.audio.toggleMute();
-            btnSound.querySelector('.icon').textContent = isMuted ? '🔇' : '🔊';
+            const iconEl = btnSound.querySelector('.icon');
+            if (iconEl) {
+              if (window.ArcadeIcons && window.ArcadeIcons.get) {
+                iconEl.innerHTML = window.ArcadeIcons.get(isMuted ? 'soundOff' : 'soundOn', { size: 18 });
+              } else {
+                iconEl.textContent = isMuted ? 'OFF' : 'ON';
+              }
+            }
             if (isMuted) {
               if (this.audioHelper) this.audioHelper.stopAmbientMusic();
             } else if (this.state === 'PLAYING') {
@@ -3453,7 +3520,7 @@
 
           if (!isUnlocked) {
             if (previewDesc && char) {
-              previewDesc.innerHTML = `<span style="color:#f43f5e">🔒 <strong>${char.name} (BLOQUEADO):</strong> Desbloquéalo en el Altar del Abismo con ${char.costEssence || 100} ✨ de esencia.</span>`;
+              previewDesc.innerHTML = `<span style="color:#f43f5e"><strong>${char.name} (BLOQUEADO):</strong> Desbloquéalo en el Altar del Abismo con ${char.costEssence || 100} de esencia.</span>`;
             }
             if (this.audio && this.audio.playTone) this.audio.playTone(130, 'sawtooth', 0.1, 0.08);
             return;
@@ -3558,7 +3625,7 @@
         this.doorsLocked = true;
         this.currentWaveIndex = 0;
         this.spawnWave(0);
-        this.showWaveBanner(`¡OLEADA 1/${this.currentRoom.waves.length}!`, '⚔️', false);
+        this.showWaveBanner(`Oleada 1/${this.currentRoom.waves.length}`, 'swords', false);
       } else if (this.currentRoom) {
         this.currentRoom.cleared = false;
         this.currentRoom.waves = [
@@ -3568,7 +3635,7 @@
         this.doorsLocked = true;
         this.currentWaveIndex = 0;
         this.spawnWave(0);
-        this.showWaveBanner('¡OLEADA 1/2: PURGA LA CRIPTA!', '⚔️', false);
+        this.showWaveBanner('Oleada 1/2: Purga la cripta', 'swords', false);
       }
     }
 
@@ -3630,7 +3697,7 @@
         this.doorsLocked = true;
         this.currentWaveIndex = 0;
         this.spawnWave(0);
-        this.showWaveBanner(`¡OLEADA 1/${this.currentRoom.waves.length}!`, '⚔️', false);
+        this.showWaveBanner(`Oleada 1/${this.currentRoom.waves.length}`, 'swords', false);
       }
     }
 
@@ -3970,12 +4037,12 @@
           // Avanzar a la siguiente oleada
           this.currentWaveIndex++;
           this.spawnWave(this.currentWaveIndex);
-          this.showWaveBanner(`¡OLEADA ${this.currentWaveIndex + 1}/${waves.length}!`, '⚔️', false);
+          this.showWaveBanner(`Oleada ${this.currentWaveIndex + 1}/${waves.length}`, 'swords', false);
         } else {
-          // ¡Sala despejada! Abrir puertas
+          // Sala despejada: Abrir puertas
           this.currentRoom.cleared = true;
           this.doorsLocked = false;
-          this.showWaveBanner('¡SALA DESPEJADA! PUERTAS ABIERTAS', '✨', true);
+          this.showWaveBanner('Sala despejada: puertas abiertas', 'spark', true);
           if (this.audio && this.audio.playClear) this.audio.playClear();
           this.minimap.render(this.dungeon, this.currentRoom);
           if (this.state === 'MAP_VIEW' && this.mapModalCanvas) {
@@ -3993,7 +4060,7 @@
       );
 
       if (damageApplied === 'BLOCKED') {
-        this.floatingTexts.spawn(this.player.x, this.player.y - 15, '¡BLOQUEO!', '#38bdf8', true);
+        this.floatingTexts.spawn(this.player.x, this.player.y - 15, 'BLOQUEO', '#38bdf8', true);
         for (let k = 0; k < 12; k++) {
           this.particles.spawn(this.player.x, this.player.y, (Math.random() - 0.5) * 120, (Math.random() - 0.5) * 120, 0.35, 4, '#38bdf8');
         }
@@ -4016,9 +4083,9 @@
       if (dist < explosive.explosionRadius) {
         const damageApplied = this.player.takeDamage(explosive.damage, (this.player.x - explosive.x) * 0.2, (this.player.y - explosive.y) * 0.2);
         if (damageApplied === 'BLOCKED') {
-          this.floatingTexts.spawn(this.player.x, this.player.y - 15, '¡BLOQUEO!', '#38bdf8', true);
+          this.floatingTexts.spawn(this.player.x, this.player.y - 15, 'BLOQUEO', '#38bdf8', true);
         } else if (damageApplied) {
-          this.floatingTexts.spawn(this.player.x, this.player.y - 15, `-${explosive.damage}!`, '#ef4444', true);
+          this.floatingTexts.spawn(this.player.x, this.player.y - 15, `-${explosive.damage}`, '#ef4444', true);
         }
       }
 
@@ -4116,7 +4183,7 @@
             if (chainTarget && chainTarget.entity) {
               const chainDmg = Math.round(p.damage * 0.65);
               const killed = chainTarget.entity.takeDamage(chainDmg, 0, 0, p.x, p.y);
-              this.floatingTexts.spawn(chainTarget.entity.x, chainTarget.entity.y, `⚡${chainDmg}`, '#38bdf8', true);
+              this.floatingTexts.spawn(chainTarget.entity.x, chainTarget.entity.y, `${chainDmg}`, '#38bdf8', true);
               for (let k = 0; k < 8; k++) {
                 this.particles.spawn(chainTarget.entity.x, chainTarget.entity.y, (Math.random() - 0.5) * 80, (Math.random() - 0.5) * 80, 0.22, 3, '#38bdf8');
               }
@@ -4241,8 +4308,8 @@
           }
         }
         this.triggerScreenShake(14, 0.45);
-        this.showWaveBanner('¡JEFE DERROTADO! PORTAL ABIERTO', '👑', true);
-        this.floatingTexts.spawn(enemy.x, enemy.y - 25, '¡VICTORIA COLOSAL!', '#fbbf24', true);
+        this.showWaveBanner('Jefe derrotado: portal abierto', 'portal', true);
+        this.floatingTexts.spawn(enemy.x, enemy.y - 25, 'VICTORIA', '#fbbf24', true);
       }
 
       if (this.audio && this.audio.playClear) this.audio.playClear();
@@ -4278,7 +4345,7 @@
       }
 
       const bName = (this.dungeon && this.dungeon.currentBiome) ? this.dungeon.currentBiome.name.toUpperCase() : 'ABISMO';
-      this.showWaveBanner(`¡PISO ${this.floor}: ${bName}!`, '🌀', true);
+      this.showWaveBanner(`Piso ${this.floor}: ${bName}`, 'portal', true);
       this.triggerScreenShake(8, 0.3);
       if (this.audio && this.audio.playClear) this.audio.playClear();
     }
@@ -4371,7 +4438,7 @@
                 this.floatingTexts.spawn(this.player.x, this.player.y - 20, '+45 HP', '#4ade80', true);
               } else {
                 // Ofrecer bendición o reliquia adquirida
-                this.triggerLevelUpBlessing(`¡COMPRA: ${item.name.toUpperCase()}!`, 'Elige la bendición adquirida con el mercader');
+                this.triggerLevelUpBlessing(`Compra: ${item.name}`, 'Bendición adquirida con el mercader:');
               }
 
               for (let k = 0; k < 16; k++) {
@@ -4383,7 +4450,7 @@
               this.updateHUD();
             } else if (this._shopWarningTimer <= 0) {
               this._shopWarningTimer = 1.3;
-              this.floatingTexts.spawn(this.player.x, this.player.y - 20, `¡Oro insuficiente! (${item.cost} 🪙)`, '#ef4444', true);
+              this.floatingTexts.spawn(this.player.x, this.player.y - 20, `Oro insuficiente (${item.cost})`, '#ef4444', true);
               if (this.audio && this.audio.playTone) this.audio.playTone(140, 'sawtooth', 0.1, 0.08);
             }
           }
@@ -4394,10 +4461,10 @@
     triggerNextLevelUp() {
       if (this.pendingLevelUps <= 0) return;
       this.pendingLevelUps--;
-      this.triggerLevelUpBlessing('¡NIVEL ALCANZADO!', 'Elige una bendición arcana para potenciarte:');
+      this.triggerLevelUpBlessing('Nivel alcanzado', 'Elige una bendición para potenciarte:');
     }
 
-    triggerLevelUpBlessing(title = '¡NIVEL ALCANZADO!', subtitle = 'Elige una bendición arcana para potenciarte:') {
+    triggerLevelUpBlessing(title = 'Nivel alcanzado', subtitle = 'Elige una bendición para potenciarte:') {
       this.state = 'LEVELUP';
 
       if (this.levelUpTitle) this.levelUpTitle.textContent = title;
@@ -4413,8 +4480,9 @@
         // Si no quedan mejoras disponibles
         const emptyCard = document.createElement('div');
         emptyCard.className = 'upgrade-card rarity-comun';
+        const crownSvg = (window.ArcadeIcons && window.ArcadeIcons.get) ? window.ArcadeIcons.get('trophy', { size: 28 }) : '';
         emptyCard.innerHTML = `
-          <div class="card-icon">👑</div>
+          <div class="card-icon">${crownSvg}</div>
           <div class="card-name">Poder Absoluto</div>
           <div class="card-desc">Has dominado todas las bendiciones arcanas. Restaura 50 HP.</div>
         `;
@@ -4429,14 +4497,17 @@
           card.className = `upgrade-card rarity-${opt.rarity || 'comun'}`;
 
           const rarityBadge = opt.isSynergy ? 'SINERGIA' : (opt.rarity ? opt.rarity.toUpperCase() : 'COMÚN');
-          const lvlText = opt.isSynergy ? 'ÚNICA' : `Nivel ${opt.currentLevel || 0} ➔ ${opt.nextLevel || 1}`;
+          const lvlText = opt.isSynergy ? 'ÚNICA' : `Nivel ${opt.currentLevel || 0} / ${opt.nextLevel || 1}`;
+          const cardIconSvg = (window.ArcadeIcons && window.ArcadeIcons.get && opt.icon)
+            ? window.ArcadeIcons.get(opt.icon, { size: 28 })
+            : ((window.ArcadeIcons && window.ArcadeIcons.get) ? window.ArcadeIcons.get('spark', { size: 28 }) : '');
 
           card.innerHTML = `
             <div class="card-top-row">
               <span class="card-rarity-badge">${rarityBadge}</span>
               <span class="card-level-badge">${lvlText}</span>
             </div>
-            <div class="card-icon">${opt.icon || '✨'}</div>
+            <div class="card-icon">${cardIconSvg}</div>
             <h3 class="card-name">${opt.name}</h3>
             <p class="card-desc">${opt.description}</p>
           `;
@@ -4463,7 +4534,7 @@
         UpgradeManager.applyUpgrade(this.player, upgradeId);
       }
 
-      this.floatingTexts.spawn(this.player.x, this.player.y - 25, `¡${upgradeName}!`, '#38bdf8', true);
+      this.floatingTexts.spawn(this.player.x, this.player.y - 25, `${upgradeName}`, '#38bdf8', true);
       this.updateHUD();
 
       this.closeLevelUpModal();
@@ -4516,10 +4587,10 @@
       if (resScore) resScore.textContent = this.score;
 
       const resEssenceEarned = document.getElementById('res-essence-earned');
-      if (resEssenceEarned) resEssenceEarned.textContent = `+${essenceEarned} ✨`;
+      if (resEssenceEarned) resEssenceEarned.textContent = `+${essenceEarned}`;
 
       const resEssenceTotal = document.getElementById('res-essence-total');
-      if (resEssenceTotal) resEssenceTotal.textContent = `${this.metaState.essence} ✨`;
+      if (resEssenceTotal) resEssenceTotal.textContent = `${this.metaState.essence}`;
 
       if (this.btnContinueRun) this.btnContinueRun.classList.add('hidden');
       this.updateEssenceDisplay();
@@ -4529,7 +4600,7 @@
       }
 
       if (newAchievements && newAchievements.length > 0) {
-        this.floatingTexts.spawn(this.player.x, this.player.y - 30, `¡LOGRO: ${newAchievements[0].name}!`, '#fbbf24', true);
+        this.floatingTexts.spawn(this.player.x, this.player.y - 30, `Logro: ${newAchievements[0].name}`, '#fbbf24', true);
       }
 
       if (this.audio && this.audio.playGameOver) {
@@ -4712,7 +4783,8 @@
           if (!badge) {
             badge = document.createElement('span');
             badge.className = 'char-card-lock-badge';
-            badge.textContent = '🔒 Bloqueado';
+            const lockSvg = (window.ArcadeIcons && window.ArcadeIcons.get) ? window.ArcadeIcons.get('lock', { size: 12 }) : '';
+            badge.innerHTML = `${lockSvg} Bloqueado`;
             card.appendChild(badge);
           }
         } else {
@@ -4788,7 +4860,7 @@
       this.state = 'PLAYING';
       this.lastTimestamp = performance.now();
       this.updateHUD();
-      this.showWaveBanner(`DESCENSO REANUDADO - PISO ${this.floor}`, '⚡', true);
+      this.showWaveBanner(`Descenso reanudado: Piso ${this.floor}`, 'portal', true);
     }
 
     initDebugPanel() {
@@ -4911,20 +4983,21 @@
         const isMax = currentRank >= u.maxRank;
         const cost = isMax ? 0 : (AbismoStorage ? AbismoStorage.getUpgradeCost(u, currentRank) : 999);
         const canAfford = !isMax && (this.metaState.essence >= cost);
+        const uIconSvg = (window.ArcadeIcons && window.ArcadeIcons.get && u.icon) ? window.ArcadeIcons.get(u.icon, { size: 22 }) : '';
 
         const card = document.createElement('div');
         card.className = 'meta-card';
         card.innerHTML = `
           <div class="meta-card-header">
             <div class="meta-card-title-group">
-              <span class="meta-card-icon">${u.icon}</span>
+              <span class="meta-card-icon">${uIconSvg}</span>
               <span class="meta-card-name">${u.name}</span>
             </div>
             <span class="meta-card-rank">${isMax ? 'MÁX' : 'Nv. ' + currentRank + ' / ' + u.maxRank}</span>
           </div>
           <p class="meta-card-desc">${u.desc}</p>
           <button class="meta-card-buy-btn" type="button" ${isMax || !canAfford ? 'disabled' : ''}>
-            ${isMax ? 'NIVEL MÁXIMO' : `MEJORAR (${cost} ✨)`}
+            ${isMax ? 'NIVEL MÁXIMO' : `MEJORAR (${cost} ESENCIA)`}
           </button>
         `;
 
@@ -4949,20 +5022,21 @@
         const isUnlocked = this.metaState.unlockedCharacters && this.metaState.unlockedCharacters.includes(c.id);
         const cost = c.costEssence || 120;
         const canAfford = !isUnlocked && (this.metaState.essence >= cost);
+        const userIconSvg = (window.ArcadeIcons && window.ArcadeIcons.get) ? window.ArcadeIcons.get('user', { size: 22 }) : '';
 
         const card = document.createElement('div');
         card.className = 'meta-card';
         card.innerHTML = `
           <div class="meta-card-header">
             <div class="meta-card-title-group">
-              <span class="meta-card-icon">🎭</span>
+              <span class="meta-card-icon">${userIconSvg}</span>
               <span class="meta-card-name">${c.name}</span>
             </div>
             <span class="meta-card-rank">${isUnlocked ? 'DESBLOQUEADO' : 'PERSONAJE'}</span>
           </div>
           <p class="meta-card-desc">${c.description}</p>
           <button class="meta-card-buy-btn" type="button" ${isUnlocked || !canAfford ? 'disabled' : ''}>
-            ${isUnlocked ? 'YA DESBLOQUEADO' : `DESBLOQUEAR (${cost} ✨)`}
+            ${isUnlocked ? 'YA DESBLOQUEADO' : `DESBLOQUEAR (${cost} ESENCIA)`}
           </button>
         `;
 
@@ -5020,22 +5094,23 @@
       if (elBosses) elBosses.textContent = st.bossesKilled || 0;
 
       const elEssence = document.getElementById('ach-stat-essence');
-      if (elEssence) elEssence.textContent = `${this.metaState.totalEssenceEarned || 0} ✨`;
+      if (elEssence) elEssence.textContent = `${this.metaState.totalEssenceEarned || 0} ESENCIA`;
 
       if (!this.achievementsListGrid) return;
       this.achievementsListGrid.innerHTML = '';
 
       LOGROS.forEach((l) => {
         const isUnlocked = this.metaState.achievements && this.metaState.achievements.includes(l.id);
+        const lIconSvg = (window.ArcadeIcons && window.ArcadeIcons.get && l.icon) ? window.ArcadeIcons.get(l.icon, { size: 22 }) : '';
         const card = document.createElement('div');
         card.className = `ach-card ${isUnlocked ? 'unlocked' : 'locked'}`;
         card.innerHTML = `
-          <span class="ach-card-icon">${l.icon}</span>
+          <span class="ach-card-icon">${lIconSvg}</span>
           <div class="ach-card-info">
             <div class="ach-card-name">${l.name}</div>
             <div class="ach-card-desc">${l.desc}</div>
           </div>
-          <span class="ach-card-status">${isUnlocked ? 'DESBLOQUEADO 🏆' : 'BLOQUEADO 🔒'}</span>
+          <span class="ach-card-status">${isUnlocked ? 'DESBLOQUEADO' : 'BLOQUEADO'}</span>
         `;
         this.achievementsListGrid.appendChild(card);
       });

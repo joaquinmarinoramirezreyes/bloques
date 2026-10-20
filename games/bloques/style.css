@@ -2,14 +2,25 @@
    BLOQUES - ESTILOS ARCADE & RESPONSIVE
    ========================================================================== */
 
+:root {
+  --bg-space: #efe6d2;
+  --bg-panel: #e2d7be;
+  --bg-card: #f5eedc;
+  --accent-primary: #c0392b;
+  --accent-hover: #a93226;
+  --text-main: #1f2a44;
+  --text-dim: #4b5876;
+  --border-subtle: #d1c4a5;
+}
+
 html, body {
   width: 100%;
   height: 100%;
   height: 100dvh;
-  background-color: var(--bg-space, #070913);
-  color: var(--text-main, #f8fafc);
+  background-color: var(--bg-space) !important;
+  color: var(--text-main);
   font-family: var(--font-family);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 #app-root {
@@ -33,12 +44,12 @@ html, body {
    1. ENCABEZADO SUPERIOR
    -------------------------------------------------------------------------- */
 .hud-header {
-  height: var(--header-height);
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
@@ -50,33 +61,31 @@ html, body {
 
 .back-button {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-subtle);
   color: var(--text-main);
   text-decoration: none;
 }
 
 .back-button:hover, .back-button:active {
-  border-color: var(--neon-cyan);
-  color: var(--neon-cyan);
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
 }
 
 .brand-badge {
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.15em;
-  padding: 2px 6px;
+  padding: 3px 6px;
   border-radius: 4px;
-  background: linear-gradient(135deg, var(--neon-cyan), var(--neon-purple));
-  color: #05060c;
+  background: var(--accent-primary);
+  color: #ffffff;
 }
 
 .brand-title {
   font-size: 1.25rem;
   font-weight: 900;
   letter-spacing: 0.18em;
-  background: linear-gradient(90deg, #ffffff 40%, var(--neon-cyan) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-main);
 }
 
 .hud-actions {
@@ -85,11 +94,13 @@ html, body {
 }
 
 .icon-button {
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   color: var(--text-main);
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -100,8 +111,8 @@ html, body {
 
 .icon-button:active {
   transform: scale(0.92);
-  background: rgba(255, 255, 255, 0.18);
-  border-color: var(--neon-cyan);
+  background: var(--bg-panel);
+  border-color: var(--accent-primary);
 }
 
 .hidden {
@@ -136,12 +147,9 @@ html, body {
 }
 
 #board-canvas {
-  background: rgba(10, 13, 25, 0.95);
+  background: #e2d7be;
   border-radius: 8px;
-  border: 2px solid rgba(99, 102, 241, 0.4);
-  box-shadow: 
-    0 0 25px rgba(0, 240, 255, 0.08),
-    inset 0 0 15px rgba(0, 0, 0, 0.7);
+  border: 2px solid var(--accent-primary);
   display: block;
   touch-action: none;
 }
@@ -158,11 +166,9 @@ html, body {
 
 .panel-box {
   background: var(--bg-card);
-  border: 1px solid var(--bg-card-border);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 6px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .panel-label {
@@ -406,9 +412,7 @@ html, body {
 .game-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(6, 8, 16, 0.88);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(15, 20, 28, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -425,18 +429,19 @@ html, body {
 .overlay-card {
   width: 100%;
   max-width: 270px;
-  background: rgba(18, 22, 42, 0.95);
-  border: 1px solid rgba(99, 102, 241, 0.4);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 20px 16px;
   text-align: center;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  box-shadow: 0 10px 30px rgba(31, 42, 68, 0.15);
 }
 
 .overlay-card h2 {
   font-size: 1.25rem;
   letter-spacing: 0.1em;
   margin-bottom: 6px;
+  color: var(--text-main);
 }
 
 .overlay-card p {
@@ -446,12 +451,12 @@ html, body {
 }
 
 .danger-title {
-  color: var(--neon-coral);
-  text-shadow: 0 0 10px rgba(255, 51, 102, 0.4);
+  color: var(--accent-primary);
 }
 
 .stats-summary {
-  background: rgba(10, 12, 24, 0.7);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 10px 12px;
   margin-bottom: 14px;
@@ -473,12 +478,12 @@ html, body {
 }
 
 .stat-row.highlight strong {
-  color: var(--neon-gold);
+  color: var(--accent-primary);
 }
 
 .badge-new-record {
-  background: linear-gradient(90deg, #ff9100, #ffd000);
-  color: #0b0d17;
+  background: var(--accent-primary);
+  color: #ffffff;
   font-size: 0.7rem;
   font-weight: 900;
   letter-spacing: 0.1em;
@@ -500,6 +505,7 @@ html, body {
 
 .btn-primary, .btn-secondary {
   width: 100%;
+  min-height: 44px;
   padding: 10px 14px;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -509,30 +515,32 @@ html, body {
   transition: all 0.15s ease;
   border: none;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--neon-cyan), #0099ff);
-  color: #050814;
-  box-shadow: 0 4px 14px rgba(0, 240, 255, 0.3);
+  background: var(--accent-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(192, 57, 43, 0.25);
 }
 
 .btn-primary:active {
   transform: scale(0.96);
-  filter: brightness(1.15);
+  background: var(--accent-hover);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-card);
   color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-subtle);
 }
 
 .btn-secondary:active {
   transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--bg-panel);
 }
 
 /* --------------------------------------------------------------------------
@@ -549,7 +557,7 @@ html, body {
 
 @media (max-height: 680px) {
   :root {
-    --header-height: 38px;
+    --header-height: 48px;
     --controls-height: 140px;
   }
   
@@ -574,8 +582,10 @@ html, body {
   }
   
   .small-btn {
-    width: 40px;
-    height: 40px;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
   }
   
   .stat-value {

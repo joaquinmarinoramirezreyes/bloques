@@ -21,10 +21,10 @@ function it(desc, fn) {
   totalTests++;
   try {
     fn();
-    console.log(`✅ PASÓ: ${desc}`);
+    console.log(`[OK] PASÓ: ${desc}`);
     passedTests++;
   } catch (err) {
-    console.error(`❌ FALLÓ: ${desc}`);
+    console.error(`[FAIL] FALLÓ: ${desc}`);
     console.error(err);
     process.exit(1);
   }

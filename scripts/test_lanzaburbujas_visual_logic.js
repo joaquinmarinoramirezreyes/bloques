@@ -16,7 +16,7 @@ const path = require('path');
 const { CONFIG, LanzaburbujasLogic } = require(path.join(__dirname, '../games/lanzaburbujas/game.js'));
 const { ArcadeTween } = require(path.join(__dirname, '../shared/tween.js'));
 
-console.log('🫧 Iniciando suite de pruebas de lógica y consistencia visual de Lanzaburbujas...');
+console.log('[BUBBLE] Iniciando suite de pruebas de lógica y consistencia visual de Lanzaburbujas...');
 
 let passed = 0;
 let total = 0;
@@ -25,10 +25,10 @@ function it(name, fn) {
   total++;
   try {
     fn();
-    console.log(`  ✓ ${name}`);
+    console.log(`  OK ${name}`);
     passed++;
   } catch (err) {
-    console.error(`  ✗ ${name}`);
+    console.error(`  X ${name}`);
     console.error(`    ${err.message}`);
     throw err;
   }
@@ -319,4 +319,4 @@ it('ArcadeTween gestiona 250 interpolaciones simultáneas sin fugas de memoria',
   assert.strictEqual(ArcadeTween.activeCount, 0, 'Todos los tweens deben haber sido devueltos al pool');
 });
 
-console.log(`\n🎉 Todas las ${passed}/${total} pruebas de lógica y sincronización visual pasaron con éxito.\n`);
+console.log(`\n[PASS] Todas las ${passed}/${total} pruebas de lógica y sincronización visual pasaron con éxito.\n`);

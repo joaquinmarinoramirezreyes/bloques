@@ -1,0 +1,102 @@
+{
+  "Menú Principal": {
+    "path": "/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Menú Era 80": {
+    "path": "/#80",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Menú Era 90": {
+    "path": "/#90",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Menú Era 00": {
+    "path": "/#00",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Bloques": {
+    "path": "/games/bloques/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Serpiente": {
+    "path": "/games/snake/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Rompe Muros": {
+    "path": "/games/rompemuros/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Defensa Orbital": {
+    "path": "/games/defensaorbital/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Sombras": {
+    "path": "/games/sombras/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Derrape": {
+    "path": "/games/derrape/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Abismo": {
+    "path": "/games/abismo/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Frontón": {
+    "path": "/games/fronton/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Campo Minado": {
+    "path": "/games/campominado/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Corredor": {
+    "path": "/games/corredor/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Gotas": {
+    "path": "/games/gotas/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Cristales": {
+    "path": "/games/cristales/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Lanzaburbujas": {
+    "path": "/games/lanzaburbujas/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Lumen": {
+    "path": "/games/lumen/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Cargas": {
+    "path": "/games/cargas/",
+    "under44Count": 0,
+    "controls": []
+  },
+  "Bastión": {
+    "path": "/games/bastion/",
+    "under44Count": 0,
+    "controls": []
+  }
+}

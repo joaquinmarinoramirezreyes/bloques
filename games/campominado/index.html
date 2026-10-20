@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#1a1c2e">
+  <meta name="theme-color" content="#1b4b8a">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="description" content="Campo Minado - Estética de sonar y laboratorio, revelado en ola, campaña de 20 tableros, pistas seguras y sin adivinanza forzada.">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231a1c2e'/%3E%3Ccircle cx='16' cy='16' r='8' fill='%23ff3366'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23ffcc00'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%231b4b8a'/%3E%3Ccircle cx='16' cy='16' r='8' fill='%239fd3ff'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23f2f6ff'/%3E%3C/svg%3E">
   <title>Campo Minado - Laboratorio Sonar 90s</title>
   <link rel="stylesheet" href="../../shared/theme.css">
   <link rel="stylesheet" href="style.css">
@@ -28,13 +28,19 @@
       </div>
       <div class="hud-actions">
         <button id="btn-tutorial-header" class="icon-button" aria-label="Tutorial" title="Tutorial">
-          ❓
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M11 18h2v-2h-2v2zm1-16C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm0-14c-2.21 0-4 1.79-4 4h2c0-1.1.9-2 2-2s2 .9 2 2c0 2-3 1.75-3 5h2c0-2.25 3-2.5 3-5 0-2.21-1.79-4-4-4z"/>
+          </svg>
         </button>
         <button id="btn-achievements-header" class="icon-button" aria-label="Logros" title="Logros (8)">
-          🏆
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+          </svg>
         </button>
         <button id="btn-options-header" class="icon-button" aria-label="Ajustes" title="Ajustes">
-          ⚙️
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+          </svg>
         </button>
         <button id="btn-sound-toggle" class="icon-button" aria-label="Silenciar / Activar sonido" title="Sonido">
           <svg id="icon-sound-on" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -77,11 +83,19 @@
       </div>
 
       <button id="btn-face" class="face-button" aria-label="Reiniciar juego" title="Reiniciar">
-        <span id="face-icon" class="face-emoji">😎</span>
+        <span id="face-icon" class="face-icon">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M12 2l2.4 7.4L22 12l-7.6 2.6L12 22l-2.4-7.4L2 12l7.6-2.6L12 2z"/>
+          </svg>
+        </span>
       </button>
 
       <button id="btn-hint" class="hint-button" aria-label="Escanear casilla segura (Pista)" title="Escanear Pista Segura">
-        <span class="hint-icon">📡</span>
+        <span class="hint-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm0-14c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6-2.69-6-6-6zm0 10c-2.21 0-4-1.79-4-4s1.79-4 4-4 4 1.79 4 4-1.79 4-4 4zm0-6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+          </svg>
+        </span>
         <span id="hint-text" class="hint-label">PISTA: 1</span>
       </button>
 
@@ -101,7 +115,11 @@
     <!-- Barra de Herramientas Táctil Inferior -->
     <footer class="touch-toolbar">
       <button id="btn-mode-toggle" class="mode-toggle-btn active" type="button">
-        <span class="toggle-icon">⛏️</span>
+        <span class="toggle-icon">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M14.7 6.3l-2.4 2.4 3 3 2.4-2.4c.4-.4.4-1 0-1.4l-1.6-1.6c-.4-.4-1-.4-1.4 0zM3 18l6.8-6.8 3 3L6 21H3v-3z"/>
+          </svg>
+        </span>
         <span class="toggle-text" id="mode-text">MODO: REVELAR</span>
       </button>
       <div class="best-time-tag">
@@ -124,7 +142,11 @@
       <div class="overlay-card">
         <h2>TUTORIAL DE ARTIFICIERO</h2>
         <div class="tutorial-step" id="tutorial-content">
-          <div class="tut-icon">🔍</div>
+          <div class="tut-icon">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">
+              <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+            </svg>
+          </div>
           <h3 id="tut-title">La regla de los números</h3>
           <p id="tut-desc">Cada número indica cuántas minas hay en las 8 casillas que lo rodean.</p>
         </div>
@@ -177,7 +199,7 @@
     <!-- Overlay de Victoria / Derrota -->
     <div id="overlay-result" class="game-overlay hidden">
       <div class="overlay-card">
-        <h2 id="result-title">¡VICTORIA!</h2>
+        <h2 id="result-title">Victoria</h2>
         <p id="result-sub">Has despejado todo el sector minado</p>
         <div class="result-stats">
           <div class="stat-item">
@@ -202,6 +224,7 @@
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
   <script src="../../shared/juice.js"></script>
+  <script src="../../shared/icons.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

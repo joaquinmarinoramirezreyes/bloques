@@ -33,10 +33,10 @@ function runTest(name, fn) {
   totalTests++;
   try {
     fn();
-    console.log(`  ✓ [PASSED] ${name}`);
+    console.log(`  OK [PASSED] ${name}`);
     passedTests++;
   } catch (err) {
-    console.error(`  ✗ [FAILED] ${name}`);
+    console.error(`  X [FAILED] ${name}`);
     console.error(`    ${err.message}\n`);
     throw err;
   }

@@ -17,14 +17,14 @@
     },
     LONG_PRESS_MS: 260,
     COLORS: {
-      1: '#00e5ff', // Cyan
-      2: '#00e676', // Verde brillante
-      3: '#ff3344', // Coral / Rojo
-      4: '#b388ff', // Púrpura neón
-      5: '#ff9100', // Naranja eléctrico
-      6: '#ff007f', // Rosa neón
-      7: '#ffea00', // Amarillo sol
-      8: '#ffffff'  // Blanco puro
+      1: '#9fd3ff', // Azul acento claro
+      2: '#4ade80', // Verde
+      3: '#ff6b6b', // Coral / Rojo
+      4: '#7ba7d9', // Azul medio
+      5: '#ffa726', // Naranja
+      6: '#4a90e2', // Azul profundo
+      7: '#fcd34d', // Amarillo
+      8: '#f2f6ff'  // Blanco azulado
     },
     CAMPAIGN: [
       { id: 1, name: "Calibración Alfa", cols: 8, rows: 8, mines: 6, rule: 'standard' },
@@ -49,14 +49,14 @@
       { id: 20, name: "Singularidad Cero", cols: 15, rows: 20, mines: 55, rule: 'critical', desc: 'Misión maestra de artificiero' }
     ],
     ACHIEVEMENTS: [
-      { id: 'first_clear', title: 'Primer Sector', desc: 'Despeja tu primer campo minado con éxito', icon: '🎖️' },
-      { id: 'speed_demon', title: 'Artificiero Veloz', desc: 'Despeja el sector 9x9 en menos de 45s', icon: '⚡' },
-      { id: 'guess_free', title: 'Lógica Pura', desc: 'Supera un sector sin utilizar pistas de sonar', icon: '🧠' },
-      { id: 'campaign_5', title: 'Cadete de Laboratorio', desc: 'Supera los primeros 5 sectores de campaña', icon: '🔬' },
-      { id: 'campaign_20', title: 'Maestro del Sonar', desc: 'Completa los 20 sectores de la campaña', icon: '👑' },
-      { id: 'no_flag_win', title: 'A Mente Fría', desc: 'Gana una partida sin colocar ninguna bandera', icon: '❄️' },
-      { id: 'hard_veteran', title: 'Misión Titán', desc: 'Supera el sector avanzado de 16x24 con 70 minas', icon: '🛡️' },
-      { id: 'streak_3', title: 'En Racha', desc: 'Consigue 3 victorias consecutivas', icon: '🔥' }
+      { id: 'first_clear', title: 'Primer Sector', desc: 'Despeja tu primer campo minado con éxito', icon: 'medal' },
+      { id: 'speed_demon', title: 'Artificiero Veloz', desc: 'Despeja el sector 9x9 en menos de 45s', icon: 'zap' },
+      { id: 'guess_free', title: 'Lógica Pura', desc: 'Supera un sector sin utilizar pistas de sonar', icon: 'brain' },
+      { id: 'campaign_5', title: 'Cadete de Laboratorio', desc: 'Supera los primeros 5 sectores de campaña', icon: 'flask' },
+      { id: 'campaign_20', title: 'Maestro del Sonar', desc: 'Completa los 20 sectores de la campaña', icon: 'trophy' },
+      { id: 'no_flag_win', title: 'A Mente Fría', desc: 'Gana una partida sin colocar ninguna bandera', icon: 'flag' },
+      { id: 'hard_veteran', title: 'Misión Titán', desc: 'Supera el sector avanzado de 16x24 con 70 minas', icon: 'shield' },
+      { id: 'streak_3', title: 'En Racha', desc: 'Consigue 3 victorias consecutivas', icon: 'star' }
     ]
   };
 
@@ -498,7 +498,11 @@
     State.waveCells = [];
     State.particles = [];
 
-    dom.faceIcon.textContent = '😎';
+    if (window.ArcadeIcons) {
+      dom.faceIcon.innerHTML = window.ArcadeIcons.get('spark', { size: 20 });
+    } else {
+      dom.faceIcon.textContent = '';
+    }
     dom.hintText.textContent = `PISTA: ${State.hintsRemaining}`;
     dom.overlayResult.classList.add('hidden');
 
@@ -596,7 +600,7 @@
       SonarAudio.sfxFlag();
       if (window.ArcadeJuice) {
         window.ArcadeJuice.vibrate(20);
-        window.ArcadeJuice.spawnFloat(cell.flagged ? '🚩' : '❌', (c + 0.5) * cellW, (r + 0.5) * cellH, '#f59e0b', 12);
+        window.ArcadeJuice.spawnFloat(cell.flagged ? '+1' : '-1', (c + 0.5) * cellW, (r + 0.5) * cellH, '#dc2626', 12);
       }
       updateCounters();
       return;
@@ -648,7 +652,11 @@
   function triggerExplosion(c, r) {
     State.gameOver = true;
     stopTimer();
-    dom.faceIcon.textContent = '😵';
+    if (window.ArcadeIcons) {
+      dom.faceIcon.innerHTML = window.ArcadeIcons.get('skull', { size: 20, color: '#dc2626' });
+    } else {
+      dom.faceIcon.textContent = 'X';
+    }
     SonarAudio.sfxExplode();
 
     if (window.ArcadeJuice) {
@@ -666,7 +674,7 @@
     }
 
     setTimeout(() => {
-      dom.resultTitle.textContent = '¡SECTOR DETONADO!';
+      dom.resultTitle.textContent = 'Sector detonado';
       dom.resultSub.textContent = 'Una mina ha colapsado el perímetro';
       dom.statFinalTime.textContent = `${State.timerSeconds}s`;
       dom.campNextBox.classList.add('hidden');
@@ -677,7 +685,11 @@
   function triggerVictory() {
     State.gameWon = true;
     stopTimer();
-    dom.faceIcon.textContent = '😎';
+    if (window.ArcadeIcons) {
+      dom.faceIcon.innerHTML = window.ArcadeIcons.get('trophy', { size: 20, color: '#f59e0b' });
+    } else {
+      dom.faceIcon.textContent = '';
+    }
     SonarAudio.sfxVictory();
 
     // Guardar récord de tiempo
@@ -693,18 +705,18 @@
 
     // Logros
     if (window.ArcadeJuice) {
-      window.ArcadeJuice.unlockAchievement('campominado', 'first_clear', 'Primer Sector', 'Despejaste tu primer campo minado', '🎖️');
+      window.ArcadeJuice.unlockAchievement('campominado', 'first_clear', 'Primer Sector', 'Despejaste tu primer campo minado', 'medal');
       if (State.sizeKey === 'EASY' && State.timerSeconds <= 45) {
-        window.ArcadeJuice.unlockAchievement('campominado', 'speed_demon', 'Artificiero Veloz', 'Despejaste 9x9 en menos de 45s', '⚡');
+        window.ArcadeJuice.unlockAchievement('campominado', 'speed_demon', 'Artificiero Veloz', 'Despejaste 9x9 en menos de 45s', 'zap');
       }
       if (!State.usedHintThisGame) {
-        window.ArcadeJuice.unlockAchievement('campominado', 'guess_free', 'Lógica Pura', 'Ganaste sin usar pistas', '🧠');
+        window.ArcadeJuice.unlockAchievement('campominado', 'guess_free', 'Lógica Pura', 'Ganaste sin usar pistas', 'brain');
       }
       if (State.flagsUsedCount === 0) {
-        window.ArcadeJuice.unlockAchievement('campominado', 'no_flag_win', 'A Mente Fría', 'Ganaste sin colocar banderas', '❄️');
+        window.ArcadeJuice.unlockAchievement('campominado', 'no_flag_win', 'A Mente Fría', 'Ganaste sin colocar banderas', 'flag');
       }
       if (State.sizeKey === 'HARD') {
-        window.ArcadeJuice.unlockAchievement('campominado', 'hard_veteran', 'Misión Titán', 'Superaste 16x24 con 70 minas', '🛡️');
+        window.ArcadeJuice.unlockAchievement('campominado', 'hard_veteran', 'Misión Titán', 'Superaste 16x24 con 70 minas', 'shield');
       }
     }
 
@@ -716,15 +728,15 @@
         saveCampaignProgress();
       }
       if (State.campaignLevelIdx >= 4 && window.ArcadeJuice) {
-        window.ArcadeJuice.unlockAchievement('campominado', 'campaign_5', 'Cadete de Laboratorio', 'Superaste 5 sectores de campaña', '🔬');
+        window.ArcadeJuice.unlockAchievement('campominado', 'campaign_5', 'Cadete de Laboratorio', 'Superaste 5 sectores de campaña', 'flask');
       }
       if (State.campaignCleared.length >= 20 && window.ArcadeJuice) {
-        window.ArcadeJuice.unlockAchievement('campominado', 'campaign_20', 'Maestro del Sonar', 'Completaste los 20 sectores de campaña', '👑');
+        window.ArcadeJuice.unlockAchievement('campominado', 'campaign_20', 'Maestro del Sonar', 'Completaste los 20 sectores de campaña', 'trophy');
       }
     }
 
     setTimeout(() => {
-      dom.resultTitle.textContent = isNewBest ? '¡NUEVO RÉCORD!' : '¡SECTOR DESPEJADO!';
+      dom.resultTitle.textContent = isNewBest ? 'Nuevo récord' : 'Sector despejado';
       dom.resultSub.textContent = 'Todas las minas fueron neutralizadas';
       dom.statFinalTime.textContent = `${State.timerSeconds}s`;
       const best = getSavedBestTime();
@@ -981,7 +993,7 @@
     dom.btnModeToggle.addEventListener('click', () => {
       State.flagMode = !State.flagMode;
       dom.btnModeToggle.classList.toggle('flag-mode', State.flagMode);
-      dom.modeText.textContent = State.flagMode ? 'MODO: BANDERA 🚩' : 'MODO: REVELAR ⛏️';
+      dom.modeText.textContent = State.flagMode ? 'MODO: BANDERA' : 'MODO: REVELAR';
     });
 
     // Pista de escaneo
@@ -1129,10 +1141,14 @@
       const unlocked = window.ArcadeJuice ? window.ArcadeJuice.hasAchievement('campominado', ach.id) : false;
       const el = document.createElement('div');
       el.className = `ach-item ${unlocked ? 'unlocked' : ''}`;
+      const iconSvg = window.ArcadeIcons ? window.ArcadeIcons.get(ach.icon, { size: 22 }) : '';
+      const statusSvg = unlocked
+        ? (window.ArcadeIcons ? window.ArcadeIcons.get('check', { size: 14, color: '#10b981' }) : 'OK')
+        : (window.ArcadeIcons ? window.ArcadeIcons.get('lock', { size: 14, color: '#94a3b8' }) : '-');
       el.innerHTML = `
-        <span class="ach-icon">${ach.icon}</span>
+        <span class="ach-icon">${iconSvg}</span>
         <div>
-          <div class="ach-title">${ach.title} ${unlocked ? '✓' : '🔒'}</div>
+          <div class="ach-title">${ach.title} ${statusSvg}</div>
           <div class="ach-desc">${ach.desc}</div>
         </div>
       `;

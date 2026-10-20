@@ -95,7 +95,7 @@ function rectsOverlap(r1, r2) {
 }
 
 async function runLayoutTests() {
-  console.log('📱 Iniciando verificación de layout y solapamiento para Lanzaburbujas...\n');
+  console.log('[VIEWPORT] Iniciando verificación de layout y solapamiento para Lanzaburbujas...\n');
 
   const chromePath = getChromeExecutable();
   if (!chromePath) {
@@ -124,20 +124,20 @@ async function runLayoutTests() {
   const failureReports = [];
 
   try {
-    const page = await browser.newPage();
-
     for (const vp of viewports) {
-      console.log(`🔍 Probando viewport: ${vp.name} (${vp.width}x${vp.height})...`);
-      await page.setViewport({ width: vp.width, height: vp.height, deviceScaleFactor: 2 });
-      await page.goto(url, { waitUntil: 'networkidle0' });
+      console.log(`[CHECK] Probando viewport: ${vp.name} (${vp.width}x${vp.height})...`);
+      const page = await browser.newPage();
+      try {
+        await page.setViewport({ width: vp.width, height: vp.height, deviceScaleFactor: 2 });
+        await page.goto(url, { waitUntil: 'domcontentloaded' });
 
-      // Iniciar nivel 1 para tener el cañón y munición activos
-      await page.evaluate(() => {
-        const lvlBtn = document.querySelector('.level-badge.unlocked');
-        if (lvlBtn) lvlBtn.click();
-      });
+        // Iniciar nivel 1 para tener el cañón y munición activos
+        await page.evaluate(() => {
+          const lvlBtn = document.querySelector('.level-badge.unlocked');
+          if (lvlBtn) lvlBtn.click();
+        });
 
-      await new Promise(r => setTimeout(r, 400));
+        await new Promise(r => setTimeout(r, 500));
 
       // Comprobar rectángulos mediante getBoundingClientRect
       const layoutData = await page.evaluate(() => {
@@ -179,7 +179,7 @@ async function runLayoutTests() {
       // Tomar captura
       const shotPath = path.join(SCREENSHOTS_DIR, `layout_${vp.width}x${vp.height}.png`);
       await page.screenshot({ path: shotPath });
-      console.log(`   📸 Captura guardada: ${path.basename(shotPath)}`);
+      console.log(`   [SHOT] Captura guardada: ${path.basename(shotPath)}`);
 
       // Verificar 1: Cañón dentro de los límites visibles del canvas
       totalTests++;
@@ -228,7 +228,10 @@ async function runLayoutTests() {
         }
       }
 
-      console.log(`   ✓ Verificación geométrica completada para ${vp.name}\n`);
+      console.log(`   OK Verificación geométrica completada para ${vp.name}\n`);
+      } finally {
+        await page.close();
+      }
     }
 
     await browser.close();
@@ -240,11 +243,11 @@ async function runLayoutTests() {
   console.log(`RESULTADO DE COMPROBACIÓN DE LAYOUT Y SOLAPAMIENTOS:`);
   console.log(`Pruebas superadas: ${passedTests} / ${totalTests}`);
   if (failureReports.length > 0) {
-    console.error(`\n❌ ERRORES DETECTADOS (${failureReports.length}):`);
+    console.error(`\n[FAIL] ERRORES DETECTADOS (${failureReports.length}):`);
     failureReports.forEach(f => console.error(`  - ${f}`));
     process.exit(1);
   } else {
-    console.log(`🎉 100% de verificaciones superadas. CERO solapamientos entre cañón/burbujas y botones.`);
+    console.log(`[PASS] 100% de verificaciones superadas. CERO solapamientos entre cañón/burbujas y botones.`);
     console.log(`======================================================\n`);
   }
 }

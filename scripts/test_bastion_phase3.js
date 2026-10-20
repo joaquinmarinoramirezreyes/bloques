@@ -41,7 +41,7 @@ meta.upgrades.sobremarcha_cinetica = 2;
 assert(Math.abs(meta.getGlobalFireRateMultiplier() - 1.08) < 0.001, 'Rango 2 otorga +8% de cadencia');
 meta.upgrades.recuperacion_tactica = 2;
 assert(Math.abs(meta.getSellRefundRate() - 0.78) < 0.001, 'Rango 2 otorga 78% de reembolso');
-console.log('✅ PASÓ: MetaManager y Árbol de 6 Mejoras funcionan correctamente');
+console.log('[OK] PASÓ: MetaManager y Árbol de 6 Mejoras funcionan correctamente');
 
 // -----------------------------------------------------------------------------
 // [2] INTEGRACIÓN DE METAPROGRESO EN LA PARTIDA
@@ -56,7 +56,7 @@ const tRes = gameMeta.placeTower('balistico', 4, 1);
 assert(tRes.success === true, 'Torre colocada con descuento de metaprogreso');
 // Coste base 100, descuento 8% = 92
 assert(tRes.tower.cost === 92, 'El coste efectivo de la torre refleja el 8% de descuento (100 -> 92)');
-console.log('✅ PASÓ: Bonos pasivos de metaprogreso aplicados a la partida');
+console.log('[OK] PASÓ: Bonos pasivos de metaprogreso aplicados a la partida');
 
 // -----------------------------------------------------------------------------
 // [3] SISTEMA DE RELIQUIAS Y ARTEFACTOS ARCANOS
@@ -98,7 +98,7 @@ const enemyTesla = relicGame.spawnEnemy('reptante');
 const hpBeforeTesla = enemyTesla.hp;
 relicGame.triggerTeslaStrike();
 assert(enemyTesla.hp < hpBeforeTesla, 'La Bobina de Tesla descarga sobre el enemigo más próximo');
-console.log('✅ PASÓ: Efectos de Reliquias Arcanas verificados');
+console.log('[OK] PASÓ: Efectos de Reliquias Arcanas verificados');
 
 // -----------------------------------------------------------------------------
 // [4] DIFICULTADES Y MUTADORES
@@ -114,7 +114,7 @@ assert(hardGame.diffShardMult === 2.0, 'Dificultad Pesadilla otorga x2.0 en esqu
 const hardEnemy = hardGame.spawnEnemy('reptante');
 assert(hardEnemy.hp > 90 * 1.5, 'La salud del enemigo escala con la dificultad');
 assert(hardEnemy.armor >= 0.20, 'El mutador Invasión Acorazada añade +20% de armadura base');
-console.log('✅ PASÓ: Dificultades y Mutadores escalan el combate');
+console.log('[OK] PASÓ: Dificultades y Mutadores escalan el combate');
 
 // -----------------------------------------------------------------------------
 // [5] JUICE, SCREEN SHAKE Y BALÍSTICA 3D DE MORTERO
@@ -139,7 +139,7 @@ assert(mortProj.maxHeight === 38, 'El proyectil posee parámetro de elevación Z
 fxGame.updateProjectiles(0.35);
 assert(mortProj.heightZ > 0, 'El proyectil se eleva en el eje Z durante el vuelo');
 assert(mortProj.y < mortProj.groundY, 'La posición Y visual está por encima de la sombra en el suelo');
-console.log('✅ PASÓ: Parábola balística 3D y sacudida de pantalla verificadas');
+console.log('[OK] PASÓ: Parábola balística 3D y sacudida de pantalla verificadas');
 
 // -----------------------------------------------------------------------------
 // [6] ESTADÍSTICAS COMPLETAS DE PARTIDA Y DESPLIEGUE DE DAÑO
@@ -158,7 +158,7 @@ fxGame.applyDamageToEnemy(damageTarget, 50, false, 'physical', 1.0, mortTower.id
 assert(fxGame.stats.totalDamage >= 50, 'El daño se acumula en las estadísticas');
 assert(fxGame.stats.towerDamage[mortTower.id] >= 50, 'El daño se asocia al MVP (torre atacante)');
 assert(fxGame.damageNumbers.length > dmgNumbersBefore, 'Se genera indicador de daño flotante');
-console.log('✅ PASÓ: Estadísticas y números de daño flotantes operativos');
+console.log('[OK] PASÓ: Estadísticas y números de daño flotantes operativos');
 
 console.log('\n======================================================================');
 console.log('RESULTADO FINAL: TODAS LAS PRUEBAS DE LA FASE 3 PASARON EXITOSAMENTE.');

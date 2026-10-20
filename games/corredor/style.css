@@ -1,15 +1,15 @@
-/* games/corredor/style.css - Estilo Arcade 00 (Cyber Glass, Velocity & Biomes) */
+/* games/corredor/style.css - Estilo Arcade 00 (Desert Speedway / Solar Runner) */
 :root {
-  --y2k-bg: #090e1c;
-  --y2k-glass: rgba(22, 33, 62, 0.78);
-  --y2k-glass-border: rgba(255, 255, 255, 0.22);
-  --y2k-cyan: #00f0ff;
-  --y2k-purple: #b388ff;
-  --y2k-gold: #ffcc00;
-  --y2k-blue: #0088ff;
-  --y2k-glow: rgba(0, 240, 255, 0.35);
-  --y2k-ruby: #ff0055;
-  --y2k-emerald: #00e676;
+  --y2k-bg: #f4c27a;
+  --y2k-glass: #fdf5ea;
+  --y2k-glass-border: rgba(58, 31, 15, 0.2);
+  --y2k-cyan: #e4572e;
+  --y2k-purple: #c43a12;
+  --y2k-gold: #e4572e;
+  --y2k-blue: #e4572e;
+  --y2k-glow: rgba(228, 87, 46, 0.25);
+  --y2k-ruby: #dc2626;
+  --y2k-emerald: #16a34a;
 }
 
 * {
@@ -29,10 +29,11 @@ body.arcade-lock {
   height: 100dvh;
   min-height: -webkit-fill-available;
   overflow: hidden;
-  background-color: var(--y2k-bg);
-  color: #f0f4fc;
+  background-color: #f4c27a !important;
+  color: #3a1f0f !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   touch-action: none;
+  color-scheme: light;
 }
 
 #app-root {
@@ -54,9 +55,8 @@ body.arcade-lock {
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px;
-  background: rgba(9, 14, 28, 0.88);
+  background: rgba(24, 18, 14, 0.96);
   border-bottom: 1px solid var(--y2k-glass-border);
-  backdrop-filter: blur(10px);
   z-index: 20;
   flex-shrink: 0;
 }
@@ -73,17 +73,20 @@ body.arcade-lock {
   justify-content: center;
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
   border-radius: 12px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.05));
+  background: rgba(45, 33, 24, 0.85);
   color: #fff;
   text-decoration: none;
   border: 1px solid var(--y2k-glass-border);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3), inset 0 1px 1px rgba(255, 255, 255, 0.4);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
 }
 
 .back-button:active {
   transform: scale(0.95);
-  background: rgba(0, 240, 255, 0.2);
+  background: rgba(245, 158, 11, 0.25);
 }
 
 .brand-badge {
@@ -92,19 +95,17 @@ body.arcade-lock {
   letter-spacing: 1px;
   padding: 3px 8px;
   border-radius: 20px;
-  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25), rgba(179, 136, 255, 0.25));
+  background: rgba(245, 158, 11, 0.16);
   border: 1px solid var(--y2k-cyan);
-  color: #fff;
-  box-shadow: 0 0 10px var(--y2k-glow);
+  color: #fef3c7;
 }
 
 .brand-title {
   font-size: 18px;
   font-weight: 900;
   letter-spacing: 2px;
-  background: linear-gradient(180deg, #ffffff, #a3d9ff);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #fef3c7;
+  -webkit-text-fill-color: #fef3c7;
 }
 
 .hud-actions {
@@ -119,18 +120,22 @@ body.arcade-lock {
   justify-content: center;
   width: 44px;
   height: 44px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.15), rgba(255, 255, 255, 0.04));
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+  background: rgba(45, 33, 24, 0.85);
   border: 1px solid var(--y2k-glass-border);
   border-radius: 12px;
   color: #fff;
   cursor: pointer;
   font-size: 17px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25), inset 0 1px 1px rgba(255, 255, 255, 0.3);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   transition: transform 0.1s;
 }
 
 .icon-button:active {
   transform: scale(0.94);
+  background: rgba(245, 158, 11, 0.25);
 }
 
 .icon-button.hidden {
@@ -143,8 +148,8 @@ body.arcade-lock {
   align-items: center;
   justify-content: space-between;
   padding: 6px 12px;
-  background: linear-gradient(180deg, rgba(15, 24, 48, 0.92), rgba(9, 14, 28, 0.85));
-  border-bottom: 1px solid rgba(0, 240, 255, 0.2);
+  background: rgba(24, 18, 14, 0.96);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.2);
   z-index: 15;
   flex-shrink: 0;
 }
@@ -164,11 +169,10 @@ body.arcade-lock {
   display: flex;
   flex-direction: column;
   align-items: center;
-  background: linear-gradient(135deg, rgba(255, 204, 0, 0.25), rgba(255, 51, 102, 0.25));
-  border: 1px solid #ffcc00;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid #f59e0b;
   padding: 2px 8px;
   border-radius: 8px;
-  box-shadow: 0 0 10px rgba(255, 204, 0, 0.4);
   animation: pulseScale 0.6s infinite alternate;
 }
 
@@ -180,7 +184,7 @@ body.arcade-lock {
   font-family: 'Courier New', Courier, monospace;
   font-size: 15px;
   font-weight: 900;
-  color: #ffcc00;
+  color: #fbbf24;
   line-height: 1;
 }
 
@@ -200,7 +204,7 @@ body.arcade-lock {
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 1px;
-  color: #7b93b8;
+  color: #a89f91;
   text-transform: uppercase;
 }
 
@@ -208,8 +212,7 @@ body.arcade-lock {
   font-family: 'Courier New', Courier, monospace;
   font-size: 18px;
   font-weight: 900;
-  color: #fff;
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  color: #fef3c7;
 }
 
 .hud-val small {
@@ -228,11 +231,11 @@ body.arcade-lock {
   gap: 4px;
   padding: 3px 8px;
   border-radius: 12px;
-  background: rgba(0, 240, 255, 0.18);
+  background: rgba(245, 158, 11, 0.16);
   border: 1px solid var(--y2k-cyan);
+  color: #fef3c7;
   font-size: 11px;
   font-weight: 800;
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.4);
 }
 
 .powerup-badge.hidden {
@@ -244,15 +247,15 @@ body.arcade-lock {
   width: 32px;
   height: 6px;
   border-radius: 3px;
-  background: linear-gradient(90deg, #ffcc00, #ff8800);
+  background: linear-gradient(90deg, #f59e0b, #ea580c);
 }
 
 .turbo-meter {
-  background: linear-gradient(90deg, #00f0ff, #ff007f) !important;
+  background: linear-gradient(90deg, #ea580c, #dc2626) !important;
 }
 
 .slowmo-meter {
-  background: linear-gradient(90deg, #00e676, #00f0ff) !important;
+  background: linear-gradient(90deg, #10b981, #f59e0b) !important;
 }
 
 /* Barra de Misión Activa en Carrera */
@@ -261,12 +264,12 @@ body.arcade-lock {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: rgba(9, 14, 28, 0.88);
-  border-bottom: 1px solid rgba(255, 204, 0, 0.3);
+  background: rgba(32, 24, 18, 0.95);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.25);
   padding: 4px 12px;
   font-size: 11px;
   font-weight: 800;
-  color: #ffdd44;
+  color: #fef3c7;
   letter-spacing: 0.5px;
   z-index: 14;
   flex-shrink: 0;
@@ -281,7 +284,7 @@ body.arcade-lock {
 }
 
 .mission-text {
-  text-shadow: 0 0 8px rgba(255, 204, 0, 0.4);
+  color: #fef3c7;
 }
 
 /* Banner de Sector / Bioma */
@@ -290,15 +293,15 @@ body.arcade-lock {
   top: 22%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: rgba(9, 14, 28, 0.94);
-  border: 2px solid var(--y2k-cyan);
+  background: rgba(24, 18, 14, 0.96);
+  border: 1px solid var(--y2k-cyan);
   border-radius: 14px;
   padding: 12px 24px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 4px;
-  box-shadow: 0 0 35px rgba(0, 240, 255, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   z-index: 25;
   pointer-events: none;
   animation: bannerFade 1.8s ease-out forwards;
@@ -311,15 +314,14 @@ body.arcade-lock {
 .sector-title {
   font-size: 22px;
   font-weight: 900;
-  color: var(--y2k-cyan);
+  color: #fbbf24;
   letter-spacing: 2px;
-  text-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
 }
 
 .sector-desc {
   font-size: 11px;
   font-weight: 800;
-  color: #fff;
+  color: #fef3c7;
   letter-spacing: 1.5px;
 }
 
@@ -329,15 +331,15 @@ body.arcade-lock {
   top: 14%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: linear-gradient(135deg, rgba(255, 0, 127, 0.9), rgba(15, 24, 48, 0.95));
-  border: 2px solid #ffcc00;
+  background: rgba(45, 26, 18, 0.96);
+  border: 1px solid #f59e0b;
   border-radius: 14px;
   padding: 10px 20px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  box-shadow: 0 0 30px rgba(255, 204, 0, 0.6);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
   z-index: 26;
   pointer-events: none;
   animation: bannerFade 2.2s ease-out forwards;
@@ -354,15 +356,14 @@ body.arcade-lock {
 .event-title {
   font-size: 16px;
   font-weight: 900;
-  color: #ffcc00;
+  color: #fbbf24;
   letter-spacing: 1.5px;
-  text-shadow: 0 0 8px rgba(255, 204, 0, 0.8);
 }
 
 .event-desc {
   font-size: 11px;
   font-weight: 800;
-  color: #ffffff;
+  color: #fef3c7;
   letter-spacing: 0.8px;
 }
 
@@ -402,8 +403,8 @@ body.arcade-lock {
 #runner-canvas {
   display: block;
   border-radius: 10px;
-  background: #060914;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7);
+  background: #100b08;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
   touch-action: none;
   max-width: 100%;
   max-height: 100%;
@@ -417,14 +418,14 @@ body.arcade-lock {
   transform: translate(-50%, -50%);
   width: 90%;
   max-width: 380px;
-  background: var(--y2k-glass);
-  border: 1px solid var(--y2k-glass-border);
+  background: #fdf5ea;
+  border: 2px solid #e4572e;
   border-radius: 20px;
   padding: 22px 18px;
   text-align: center;
-  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8), 0 0 30px var(--y2k-glow);
-  backdrop-filter: blur(14px);
+  box-shadow: 0 16px 40px rgba(58, 31, 15, 0.25);
   z-index: 30;
+  color: #3a1f0f;
   transition: opacity 0.2s, transform 0.2s;
 }
 
@@ -441,22 +442,22 @@ body.arcade-lock {
   line-height: 54px;
   margin: 0 auto 10px;
   border-radius: 50%;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.3), rgba(0, 240, 255, 0.15));
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4), 0 0 15px rgba(0, 240, 255, 0.5);
+  background: rgba(245, 158, 11, 0.16);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fbbf24;
 }
 
 .card-title {
   font-size: 22px;
   font-weight: 900;
   letter-spacing: 2px;
-  color: #fff;
+  color: #fef3c7;
   margin-bottom: 4px;
 }
 
 .card-subtitle {
   font-size: 11px;
-  color: #a0b8da;
+  color: #a89f91;
   margin-bottom: 14px;
 }
 
@@ -465,7 +466,7 @@ body.arcade-lock {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(45, 33, 24, 0.7);
   border: 1px solid var(--y2k-glass-border);
   border-radius: 12px;
   padding: 8px 12px;
@@ -487,27 +488,33 @@ body.arcade-lock {
 .skin-name {
   font-size: 12px;
   font-weight: 900;
-  color: var(--y2k-cyan);
+  color: #fbbf24;
 }
 
 .skin-aura {
   font-size: 10px;
-  color: #94a3b8;
+  color: #a89f91;
 }
 
 .btn-micro {
-  padding: 4px 10px;
-  font-size: 10px;
+  min-height: 44px;
+  min-width: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  font-size: 11px;
   font-weight: 800;
   border-radius: 8px;
-  background: rgba(0, 240, 255, 0.2);
+  background: rgba(245, 158, 11, 0.2);
   border: 1px solid var(--y2k-cyan);
-  color: #fff;
+  color: #fef3c7;
   cursor: pointer;
 }
 
 .instructions-card {
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(45, 33, 24, 0.6);
+  border: 1px solid rgba(245, 158, 11, 0.15);
   border-radius: 12px;
   padding: 10px 12px;
   margin-bottom: 14px;
@@ -530,22 +537,22 @@ body.arcade-lock {
 }
 
 .inst-desc {
-  color: #c7d8ee;
+  color: #fef3c7;
 }
 
 .btn-launch {
   width: 100%;
   min-height: 48px;
-  background: linear-gradient(180deg, #00f0ff, #0077ff);
-  color: #03040a;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  background: #e4572e !important;
+  color: #ffffff !important;
+  border: 1px solid #c43a12 !important;
   border-radius: 14px;
   font-family: inherit;
   font-size: 15px;
   font-weight: 900;
   letter-spacing: 1.5px;
   cursor: pointer;
-  box-shadow: 0 6px 20px rgba(0, 240, 255, 0.45), inset 0 2px 0 rgba(255, 255, 255, 0.6);
+  box-shadow: 0 4px 14px rgba(228, 87, 46, 0.4);
   transition: transform 0.1s;
 }
 
@@ -561,13 +568,13 @@ body.arcade-lock {
 
 .btn-half {
   flex: 1;
-  min-height: 40px;
+  min-height: 44px;
   font-size: 12px;
 }
 
 .record-indicator {
   font-size: 11px;
-  color: #7b93b8;
+  color: #a89f91;
   margin-top: 12px;
 }
 
@@ -579,8 +586,7 @@ body.arcade-lock {
 .game-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(6, 9, 20, 0.88);
-  backdrop-filter: blur(8px);
+  background: rgba(16, 12, 9, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -609,13 +615,13 @@ body.arcade-lock {
   font-size: 20px;
   font-weight: 900;
   letter-spacing: 1.5px;
-  color: var(--y2k-cyan);
+  color: #fbbf24;
   margin-bottom: 6px;
 }
 
 .glass-panel p {
   font-size: 12px;
-  color: #9ab4d6;
+  color: #a89f91;
   margin-bottom: 14px;
 }
 
@@ -631,7 +637,8 @@ body.arcade-lock {
 .result-stats {
   display: flex;
   justify-content: space-around;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(45, 33, 24, 0.7);
+  border: 1px solid var(--y2k-glass-border);
   border-radius: 12px;
   padding: 12px 8px;
   margin-bottom: 14px;
@@ -647,7 +654,7 @@ body.arcade-lock {
   font-size: 10px;
   font-weight: 800;
   letter-spacing: 1px;
-  color: #7b93b8;
+  color: #a89f91;
   text-transform: uppercase;
 }
 
@@ -655,7 +662,7 @@ body.arcade-lock {
   font-family: 'Courier New', Courier, monospace;
   font-size: 20px;
   font-weight: 900;
-  color: #fff;
+  color: #fef3c7;
 }
 
 .record-meta {
@@ -687,16 +694,16 @@ body.arcade-lock {
 }
 
 .btn-primary {
-  background: linear-gradient(180deg, #00f0ff, #0088ff);
-  color: #03040a;
-  border: 1px solid rgba(255, 255, 255, 0.4);
-  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4), inset 0 1px 1px rgba(255, 255, 255, 0.5);
+  background: #e4572e !important;
+  color: #ffffff !important;
+  border: 1px solid #c43a12 !important;
+  box-shadow: 0 4px 12px rgba(228, 87, 46, 0.35);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid var(--y2k-glass-border);
-  color: #e0e8f8;
+  background: #f7d8a8;
+  border: 1px solid rgba(58, 31, 15, 0.2);
+  color: #3a1f0f;
 }
 
 .btn-primary:active, .btn-secondary:active {
@@ -709,10 +716,10 @@ body.arcade-lock {
   font-size: 14px;
   font-weight: 900;
   color: var(--y2k-gold);
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(45, 33, 24, 0.8);
   padding: 4px 10px;
   border-radius: 10px;
-  border: 1px solid rgba(255, 204, 0, 0.3);
+  border: 1px solid rgba(245, 158, 11, 0.3);
 }
 
 .shop-tabs {
@@ -723,21 +730,24 @@ body.arcade-lock {
 
 .shop-tab {
   flex: 1;
-  padding: 8px 4px;
-  background: rgba(255, 255, 255, 0.06);
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+  background: rgba(45, 33, 24, 0.6);
   border: 1px solid var(--y2k-glass-border);
   border-radius: 8px;
-  color: #94a3b8;
+  color: #a89f91;
   font-size: 11px;
   font-weight: 800;
   cursor: pointer;
 }
 
 .shop-tab.active {
-  background: rgba(0, 240, 255, 0.2);
+  background: rgba(245, 158, 11, 0.2);
   border-color: var(--y2k-cyan);
-  color: #fff;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+  color: #fef3c7;
 }
 
 .shop-grid {
@@ -753,7 +763,7 @@ body.arcade-lock {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(45, 33, 24, 0.6);
   border: 1px solid var(--y2k-glass-border);
   border-radius: 12px;
   padding: 8px 12px;
@@ -773,16 +783,21 @@ body.arcade-lock {
 .shop-card-title {
   font-size: 12px;
   font-weight: 800;
-  color: #fff;
+  color: #fef3c7;
 }
 
 .shop-card-desc {
   font-size: 10px;
-  color: #94a3b8;
+  color: #a89f91;
 }
 
 .shop-btn {
-  padding: 6px 12px;
+  min-height: 44px;
+  min-width: 60px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 14px;
   font-size: 11px;
   font-weight: 800;
   border-radius: 8px;
@@ -791,20 +806,21 @@ body.arcade-lock {
 }
 
 .shop-btn.btn-buy {
-  background: linear-gradient(180deg, #ffcc00, #ff8800);
-  color: #000;
+  background: #f59e0b;
+  color: #1c140f;
+  font-weight: 900;
 }
 
 .shop-btn.btn-equip {
-  background: rgba(0, 240, 255, 0.2);
+  background: rgba(245, 158, 11, 0.2);
   border: 1px solid var(--y2k-cyan);
-  color: #fff;
+  color: #fef3c7;
 }
 
 .shop-btn.btn-equipped {
-  background: rgba(0, 230, 118, 0.25);
-  border: 1px solid #00e676;
-  color: #00e676;
+  background: rgba(22, 163, 74, 0.25);
+  border: 1px solid #16a34a;
+  color: #4ade80;
   cursor: default;
 }
 
@@ -822,15 +838,15 @@ body.arcade-lock {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(45, 33, 24, 0.6);
   border: 1px solid var(--y2k-glass-border);
   border-radius: 12px;
   padding: 8px 12px;
 }
 
 .ach-item.unlocked {
-  border-color: var(--y2k-gold);
-  background: rgba(255, 204, 0, 0.08);
+  border-color: #fbbf24;
+  background: rgba(245, 158, 11, 0.12);
 }
 
 .ach-icon {
@@ -840,19 +856,19 @@ body.arcade-lock {
 .ach-title {
   font-size: 12px;
   font-weight: 800;
-  color: #fff;
+  color: #fef3c7;
 }
 
 .ach-desc {
   font-size: 10px;
-  color: #94a3b8;
+  color: #a89f91;
 }
 
 .ach-status {
   margin-left: auto;
   font-size: 10px;
   font-weight: 800;
-  color: #7b93b8;
+  color: #a89f91;
 }
 
 .ach-item.unlocked .ach-status {
@@ -871,18 +887,20 @@ body.arcade-lock {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  min-height: 44px;
   padding: 8px 12px;
-  background: rgba(0, 0, 0, 0.3);
+  background: rgba(45, 33, 24, 0.6);
   border: 1px solid var(--y2k-glass-border);
   border-radius: 10px;
   font-size: 12px;
   font-weight: 700;
+  color: #fef3c7;
   cursor: pointer;
 }
 
 .opt-row input[type="checkbox"] {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
   accent-color: var(--y2k-cyan);
   cursor: pointer;
 }

@@ -80,11 +80,11 @@ for (let f = 0; f < 360; f++) {
   game.render();
 }
 
-console.log(`  ✓ [PASSED] Simulación de 360 frames (6 segundos de juego) completada.`);
-console.log(`  ✓ [PASSED] Naves entrando por curvas Bézier: ${enteringCount} lecturas de estado ENTERING.`);
-console.log(`  ✓ [PASSED] Naves integradas en la formación viva: ${formationCount} lecturas de estado FORMATION.`);
-console.log(`  ✓ [PASSED] Límite de proyectiles simultáneos verificado: máximo alcanzado ${maxSimultaneousBullets} (Límite configurado: 2).`);
-console.log(`  ✓ [PASSED] Vaivén y respiración operando en [0, W] y [0, H] sin valores NaN.`);
+console.log(`  OK [PASSED] Simulación de 360 frames (6 segundos de juego) completada.`);
+console.log(`  OK [PASSED] Naves entrando por curvas Bézier: ${enteringCount} lecturas de estado ENTERING.`);
+console.log(`  OK [PASSED] Naves integradas en la formación viva: ${formationCount} lecturas de estado FORMATION.`);
+console.log(`  OK [PASSED] Límite de proyectiles simultáneos verificado: máximo alcanzado ${maxSimultaneousBullets} (Límite configurado: 2).`);
+console.log(`  OK [PASSED] Vaivén y respiración operando en [0, W] y [0, H] sin valores NaN.`);
 
 if (maxSimultaneousBullets > 2) {
   throw new Error(`Se superó el límite de balas simultáneas: ${maxSimultaneousBullets}`);

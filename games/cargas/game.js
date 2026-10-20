@@ -2632,11 +2632,26 @@
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(conv.c * T + 2, conv.r * T + 2, T - 4, T - 4);
       ctx.fillStyle = '#f59e0b';
-      ctx.font = 'bold 12px monospace';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const arrow = conv.dir.r === -1 ? '▲' : conv.dir.r === 1 ? '▼' : conv.dir.c === -1 ? '◀' : '▶';
-      ctx.fillText(arrow, cx, cy + 1);
+      ctx.beginPath();
+      if (conv.dir.r === -1) {
+        ctx.moveTo(cx, cy - 4);
+        ctx.lineTo(cx + 4, cy + 4);
+        ctx.lineTo(cx - 4, cy + 4);
+      } else if (conv.dir.r === 1) {
+        ctx.moveTo(cx, cy + 4);
+        ctx.lineTo(cx + 4, cy - 4);
+        ctx.lineTo(cx - 4, cy - 4);
+      } else if (conv.dir.c === -1) {
+        ctx.moveTo(cx - 4, cy);
+        ctx.lineTo(cx + 4, cy - 4);
+        ctx.lineTo(cx + 4, cy + 4);
+      } else {
+        ctx.moveTo(cx + 4, cy);
+        ctx.lineTo(cx - 4, cy - 4);
+        ctx.lineTo(cx - 4, cy + 4);
+      }
+      ctx.closePath();
+      ctx.fill();
     }
 
     // Teletransportadores cuánticos
@@ -3180,7 +3195,7 @@
     }
     ctx.closePath();
     ctx.fill();
-    ctx.strokeStyle = boss.type === 'titan' ? '#ef4444' : boss.type === 'cryo' ? '#00f0ff' : '#c084fc';
+    ctx.strokeStyle = boss.type === 'titan' ? '#ef4444' : boss.type === 'cryo' ? '#38bdf8' : '#c084fc';
     ctx.lineWidth = 2;
     ctx.stroke();
     ctx.restore();
@@ -3317,8 +3332,8 @@
       ctx.roundRect(-6, 0, 12, 8, 2);
       ctx.fill();
 
-      ctx.fillStyle = '#00f0ff';
-      ctx.shadowColor = '#00f0ff';
+      ctx.fillStyle = '#38bdf8';
+      ctx.shadowColor = '#38bdf8';
       ctx.shadowBlur = 6;
       ctx.beginPath();
       ctx.arc(0, 4, 2.5, 0, Math.PI * 2);
@@ -3581,7 +3596,7 @@
       CargasStorage.save(State.storage);
       const ach = ACHIEVEMENTS.find(a => a.id === id);
       if (ach) {
-        showToast(`🏆 ¡LOGRO DESBLOQUEADO: ${ach.title.toUpperCase()}!`, 3.5);
+        showToast(`Logro: ${ach.title}`, 3.5);
       }
     }
   }
@@ -3592,7 +3607,7 @@
 
     const bestScore = saveHighScore();
 
-    document.getElementById('result-title').textContent = '¡MISIÓN FALLIDA!';
+    document.getElementById('result-title').textContent = 'Misión fallida';
     document.getElementById('result-desc').textContent = reason;
     document.getElementById('res-score').textContent = State.score;
     document.getElementById('res-enemies').textContent = State.levelEnemiesKilled;
@@ -3647,8 +3662,8 @@
     const bestScore = saveHighScore();
     CargasStorage.save(State.storage);
 
-    document.getElementById('result-title').textContent = '¡SECTOR COMPLETADO!';
-    document.getElementById('result-desc').textContent = `Estrellas: ${'⭐'.repeat(stars)} &bull; Bono de Tiempo: +${timeBonus} pts.`;
+    document.getElementById('result-title').textContent = 'Sector completado';
+    document.getElementById('result-desc').textContent = `Estrellas: ${stars}/3 &bull; Bono de tiempo: +${timeBonus} pts.`;
     document.getElementById('res-score').textContent = State.score;
     document.getElementById('res-enemies').textContent = State.levelEnemiesKilled;
     document.getElementById('res-blocks').textContent = State.levelBlocksDestroyed;
@@ -3658,7 +3673,7 @@
       document.getElementById('btn-result-next').classList.remove('hidden');
     } else {
       document.getElementById('btn-result-next').classList.add('hidden');
-      document.getElementById('result-desc').textContent = '¡HAS EVACUADO TODOS LOS SECTORES CUÁNTICOS!';
+      document.getElementById('result-desc').textContent = 'Todos los sectores evacuados con éxito.';
     }
 
     document.getElementById('modal-result').classList.remove('hidden');
@@ -3683,9 +3698,14 @@
       document.getElementById('hud-speed').textContent = `${State.p1.speedMult.toFixed(1)}x`;
       document.getElementById('hud-remote-txt').textContent = State.p1.hasRemote ? 'LISTO' : 'AUTO';
 
-      let icons = '';
-      for (let i = 0; i < State.p1.lives; i++) icons += '⚙️';
-      document.getElementById('lives-val').textContent = icons || '💀';
+      const livesEl = document.getElementById('lives-val');
+      if (livesEl) {
+        if (window.ArcadeIcons) {
+          livesEl.innerHTML = Array(Math.max(0, State.p1.lives)).fill(window.ArcadeIcons.get('spark', { size: 14, color: '#eab308' })).join(' ') || '0';
+        } else {
+          livesEl.textContent = String(State.p1.lives);
+        }
+      }
 
       const btnDetonate = document.getElementById('btn-action-detonate');
       if (btnDetonate) {
@@ -3888,13 +3908,14 @@
         chip.className = `lvl-chip ${lvl.isBoss ? 'boss-chip' : ''} ${lvl.id === State.currentLevelIdx + 1 ? 'active' : ''}`;
         if (!isUnlocked) chip.classList.add('locked');
 
+        const starsHtml = stars > 0 ? (window.ArcadeIcons ? Array(stars).fill(window.ArcadeIcons.get('spark', { size: 10, color: '#eab308' })).join('') : `${stars}/3`) : '';
         chip.innerHTML = `<span>${lvl.id}</span>
-          <div class="chip-stars">${stars > 0 ? '⭐'.repeat(stars) : ''}</div>
+          <div class="chip-stars">${starsHtml}</div>
           ${lvl.isBoss ? '<small class="chip-boss-tag">JEFE</small>' : ''}`;
 
         chip.addEventListener('click', () => {
           if (!isUnlocked) {
-            showToast('¡Sector bloqueado! Supera los anteriores.', 1.5);
+            showToast('Sector bloqueado. Supera los anteriores.', 1.5);
             return;
           }
           document.querySelectorAll('.lvl-chip').forEach(c => c.classList.remove('active'));
@@ -4026,11 +4047,11 @@
     creditsEl.textContent = State.storage.credits;
 
     const upgradesList = [
-      { key: 'radius', name: 'Radio de Resonancia', max: 3, baseCost: 150, icon: '💎', desc: 'Aumenta el alcance Manhattan de la onda' },
-      { key: 'charges', name: 'Capacitador de Cargas', max: 3, baseCost: 200, icon: '💣', desc: 'Permite desplegar más cargas simultáneas' },
-      { key: 'speed', name: 'Servomotores de Botas', max: 3, baseCost: 150, icon: '⚡', desc: '+15% velocidad base de movimiento' },
-      { key: 'slide', name: 'Guantelete Magnético', max: 2, baseCost: 250, icon: '🧤', desc: 'Las cargas empujadas se deslizan +40% más rápido' },
-      { key: 'shield', name: 'Blindaje de Ingeniero', max: 2, baseCost: 350, icon: '🛡️', desc: '+1 vida adicional al iniciar cada sector' }
+      { key: 'radius', name: 'Radio de Resonancia', max: 3, baseCost: 150, icon: 'spark', desc: 'Aumenta el alcance Manhattan de la onda' },
+      { key: 'charges', name: 'Capacitador de Cargas', max: 3, baseCost: 200, icon: 'zap', desc: 'Permite desplegar más cargas simultáneas' },
+      { key: 'speed', name: 'Servomotores de Botas', max: 3, baseCost: 150, icon: 'speed', desc: '+15% velocidad base de movimiento' },
+      { key: 'slide', name: 'Guantelete Magnético', max: 2, baseCost: 250, icon: 'flag', desc: 'Las cargas empujadas se deslizan +40% más rápido' },
+      { key: 'shield', name: 'Blindaje de Ingeniero', max: 2, baseCost: 350, icon: 'shield', desc: '+1 vida adicional al iniciar cada sector' }
     ];
 
     const container = document.getElementById('shop-items-container');
@@ -4043,14 +4064,15 @@
 
       const itemCard = document.createElement('div');
       itemCard.className = 'shop-item-card';
+      const iconSvg = window.ArcadeIcons ? window.ArcadeIcons.get(upg.icon, { size: 24, color: '#eab308' }) : upg.name.slice(0, 2);
       itemCard.innerHTML = `
-        <div class="shop-item-icon">${upg.icon}</div>
+        <div class="shop-item-icon" style="display:flex;align-items:center;justify-content:center;width:32px;height:32px;">${iconSvg}</div>
         <div class="shop-item-info">
           <div class="shop-item-name">${upg.name} (Nivel ${curLvl}/${upg.max})</div>
           <div class="shop-item-desc">${upg.desc}</div>
         </div>
         <button class="ind-btn btn-primary shop-buy-btn ${isMax ? 'disabled' : ''}">
-          ${isMax ? 'MÁXIMO' : `${cost} ⚙️`}
+          ${isMax ? 'MÁXIMO' : `${cost} PTS`}
         </button>
       `;
 
@@ -4062,11 +4084,11 @@
             State.storage.upgrades[upg.key] = curLvl + 1;
             CargasStorage.save(State.storage);
             SynthSound.sfxPowerup();
-            showToast(`¡MEJORA ADQUIRIDA: ${upg.name.toUpperCase()}!`, 1.5);
+            showToast(`Mejora adquirida: ${upg.name}`, 1.5);
             if (curLvl + 1 >= upg.max) unlockAchievement('SHOP_MASTER');
             openShopUI();
           } else {
-            showToast('¡Créditos insuficientes! Destruye más bloques.', 1.5);
+            showToast('Créditos insuficientes. Demuele más bloques.', 1.5);
           }
         });
       }
@@ -4106,9 +4128,10 @@
       box = document.createElement('div');
       box.id = 'arcade-error-overlay';
       box.style.cssText = 'position:fixed;inset:0;z-index:99999;background:rgba(10,14,23,0.96);color:#f8fafc;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;text-align:center;font-family:monospace,system-ui,sans-serif;';
+      const alertSvg = window.ArcadeIcons ? window.ArcadeIcons.get('alert', { size: 36, color: '#ef4444' }) : '!';
       box.innerHTML = `
         <div style="max-width:420px;background:#1e293b;border:2px solid #ef4444;border-radius:8px;padding:20px;box-shadow:0 10px 30px rgba(0,0,0,0.8);">
-          <div style="font-size:2.2rem;margin-bottom:8px;">⚠️</div>
+          <div style="margin-bottom:8px;display:flex;justify-content:center;">${alertSvg}</div>
           <h2 style="color:#ef4444;font-size:1.1rem;margin-bottom:8px;text-transform:uppercase;">Error al iniciar el juego</h2>
           <p id="arcade-error-msg" style="font-size:0.82rem;color:#cbd5e1;margin-bottom:16px;word-break:break-word;background:#0f172a;padding:8px;border-radius:4px;"></p>
           <div style="display:flex;gap:8px;justify-content:center;">

@@ -12,10 +12,10 @@ function test(title, fn) {
   total++;
   try {
     fn();
-    console.log(`  ✓ [PASSED] ${title}`);
+    console.log(`  OK [PASSED] ${title}`);
     passed++;
   } catch (err) {
-    console.error(`  ✗ [FAILED] ${title}`);
+    console.error(`  X [FAILED] ${title}`);
     console.error(`    ${err.message}`);
   }
 }

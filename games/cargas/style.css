@@ -1,19 +1,19 @@
 /* style.css - Cargas Arcade 90s Industrial */
 :root {
-  --bg-dark: #0e1219;
-  --bg-panel: #161c28;
-  --metal-light: #475569;
-  --metal-dark: #1e293b;
-  --metal-border: #334155;
-  --caution-yellow: #f59e0b;
-  --caution-amber: #d97706;
-  --hazard-dark: #111827;
-  --energy-cyan: #06b6d4;
+  --bg-dark: #cfcac2;
+  --bg-panel: #dcd7cf;
+  --metal-light: #ece7df;
+  --metal-dark: #aba69e;
+  --metal-border: #99948c;
+  --caution-yellow: #ff5a1f;
+  --caution-amber: #e04a12;
+  --hazard-dark: #2b2b2b;
+  --energy-cyan: #ff5a1f;
   --energy-blue: #3b82f6;
   --danger-red: #ef4444;
   --success-green: #10b981;
-  --text-white: #f8fafc;
-  --text-muted: #94a3b8;
+  --text-white: #2b2b2b;
+  --text-muted: #555555;
   --font-arcade: 'Courier New', Courier, monospace, system-ui;
 }
 
@@ -30,10 +30,11 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: var(--bg-dark);
-  color: var(--text-white);
+  background-color: #cfcac2 !important;
+  color: #2b2b2b !important;
   font-family: var(--font-arcade);
   touch-action: none;
+  color-scheme: light;
 }
 
 #game-container {
@@ -44,7 +45,7 @@ html, body {
   max-width: 500px;
   margin: 0 auto;
   position: relative;
-  background-color: var(--bg-panel);
+  background-color: #cfcac2 !important;
   border-left: 2px solid var(--metal-border);
   border-right: 2px solid var(--metal-border);
   padding-top: env(safe-area-inset-top, 0px);
@@ -137,13 +138,13 @@ html, body {
   height: 44px;
 }
 
-.ind-btn.btn-primary {
-  background: linear-gradient(180deg, var(--caution-yellow) 0%, var(--caution-amber) 100%);
-  color: #000;
-  border-top: 2px solid #fde047;
-  border-left: 2px solid #fde047;
-  border-bottom: 2px solid #78350f;
-  border-right: 2px solid #78350f;
+.ind-btn.btn-primary, .btn-primary {
+  background: #ff5a1f !important;
+  color: #ffffff !important;
+  border-top: 2px solid #ff8554;
+  border-left: 2px solid #ff8554;
+  border-bottom: 2px solid #b3360b;
+  border-right: 2px solid #b3360b;
 }
 
 .ind-btn.btn-danger {
@@ -342,8 +343,7 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(4, 7, 13, 0.88);
-  backdrop-filter: blur(4px);
+  background: rgba(4, 7, 13, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -354,14 +354,15 @@ html, body {
 .modal-card {
   width: 100%;
   max-width: 380px;
-  background: #17202f;
-  border: 3px solid #334155;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.8), inset 0 0 10px rgba(0,0,0,0.5);
+  background: #e4dfd7;
+  border: 3px solid #ff5a1f;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
   display: flex;
   flex-direction: column;
   padding: 16px;
   position: relative;
   text-align: center;
+  color: #2b2b2b;
 }
 
 /* Franjas de Precaución 90s */
@@ -458,7 +459,10 @@ html, body {
   font-weight: 800;
   padding: 6px 2px;
   cursor: pointer;
-  min-height: 40px;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-transform: uppercase;
 }
 

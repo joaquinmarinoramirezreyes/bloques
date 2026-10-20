@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Abismo | Sala Arcade</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f0508'/%3E%3Ccircle cx='16' cy='16' r='8' fill='%23e11d48'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23fb7185'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%2312070a'/%3E%3Ccircle cx='16' cy='16' r='8' fill='%23b3122a'/%3E%3Ccircle cx='16' cy='16' r='4' fill='%23e8dcd0'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="../../shared/theme.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -26,10 +26,19 @@
 
       <div class="header-actions">
         <button id="btn-sound" class="icon-btn" aria-label="Silenciar sonido">
-          <span class="icon">🔊</span>
+          <span class="icon">
+            <svg id="sound-icon-svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>
+            </svg>
+          </span>
         </button>
         <button id="btn-pause" class="icon-btn" aria-label="Pausar juego">
-          <span class="icon">⏸</span>
+          <span class="icon">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+              <rect x="6" y="4" width="4" height="16" rx="1"></rect>
+              <rect x="14" y="4" width="4" height="16" rx="1"></rect>
+            </svg>
+          </span>
         </button>
       </div>
     </header>
@@ -68,7 +77,11 @@
 
             <!-- Indicador de Sala Actual -->
             <div class="room-badge" id="hud-room-badge">
-              <span class="room-badge-icon" id="hud-room-icon">🏛️</span>
+              <span class="room-badge-icon" id="hud-room-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zm0 7v-7"/>
+                </svg>
+              </span>
               <span class="room-badge-name" id="hud-room-name">Entrada a la Cripta</span>
             </div>
           </div>
@@ -77,19 +90,36 @@
           <div class="hud-top-right">
             <div class="hud-stats-row">
               <div class="stat-badge floor-badge" title="Piso actual">
-                <span class="stat-icon">🚩</span>
+                <span class="stat-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zm0 7v-7"/>
+                  </svg>
+                </span>
                 <span class="stat-val" id="hud-floor-val">PISO 1</span>
               </div>
               <div class="stat-badge gold-badge" title="Oro recolectado">
-                <span class="stat-icon">🪙</span>
+                <span class="stat-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                    <path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8zm0-14a6 6 0 1 0 6 6 6 6 0 0 0-6-6zm0 9a3 3 0 1 1 3-3 3 3 0 0 1-3 3z"/>
+                  </svg>
+                </span>
                 <span class="stat-val" id="hud-gold-val">0</span>
               </div>
               <div class="stat-badge" title="Enemigos derrotados">
-                <span class="stat-icon">💀</span>
+                <span class="stat-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor">
+                    <path d="M12 2a8 8 0 0 0-8 8c0 3.2 1.9 5.9 4.6 7.2L8 20h8l-.6-2.8C18.1 15.9 20 13.2 20 10a8 8 0 0 0-8-8zm-3 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                  </svg>
+                </span>
                 <span class="stat-val" id="hud-kills-val">0</span>
               </div>
               <div class="stat-badge" title="Enemigos activos">
-                <span class="stat-icon">👁️</span>
+                <span class="stat-icon">
+                  <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </span>
                 <span class="stat-val" id="hud-enemies-val">0</span>
               </div>
             </div>
@@ -97,7 +127,12 @@
             <!-- Mini-Mapa Conexo (Toca para ampliar en móvil) -->
             <div class="minimap-container" id="minimap-container" title="Toca para ampliar el mapa" role="button" tabindex="0" aria-label="Abrir mapa de la cripta">
               <canvas id="minimap-canvas" width="76" height="76"></canvas>
-              <span class="minimap-zoom-hint" title="Ampliar mapa">🔍</span>
+              <span class="minimap-zoom-hint" title="Ampliar mapa">
+                <svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="11" cy="11" r="8"/>
+                  <line x1="21" y1="21" x2="16.65" y2="16.65"/>
+                </svg>
+              </span>
             </div>
           </div>
         </div>
@@ -105,7 +140,11 @@
         <!-- Barra de Salud del Jefe (Fase 4) -->
         <div class="boss-hud-container hidden" id="boss-hud-container">
           <div class="boss-hud-header">
-            <span class="boss-icon" id="boss-icon">👑</span>
+            <span class="boss-icon" id="boss-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+                <path d="M2 4l3 12h14l3-12-5 4-5-6-5 6-5-4zm3 14h14v2H5v-2z"/>
+              </svg>
+            </span>
             <span class="boss-name" id="boss-name">SEÑOR DEL ABISMO</span>
             <span class="boss-hp-pct" id="boss-hp-pct">100%</span>
           </div>
@@ -117,8 +156,12 @@
         <!-- Banner animado de oleada o despeje -->
         <div class="wave-banner-container">
           <div class="wave-banner hidden" id="wave-banner">
-            <span class="wave-banner-icon" id="wave-banner-icon">⚔️</span>
-            <span class="wave-banner-text" id="wave-banner-text">¡OLEADA 1/2!</span>
+            <span class="wave-banner-icon" id="wave-banner-icon">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/>
+              </svg>
+            </span>
+            <span class="wave-banner-text" id="wave-banner-text">Oleada 1/2</span>
           </div>
         </div>
       </div>
@@ -133,7 +176,11 @@
       <!-- Botón de Habilidad Especial (Lado Derecho) -->
       <div class="special-action-zone">
         <button id="btn-action-special" class="special-action-btn" aria-label="Activar habilidad especial">
-          <span class="special-icon">💥</span>
+          <span class="special-icon">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </span>
           <span class="special-lbl">ESTALLIDO</span>
           <div class="special-cooldown-overlay" id="special-cooldown-overlay"></div>
           <span class="special-cooldown-text hidden" id="special-cooldown-text">0.0</span>
@@ -143,7 +190,11 @@
       <!-- Modal de inicio (Fases 1 a 4) -->
       <div class="overlay-modal" id="start-modal">
         <div class="modal-card">
-          <div class="abismo-crest-icon">🗡️</div>
+          <div class="abismo-crest-icon">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor">
+              <path d="M11 2v4H9v2h2v7.17l-3.59-3.58L6 13.17 12 19.17l6-6-1.41-1.42L13 15.17V8h2V6h-2V2h-2zM4 20h16v2H4v-2z"/>
+            </svg>
+          </div>
           <h2 class="modal-title">ABISMO</h2>
           <p class="modal-subtitle">Roguelike Cenital en Criptas Infinitas</p>
 
@@ -152,27 +203,48 @@
             <span class="char-select-title">SELECCIONA TU EXPLORADOR</span>
             <div class="character-selector-grid" id="character-selector-grid">
               <button type="button" class="char-card active" data-char="peregrino">
-                <span class="char-card-icon">🗡️</span>
+                <span class="char-card-icon">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/>
+                  </svg>
+                </span>
                 <span class="char-card-name">Peregrino</span>
                 <span class="char-card-style">Dardo Espectral</span>
               </button>
               <button type="button" class="char-card" data-char="hechicera">
-                <span class="char-card-icon">🩸</span>
+                <span class="char-card-icon">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+                  </svg>
+                </span>
                 <span class="char-card-name">Hechicera</span>
                 <span class="char-card-style">Orbes Giratorios</span>
               </button>
               <button type="button" class="char-card" data-char="centinela">
-                <span class="char-card-icon">🛡️</span>
+                <span class="char-card-icon">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                  </svg>
+                </span>
                 <span class="char-card-name">Centinela</span>
                 <span class="char-card-style">Onda de Vacío</span>
               </button>
               <button type="button" class="char-card" data-char="sombra">
-                <span class="char-card-icon">👤</span>
+                <span class="char-card-icon">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                    <circle cx="12" cy="12" r="3"/>
+                  </svg>
+                </span>
                 <span class="char-card-name">Sombra</span>
                 <span class="char-card-style">Navajas Críticas</span>
               </button>
               <button type="button" class="char-card" data-char="piromante">
-                <span class="char-card-icon">🔥</span>
+                <span class="char-card-icon">
+                  <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+                    <path d="M12 2c-.5 2-2 3.5-3 5-1.5 2.2-2 4.3-2 6.5A7 7 0 0 0 14 20a7 7 0 0 0 7-7c0-3-1.5-5.5-4-7.5-.5 1.5-1.5 2.5-3 3-1-3-1-5-2-6.5z"/>
+                  </svg>
+                </span>
                 <span class="char-card-name">Piromante</span>
                 <span class="char-card-style">Anillo Ígneo</span>
               </button>
@@ -184,32 +256,49 @@
 
           <div class="instructions-box">
             <div class="instruction-row">
-              <span class="inst-icon">🎯</span>
+              <span class="inst-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="12" r="6"/>
+                  <circle cx="12" cy="12" r="2"/>
+                </svg>
+              </span>
               <span class="inst-text"><strong>Auto-Ataque:</strong> Tu explorador ataca automáticamente al enemigo más cercano según su estilo de arma.</span>
             </div>
             <div class="instruction-row">
-              <span class="inst-icon">📱</span>
+              <span class="inst-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="5" y="2" width="14" height="20" rx="2" ry="2"/>
+                  <line x1="12" y1="18" x2="12.01" y2="18"/>
+                </svg>
+              </span>
               <span class="inst-text"><strong>Móvil:</strong> Desliza en la izquierda para moverte. Pulsa el botón rojo para la habilidad especial.</span>
             </div>
             <div class="instruction-row">
-              <span class="inst-icon">💻</span>
+              <span class="inst-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+                  <line x1="8" y1="21" x2="16" y2="21"/>
+                  <line x1="12" y1="17" x2="12" y2="21"/>
+                </svg>
+              </span>
               <span class="inst-text"><strong>Teclado:</strong> WASD o Flechas para moverte. Espacio para la habilidad especial.</span>
             </div>
           </div>
 
           <div class="start-actions-stack">
             <button id="btn-continue-run" class="arcade-btn-accent hidden">
-              ⚡ CONTINUAR DESCENSO (<span id="continue-run-info">Piso 1</span>)
+              CONTINUAR DESCENSO (<span id="continue-run-info">Piso 1</span>)
             </button>
             <button id="btn-start-game" class="arcade-btn-primary">
               DESCENDER AL ABISMO
             </button>
             <div class="start-secondary-actions">
               <button id="btn-open-meta" class="meta-nav-btn" type="button">
-                ✨ ALTAR DEL ABISMO (<span id="start-essence-val">0</span>)
+                ALTAR DEL ABISMO (<span id="start-essence-val">0</span>)
               </button>
               <button id="btn-open-achievements" class="meta-nav-btn" type="button">
-                🏆 LOGROS Y RÉCORD
+                LOGROS Y RÉCORD
               </button>
             </div>
           </div>
@@ -233,8 +322,12 @@
       <div class="overlay-modal hidden" id="levelup-modal">
         <div class="modal-card modal-card-levelup">
           <div class="levelup-header">
-            <span class="levelup-icon-anim">✨</span>
-            <h2 class="modal-title levelup-title" id="levelup-title">¡SUBIDA DE NIVEL!</h2>
+            <span class="levelup-icon-anim">
+              <svg viewBox="0 0 24 24" width="28" height="28" fill="currentColor">
+                <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+              </svg>
+            </span>
+            <h2 class="modal-title levelup-title" id="levelup-title">SUBIDA DE NIVEL</h2>
             <p class="modal-subtitle" id="levelup-subtitle">Elige una bendición arcana para potenciarte:</p>
           </div>
 
@@ -248,11 +341,19 @@
       <div class="overlay-modal hidden" id="meta-modal">
         <div class="modal-card modal-card-meta">
           <div class="meta-header">
-            <div class="abismo-crest-icon">✨</div>
+            <div class="abismo-crest-icon">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+              </svg>
+            </div>
             <h2 class="modal-title">ALTAR DEL ABISMO</h2>
             <p class="modal-subtitle">Gasta tu esencia arcana en bendiciones permanentes</p>
             <div class="meta-essence-badge">
-              <span class="essence-sparkle">✨</span>
+              <span class="essence-sparkle">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+                </svg>
+              </span>
               <span class="essence-label">Esencia Disponible:</span>
               <span class="essence-val" id="meta-essence-val">0</span>
             </div>
@@ -273,34 +374,58 @@
       <div class="overlay-modal hidden" id="achievements-modal">
         <div class="modal-card modal-card-achievements">
           <div class="achievements-header">
-            <div class="abismo-crest-icon">🏆</div>
+            <div class="abismo-crest-icon">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M6 9V4h12v5a6 6 0 0 1-12 0zM6 6H3a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h1M18 6h3a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-1M12 15v4M8 19h8v2H8z"/>
+              </svg>
+            </div>
             <h2 class="modal-title">LOGROS Y RÉCORDS</h2>
             <p class="modal-subtitle">Hazañas alcanzadas en las profundidades de la cripta</p>
           </div>
 
           <div class="achievements-stats-grid">
             <div class="ach-stat-card">
-              <span class="ach-stat-icon">🚩</span>
+              <span class="ach-stat-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zm0 7v-7"/>
+                </svg>
+              </span>
               <span class="ach-stat-label">Piso Más Profundo</span>
               <span class="ach-stat-val" id="ach-stat-max-floor">PISO 1</span>
             </div>
             <div class="ach-stat-card">
-              <span class="ach-stat-icon">🎮</span>
+              <span class="ach-stat-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/>
+                </svg>
+              </span>
               <span class="ach-stat-label">Descensos Totales</span>
               <span class="ach-stat-val" id="ach-stat-runs">0</span>
             </div>
             <div class="ach-stat-card">
-              <span class="ach-stat-icon">💀</span>
+              <span class="ach-stat-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M12 2a8 8 0 0 0-8 8c0 3.2 1.9 5.9 4.6 7.2L8 20h8l-.6-2.8C18.1 15.9 20 13.2 20 10a8 8 0 0 0-8-8zm-3 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+                </svg>
+              </span>
               <span class="ach-stat-label">Sombras Purgadas</span>
               <span class="ach-stat-val" id="ach-stat-kills">0</span>
             </div>
             <div class="ach-stat-card">
-              <span class="ach-stat-icon">👑</span>
+              <span class="ach-stat-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M2 4l3 12h14l3-12-5 4-5-6-5 6-5-4zm3 14h14v2H5v-2z"/>
+                </svg>
+              </span>
               <span class="ach-stat-label">Jefes Vencidos</span>
               <span class="ach-stat-val" id="ach-stat-bosses">0</span>
             </div>
             <div class="ach-stat-card">
-              <span class="ach-stat-icon">✨</span>
+              <span class="ach-stat-icon">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M12 2l2.4 7.2L22 12l-7.6 2.8L12 22l-2.4-7.2L2 12l7.6-2.8z"/>
+                </svg>
+              </span>
               <span class="ach-stat-label">Esencia Cosechada</span>
               <span class="ach-stat-val" id="ach-stat-essence">0</span>
             </div>
@@ -321,13 +446,24 @@
         <div class="modal-card map-modal-card">
           <div class="map-modal-header">
             <div class="map-modal-title-group">
-              <span class="map-modal-icon">🗺️</span>
+              <span class="map-modal-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="1 6 1 22 8 18 16 22 23 18 23 2 16 6 8 2 1 6"/>
+                  <line x1="8" y1="2" x2="8" y2="18"/>
+                  <line x1="16" y1="6" x2="16" y2="22"/>
+                </svg>
+              </span>
               <div>
                 <h3 class="map-modal-title">MAPA DE LA CRIPTA</h3>
                 <span class="map-modal-subtitle" id="map-modal-floor-text">PISO 1</span>
               </div>
             </div>
-            <button class="map-modal-close-btn" id="btn-close-map" type="button" aria-label="Cerrar mapa">✕</button>
+            <button class="map-modal-close-btn" id="btn-close-map" type="button" aria-label="Cerrar mapa">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"/>
+                <line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
           </div>
 
           <div class="map-modal-canvas-wrapper">
@@ -336,11 +472,11 @@
 
           <div class="map-legend-grid">
             <div class="map-legend-item"><span class="legend-chip legend-player"></span> Jugador</div>
-            <div class="map-legend-item"><span class="legend-chip legend-boss">👑</span> Jefe / Portal</div>
-            <div class="map-legend-item"><span class="legend-chip legend-treasure">💎</span> Tesoro</div>
-            <div class="map-legend-item"><span class="legend-chip legend-shop">🪙</span> Mercader</div>
-            <div class="map-legend-item"><span class="legend-chip legend-rest">💚</span> Santuario</div>
-            <div class="map-legend-item"><span class="legend-chip legend-combat">⚔️</span> Combate</div>
+            <div class="map-legend-item"><span class="legend-chip legend-boss"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M2 4l3 12h14l3-12-5 4-5-6-5 6-5-4zm3 14h14v2H5v-2z"/></svg></span> Jefe / Portal</div>
+            <div class="map-legend-item"><span class="legend-chip legend-treasure"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M6 3h12l4 6-10 12L2 9l4-6z"/></svg></span> Tesoro</div>
+            <div class="map-legend-item"><span class="legend-chip legend-shop"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="12" cy="12" r="4"/></svg></span> Mercader</div>
+            <div class="map-legend-item"><span class="legend-chip legend-rest"><svg viewBox="0 0 24 24" width="12" height="12" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span> Santuario</div>
+            <div class="map-legend-item"><span class="legend-chip legend-combat"><svg viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l6-6M16 16l4 4M19 21l2-2M9.5 17.5L21 6V3h-3L6.5 14.5M11 19l-6-6M8 16l-4 4M5 21l-2-2"/></svg></span> Combate</div>
           </div>
 
           <div class="modal-actions">
@@ -354,7 +490,11 @@
       <!-- Modal de Game Over (Fase 5) -->
       <div class="overlay-modal hidden" id="gameover-modal">
         <div class="modal-card">
-          <div class="abismo-crest-icon">💀</div>
+          <div class="abismo-crest-icon">
+            <svg viewBox="0 0 24 24" width="36" height="36" fill="currentColor">
+              <path d="M12 2a8 8 0 0 0-8 8c0 3.2 1.9 5.9 4.6 7.2L8 20h8l-.6-2.8C18.1 15.9 20 13.2 20 10a8 8 0 0 0-8-8zm-3 9a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3zm6 0a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"/>
+            </svg>
+          </div>
           <h2 class="modal-title danger-title">HAS SUCUMBIDO</h2>
           <p class="modal-subtitle">Las sombras del abismo reclamaron tu alma</p>
 
@@ -369,17 +509,17 @@
             </div>
             <div class="result-row">
               <span class="result-label">Esencia Cosechada</span>
-              <span class="result-val essence-earned" id="res-essence-earned">+0 ✨</span>
+              <span class="result-val essence-earned" id="res-essence-earned">+0</span>
             </div>
             <div class="result-row">
               <span class="result-label">Esencia Total Acumulada</span>
-              <span class="result-val" id="res-essence-total">0 ✨</span>
+              <span class="result-val" id="res-essence-total">0</span>
             </div>
           </div>
 
           <div class="modal-actions">
             <button id="btn-gameover-altar" class="arcade-btn-accent">
-              ✨ ALTAR DE MEJORAS
+              ALTAR DE MEJORAS
             </button>
             <button id="btn-gameover-restart" class="arcade-btn-primary">
               INTENTAR DE NUEVO
@@ -394,7 +534,7 @@
       <!-- Pantalla / Panel de Depuración Oculta (?debug=1) (Fase 5) -->
       <div class="debug-panel hidden" id="debug-panel">
         <div class="debug-header">
-          <span class="debug-title">⚙️ DEBUG CONSOLE</span>
+          <span class="debug-title">DEBUG CONSOLE</span>
           <span class="debug-fps" id="debug-fps">FPS: 60</span>
         </div>
         <div class="debug-stats">
@@ -416,6 +556,7 @@
   </div>
 
   <!-- Scripts compartidos y módulos del juego -->
+  <script src="../../shared/icons.js"></script>
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/canvas.js"></script>
   <script src="../../shared/audio.js"></script>

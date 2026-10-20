@@ -20,8 +20,8 @@
   const PIECES = {
     I: {
       name: 'I',
-      color: '#00f0ff', // Cyan neón
-      glow: 'rgba(0, 240, 255, 0.4)',
+      color: '#c0392b', // Acento primario rojo ladrillo
+      glow: 'rgba(192, 57, 43, 0.4)',
       matrix: [
         [0, 0, 0, 0],
         [1, 1, 1, 1],
@@ -31,8 +31,8 @@
     },
     O: {
       name: 'O',
-      color: '#ffd000', // Ámbar solar
-      glow: 'rgba(255, 208, 0, 0.4)',
+      color: '#d35400', // Terracota cálido
+      glow: 'rgba(211, 84, 0, 0.4)',
       matrix: [
         [1, 1],
         [1, 1]
@@ -40,8 +40,8 @@
     },
     T: {
       name: 'T',
-      color: '#b026ff', // Púrpura eléctrico
-      glow: 'rgba(176, 38, 255, 0.4)',
+      color: '#1f2a44', // Tinta azul noche
+      glow: 'rgba(31, 42, 68, 0.4)',
       matrix: [
         [0, 1, 0],
         [1, 1, 1],
@@ -50,8 +50,8 @@
     },
     S: {
       name: 'S',
-      color: '#00e676', // Verde esmeralda
-      glow: 'rgba(0, 230, 118, 0.4)',
+      color: '#2e7d32', // Verde bosque sobrio
+      glow: 'rgba(46, 125, 50, 0.4)',
       matrix: [
         [0, 1, 1],
         [1, 1, 0],
@@ -94,7 +94,7 @@
 
   // Tabla de puntuación clásica escalada por nivel
   const POINTS_TABLE = [0, 100, 300, 500, 800]; // 0, 1, 2, 3, 4 líneas
-  const BANNER_TEXTS = ['', '¡LÍNEA!', '¡DOBLE!', '¡TRIPLE!', '¡TETRA!'];
+  const BANNER_TEXTS = ['', 'Línea', 'Doble', 'Triple', 'Tetra'];
 
   // Estados del juego
   const GameState = {
@@ -824,7 +824,7 @@
       if (newLevel !== this.level) {
         this.level = newLevel;
         this.updateDropInterval();
-        this.showBanner(`¡NIVEL ${this.level}!`);
+        this.showBanner(`Nivel ${this.level}`);
       }
 
       // Actualizar récord si es superado

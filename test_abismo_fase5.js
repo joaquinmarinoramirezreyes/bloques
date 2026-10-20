@@ -50,10 +50,10 @@ function test(name, fn) {
   total++;
   try {
     fn();
-    console.log(`  ✓ [PASSED] ${name}`);
+    console.log(`  OK [PASSED] ${name}`);
     passed++;
   } catch (err) {
-    console.error(`  ✗ [FAILED] ${name}`);
+    console.error(`  X [FAILED] ${name}`);
     console.error(`    ${err.message}\n`);
   }
 }

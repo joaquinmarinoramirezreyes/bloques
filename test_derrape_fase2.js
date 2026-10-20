@@ -30,7 +30,7 @@ const {
   saveStoredBestLap
 } = require('./games/derrape/game.js');
 
-console.log('🏁 INICIANDO PRUEBAS UNITARIAS FASE 2: DERRAPE\n');
+console.log('[RACE] INICIANDO PRUEBAS UNITARIAS FASE 2: DERRAPE\n');
 
 let passedTests = 0;
 let totalTests = 0;
@@ -39,10 +39,10 @@ function runTest(name, fn) {
   totalTests++;
   try {
     fn();
-    console.log(`  ✅ [PASS] ${name}`);
+    console.log(`  [OK] [PASS] ${name}`);
     passedTests++;
   } catch (err) {
-    console.error(`  ❌ [FAIL] ${name}`);
+    console.error(`  [FAIL] [FAIL] ${name}`);
     console.error(`     Error: ${err.message}`);
     console.error(err.stack);
   }
@@ -51,7 +51,7 @@ function runTest(name, fn) {
 // ============================================================================
 // 1. GEOMETRÍA DE PISTAS Y PUNTOS DE CONTROL
 // ============================================================================
-console.log('📌 BLOQUE 1: Geometría de Pistas y Puntos de Control');
+console.log('[BLOCK] BLOQUE 1: Geometría de Pistas y Puntos de Control');
 
 const track = new Track(TRACK_DATA_PISTA_1);
 
@@ -82,7 +82,7 @@ runTest('1.2 Delimitación de dimensiones y bounds de la pista', () => {
 // ============================================================================
 // 2. DETECCIÓN DE VUELTAS Y PROTECCIÓN ANTI-TRAMPAS
 // ============================================================================
-console.log('\n📌 BLOQUE 2: Sistema de Vueltas y Protección Anti-Trampas');
+console.log('\n[BLOCK] BLOQUE 2: Sistema de Vueltas y Protección Anti-Trampas');
 
 /**
  * Función que simula el avance de un auto a través de checkpoints
@@ -204,7 +204,7 @@ runTest('2.3 Anti-trampas: Saltarse puntos de control cortando por el césped no
 // ============================================================================
 // 3. COLISIONES CON BORDES Y DELIMITACIÓN DEL MAPA
 // ============================================================================
-console.log('\n📌 BLOQUE 3: Colisiones con Bordes y Delimitación');
+console.log('\n[BLOCK] BLOQUE 3: Colisiones con Bordes y Delimitación');
 
 runTest('3.1 Auto dentro de pista no genera colisión con barrera', () => {
   const car = new Car(track.startPos.x, track.startPos.y, track.startPos.angle);
@@ -257,7 +257,7 @@ runTest('3.3 Delimitación perimetral del mapa exterior', () => {
 // ============================================================================
 // 4. TIEMPOS Y RÉCORD
 // ============================================================================
-console.log('\n📌 BLOQUE 4: Tiempos y Récords');
+console.log('\n[BLOCK] BLOQUE 4: Tiempos y Récords');
 
 runTest('4.1 Formateo de tiempos de vuelta', () => {
   assert.strictEqual(formatTime(0), '00:00.0');

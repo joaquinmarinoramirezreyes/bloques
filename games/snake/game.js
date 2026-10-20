@@ -283,7 +283,7 @@
 
     spawnFoodParticles(px, py) {
       let spawned = 0;
-      const colors = ['#ffd000', '#00f0ff', '#00e676', '#ffffff'];
+      const colors = ['#ffd866', '#ffb000', '#cca028', '#ffffff'];
       for (let i = 0; i < this.particlePool.length && spawned < 10; i++) {
         const p = this.particlePool[i];
         if (!p.active) {
@@ -564,9 +564,7 @@
         const headRadius = (thickness * 0.54);
 
         ctx.save();
-        ctx.shadowColor = 'rgba(0, 240, 255, 0.75)';
-        ctx.shadowBlur = Math.round(this.cellSize * 0.45);
-        ctx.fillStyle = '#00f0ff'; // Cyan neón
+        ctx.fillStyle = '#ffd866';
         ctx.beginPath();
         ctx.arc(headPt.x, headPt.y, headRadius, 0, Math.PI * 2);
         ctx.fill();

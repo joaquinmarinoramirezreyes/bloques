@@ -14,7 +14,7 @@ console.log('===============================================================');
 // 1. Verificación de configuración: 30 niveles repartidos en 3 mundos
 assert.strictEqual(CONFIG.LEVELS.length, 30, 'Deben definirse exactamente 30 niveles como datos');
 assert.strictEqual(CONFIG.WORLDS.length, 3, 'Deben existir 3 mundos temáticos');
-console.log(`✓ Configuración validada: 30 niveles repartidos en 3 mundos temáticos.`);
+console.log(`OK Configuración validada: 30 niveles repartidos en 3 mundos temáticos.`);
 
 // 2. Validación de cuadrícula 11x13, spawns y jefes en los niveles 10, 20 y 30
 CONFIG.LEVELS.forEach((lvl, idx) => {
@@ -43,7 +43,7 @@ CONFIG.LEVELS.forEach((lvl, idx) => {
     assert.strictEqual(parsed.boss.type, 'archon', 'Jefe del nivel 30 debe ser Núcleo Arconte Supremo');
   }
 });
-console.log('✓ Los 30 niveles cumplen las dimensiones exactas 11x13 y los jefes 10, 20 y 30 están configurados.');
+console.log('OK Los 30 niveles cumplen las dimensiones exactas 11x13 y los jefes 10, 20 y 30 están configurados.');
 
 // 3. SOLVER DE ALCANZABILIDAD BFS: Demostrar que los 30 niveles tienen solución alcanzable
 CONFIG.LEVELS.forEach((lvl) => {
@@ -52,7 +52,7 @@ CONFIG.LEVELS.forEach((lvl) => {
   assert.strictEqual(solv.hasExit, true, `Nivel ${lvl.id} tiene salida válida`);
   assert.strictEqual(solv.canReachExit, true, `Nivel ${lvl.id} (${lvl.name}) DEBE tener camino alcanzable al portal de salida`);
 });
-console.log('✓ Solver BFS ejecutado: Los 30 niveles fueron probados y tienen solución alcanzable al portal.');
+console.log('OK Solver BFS ejecutado: Los 30 niveles fueron probados y tienen solución alcanzable al portal.');
 
 // 4. REGRESIÓN DIAGNÓSTICO #1: Las cargas deslizantes NO deben atravesar a otras cargas
 {
@@ -69,7 +69,7 @@ console.log('✓ Solver BFS ejecutado: Los 30 niveles fueron probados y tienen s
   // Debe detenerse en (1, 2) inmediatamente antes de la carga B, NUNCA atravesarla hasta (1, 5)
   assert.strictEqual(slideRes.finalR, 1);
   assert.strictEqual(slideRes.finalC, 2, 'La carga deslizante debe detenerse antes de la otra carga en (1, 3)');
-  console.log('✓ Regresión #1 superada: Las cargas empujadas ya no se atraviesan entre sí.');
+  console.log('OK Regresión #1 superada: Las cargas empujadas ya no se atraviesan entre sí.');
 }
 
 // 5. REGRESIÓN DIAGNÓSTICO #2: Cadenas de detonación dinámicas (bloques blandos destruidos no bloquean ondas posteriores)
@@ -88,7 +88,7 @@ console.log('✓ Solver BFS ejecutado: Los 30 niveles fueron probados y tienen s
   const chainRes = CargasLogic.resolveChainDetonations(charges, gridWithBlock);
   assert.strictEqual(chainRes.comboCount, 3, 'Las 3 cargas deben detonarse en la cadena');
   assert.strictEqual(charges[2].detonated, true, 'La carga C3 detrás del bloque blando recién destruido ahora sí detona');
-  console.log('✓ Regresión #2 superada: Cadenas de detonación dinámicas sin atascamiento por bloques blandos.');
+  console.log('OK Regresión #2 superada: Cadenas de detonación dinámicas sin atascamiento por bloques blandos.');
 }
 
 // 6. REGRESIÓN DIAGNÓSTICO #3: Evasión inteligente BFS en callejones sin salida
@@ -105,7 +105,7 @@ console.log('✓ Solver BFS ejecutado: Los 30 niveles fueron probados y tienen s
   // Al no poder salir a casillas seguras sin pasar por la bomba, no debe suicidarse caminando hacia la bomba si hay pared
   // En este callejón cerrado a la izquierda, verificar que evalúa seguridad
   assert.strictEqual(typeof evadeDecision.shouldEvade, 'boolean');
-  console.log('✓ Regresión #3 superada: Evasión con evaluación BFS de celdas seguras.');
+  console.log('OK Regresión #3 superada: Evasión con evaluación BFS de celdas seguras.');
 }
 
 // 7. MECÁNICA DE CAZADOR: Pathfinding BFS hacia el objetivo
@@ -121,7 +121,7 @@ console.log('✓ Solver BFS ejecutado: Los 30 niveles fueron probados y tienen s
   // Debe ir hacia abajo a (2, 1) para rodear el pilar.
   const hunterDir = CargasLogic.getHunterMove(testRoom, 1, 1, 1, 3);
   assert.deepStrictEqual(hunterDir, { r: 1, c: 0 }, 'El cazador debe buscar el camino rodeando el pilar hacia abajo');
-  console.log('✓ Pathfinding BFS del cazador verificado con éxito.');
+  console.log('OK Pathfinding BFS del cazador verificado con éxito.');
 }
 
 // 8. MECÁNICAS DE MUNDOS: Teletransportadores, Cintas e Interruptores
@@ -142,7 +142,7 @@ console.log('✓ Solver BFS ejecutado: Los 30 niveles fueron probados y tienen s
   // Al entrar en (1, 2), se teletransporta a (2, 4) y continúa hacia la derecha hasta (2, 5)
   assert.strictEqual(slideRes.finalR, 2);
   assert.strictEqual(slideRes.finalC, 5, 'La carga debe atravesar el teletransporte cuántico y continuar su trayectoria');
-  console.log('✓ Mecánica de teletransportadores cuánticos pareados verificada.');
+  console.log('OK Mecánica de teletransportadores cuánticos pareados verificada.');
 }
 
 // 9. CINTAS TRANSPORTADORAS Y COMPUERTAS
@@ -155,7 +155,7 @@ console.log('✓ Solver BFS ejecutado: Los 30 niveles fueron probados y tienen s
   ];
   const slideRes = CargasLogic.simulateSlide(conveyorGrid, 1, 1, 0, 1, []);
   assert.strictEqual(slideRes.finalR, 2, 'La cinta hacia abajo redirige la carga hacia la fila 2');
-  console.log('✓ Mecánica de cintas transportadoras verificada.');
+  console.log('OK Mecánica de cintas transportadoras verificada.');
 }
 
 console.log('===============================================================');

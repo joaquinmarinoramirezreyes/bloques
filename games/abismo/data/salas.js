@@ -9,7 +9,7 @@
     combate: {
       id: 'combate',
       name: 'Cámara de Batalla',
-      icon: '⚔️',
+      icon: 'swords',
       color: '#e11d48',
       hasEnemies: true,
       hasChest: false,
@@ -18,7 +18,7 @@
     tesoro: {
       id: 'tesoro',
       name: 'Bóveda de Reliquias',
-      icon: '💎',
+      icon: 'gem',
       color: '#fbbf24',
       hasEnemies: false,
       hasChest: true,
@@ -27,7 +27,7 @@
     tienda: {
       id: 'tienda',
       name: 'Mercader Umbrío',
-      icon: '🪙',
+      icon: 'coin',
       color: '#38bdf8',
       hasEnemies: false,
       hasChest: false,
@@ -36,7 +36,7 @@
     descanso: {
       id: 'descanso',
       name: 'Santuario de Almas',
-      icon: '💚',
+      icon: 'heart',
       color: '#4ade80',
       hasEnemies: false,
       healPercent: 0.4,
@@ -45,7 +45,7 @@
     elite: {
       id: 'elite',
       name: 'Cámara de la Bestia',
-      icon: '💀',
+      icon: 'skull',
       color: '#f43f5e',
       hasEnemies: true,
       isElite: true,
@@ -54,7 +54,7 @@
     jefe: {
       id: 'jefe',
       name: 'Trono del Señor del Abismo',
-      icon: '👑',
+      icon: 'crown',
       color: '#a855f7',
       isBoss: true,
       hasEnemies: true
@@ -142,7 +142,7 @@
         gx: startX,
         gy: startY,
         type: 'inicio',
-        typeData: { id: 'inicio', name: 'Entrada a la Cripta', icon: '🏛️', color: '#38bdf8' },
+        typeData: { id: 'inicio', name: 'Entrada a la Cripta', icon: 'flag', color: '#38bdf8' },
         doors: { N: false, S: false, E: false, W: false },
         cleared: false,
         visited: true,

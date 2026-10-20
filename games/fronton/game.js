@@ -31,21 +31,21 @@
       HARD: { label: 'CYBER',  speed: 530, errorRate: 2,  reactionLag: 0.02 }
     },
     TOURNAMENT_RIVALS: [
-      { id: 'vector1', name: 'Vector-1', avatar: '🤖', desc: 'IA de prototipo con disparos suaves y predecibles', speed: 270, errorRate: 24, reactionLag: 0.15 },
-      { id: 'aerobot', name: 'Aero-Bot', avatar: '⚡', desc: 'Ágil y rápido, busca tiros cruzados a las esquinas', speed: 360, errorRate: 14, reactionLag: 0.09 },
-      { id: 'vortex',  name: 'Vortex',   avatar: '🌀', desc: 'Efectos giroscópicos y rebotes agresivos en pared', speed: 430, errorRate: 8,  reactionLag: 0.06 },
-      { id: 'ironguard', name: 'Iron-Guard', avatar: '🛡️', desc: 'Muralla defensiva impenetrable con gran precisión', speed: 490, errorRate: 3, reactionLag: 0.03 },
-      { id: 'quantumx', name: 'Quantum-X', avatar: '🔮', desc: 'Maestro supremo: aceleración cuántica y spin letal', speed: 560, errorRate: 0, reactionLag: 0.01 }
+      { id: 'vector1', name: 'Vector-1', avatar: 'target', desc: 'IA de prototipo con disparos suaves y predecibles', speed: 270, errorRate: 24, reactionLag: 0.15 },
+      { id: 'aerobot', name: 'Aero-Bot', avatar: 'zap', desc: 'Ágil y rápido, busca tiros cruzados a las esquinas', speed: 360, errorRate: 14, reactionLag: 0.09 },
+      { id: 'vortex',  name: 'Vortex',   avatar: 'swap', desc: 'Efectos giroscópicos y rebotes agresivos en pared', speed: 430, errorRate: 8,  reactionLag: 0.06 },
+      { id: 'ironguard', name: 'Iron-Guard', avatar: 'shield', desc: 'Muralla defensiva impenetrable con gran precisión', speed: 490, errorRate: 3, reactionLag: 0.03 },
+      { id: 'quantumx', name: 'Quantum-X', avatar: 'star', desc: 'Maestro supremo: aceleración cuántica y spin letal', speed: 560, errorRate: 0, reactionLag: 0.01 }
     ],
     ACHIEVEMENTS: [
-      { id: 'first_point', title: 'Primer Saque', desc: 'Anota tu primer punto en la arena', icon: '🎯' },
-      { id: 'rally_15', title: 'Maestro del Rally', desc: 'Alcanza un rally de 15 o más golpes', icon: '⚡' },
-      { id: 'speed_650', title: 'Velocidad Supersónica', desc: 'Golpea la pelota a más de 650 px/s', icon: '🚀' },
-      { id: 'tournament_champ', title: 'Campeón del Torneo', desc: 'Vence a los 5 rivales cibernéticos', icon: '👑' },
-      { id: 'survival_25', title: 'Superviviente Cuántico', desc: 'Resiste 25 rebotes en modo Supervivencia', icon: '💠' },
-      { id: 'powerup_5', title: 'Sobrecarga Cuántica', desc: 'Recoge 5 power-ups en un solo partido', icon: '⭐' },
-      { id: 'goal_net_save', title: 'Salvada Épica', desc: 'Salva un punto con la red de portería', icon: '🛡️' },
-      { id: 'clean_sheet', title: 'Blanqueada Perfecta', desc: 'Gana un partido 7-0 sin conceder puntos', icon: '🏆' }
+      { id: 'first_point', title: 'Primer Saque', desc: 'Anota tu primer punto en la arena', icon: 'target' },
+      { id: 'rally_15', title: 'Maestro del Rally', desc: 'Alcanza un rally de 15 o más golpes', icon: 'zap' },
+      { id: 'speed_650', title: 'Velocidad Supersónica', desc: 'Golpea la pelota a más de 650 px/s', icon: 'speed' },
+      { id: 'tournament_champ', title: 'Campeón del Torneo', desc: 'Vence a los 5 rivales cibernéticos', icon: 'trophy' },
+      { id: 'survival_25', title: 'Superviviente Cuántico', desc: 'Resiste 25 rebotes en modo Supervivencia', icon: 'shield' },
+      { id: 'powerup_5', title: 'Sobrecarga Cuántica', desc: 'Recoge 5 power-ups en un solo partido', icon: 'star' },
+      { id: 'goal_net_save', title: 'Salvada Épica', desc: 'Salva un punto con la red de portería', icon: 'shield' },
+      { id: 'clean_sheet', title: 'Blanqueada Perfecta', desc: 'Gana un partido 7-0 sin conceder puntos', icon: 'crown' }
     ],
     PARTICLE_POOL_SIZE: 120,
     STORAGE_KEY: 'fronton:v1'
@@ -117,7 +117,7 @@
           vx: 0, vy: 0,
           life: 0, maxLife: 1,
           size: 2,
-          color: '#00f0ff'
+          color: '#f2c94c'
         };
       }
     }
@@ -335,10 +335,10 @@
   // COLOR DE PELOTA SEGÚN VELOCIDAD
   // ==========================================
   function getBallSpeedColor(speed) {
-    if (speed < 400) return '#00f0ff'; // Cian
-    if (speed < 550) return '#facc15'; // Ámbar
-    if (speed < 680) return '#ff007f'; // Magenta
-    return '#ffffff'; // Blanco cuántico
+    if (speed < 400) return '#f4f1e8'; // Crema arena
+    if (speed < 550) return '#f2c94c'; // Oro frontón
+    if (speed < 680) return '#e07a1f'; // Ámbar cálido
+    return '#ffffff'; // Blanco puro
   }
 
   // ==========================================
@@ -447,10 +447,10 @@
   // GESTIÓN DE POWER-UPS
   // ==========================================
   const POWERUP_TYPES = [
-    { type: 'BIG_PADDLE', name: 'PALETA GRANDE', icon: '↔️', color: '#10b981' },
-    { type: 'SLOW_BALL',  name: 'PELOTA LENTA',  icon: '❄️', color: '#00f0ff' },
-    { type: 'MULTI_BALL', name: 'MULTIPELOTA',   icon: '⚽', color: '#f59e0b' },
-    { type: 'GOAL_NET',   name: 'RED DEFENSIVA', icon: '🛡️', color: '#ec4899' }
+    { type: 'BIG_PADDLE', name: 'PALETA GRANDE', icon: 'swap', color: '#10b981' },
+    { type: 'SLOW_BALL',  name: 'PELOTA LENTA',  icon: 'speed', color: '#f2c94c' },
+    { type: 'MULTI_BALL', name: 'MULTIPELOTA',   icon: 'star', color: '#f59e0b' },
+    { type: 'GOAL_NET',   name: 'RED DEFENSIVA', icon: 'shield', color: '#ec4899' }
   ];
 
   function spawnCourtPowerup() {
@@ -467,18 +467,18 @@
       timer: 14.0
     };
     SynthArenaAudio.sfxPowerupSpawn();
-    showPowerupToast(picked.icon, `¡${picked.name} EN PISTA!`);
+    showPowerupToast(picked.icon, `${picked.name} EN PISTA`);
   }
 
   function collectPowerup(pow) {
     SynthArenaAudio.sfxPowerupCollect();
     State.courtPowerup = null;
     State.powerupsCollectedMatch++;
-    showPowerupToast(pow.icon, `¡${pow.name} ACTIVADO!`);
+    showPowerupToast(pow.icon, `${pow.name} ACTIVADO`);
     if (window.ArcadeJuice) {
       window.ArcadeJuice.spawnFloat(`+${pow.name}`, pow.x, pow.y, pow.color, 14);
       if (State.powerupsCollectedMatch >= 5) {
-        window.ArcadeJuice.unlockAchievement('fronton', 'powerup_5', 'Sobrecarga Cuántica', 'Recogiste 5 power-ups en un solo partido', '⭐');
+        window.ArcadeJuice.unlockAchievement('fronton', 'powerup_5', 'Sobrecarga Cuántica', 'Recogiste 5 power-ups en un solo partido', 'star');
       }
     }
 
@@ -515,7 +515,7 @@
 
   function showPowerupToast(icon, text) {
     if (!dom.powerupToast) return;
-    dom.powerupIcon.textContent = icon;
+    dom.powerupIcon.innerHTML = window.ArcadeIcons ? ArcadeIcons.getSvg(icon, 18) : '';
     dom.powerupName.textContent = text;
     dom.powerupToast.classList.remove('hidden');
     clearTimeout(dom.powerupToast._timeout);
@@ -778,13 +778,13 @@
           window.ArcadeJuice.shake(Math.min(10, Math.floor((b.speed - 480) * 0.03)), 0.2);
           if (b.speed >= 650) {
             window.ArcadeJuice.hitstop(50);
-            window.ArcadeJuice.unlockAchievement('fronton', 'speed_650', 'Velocidad Supersónica', 'Golpeaste a más de 650 px/s', '🚀');
+            window.ArcadeJuice.unlockAchievement('fronton', 'speed_650', 'Velocidad Supersónica', 'Golpeaste a más de 650 px/s', 'speed');
           }
         }
 
         // Logro de Rally
         if (State.rally >= 15 && window.ArcadeJuice) {
-          window.ArcadeJuice.unlockAchievement('fronton', 'rally_15', 'Maestro del Rally', 'Rally de 15 o más golpes', '⚡');
+          window.ArcadeJuice.unlockAchievement('fronton', 'rally_15', 'Maestro del Rally', 'Rally de 15 o más golpes', 'zap');
         }
       }
     }
@@ -797,8 +797,8 @@
       SynthArenaAudio.sfxPaddleHit(b.speed);
       particles.emit(b.x, b.y, 20, '#ec4899');
       if (window.ArcadeJuice) {
-        window.ArcadeJuice.spawnFloat('¡RED DEFENSIVA!', b.x, b.y - 30, '#ec4899');
-        window.ArcadeJuice.unlockAchievement('fronton', 'goal_net_save', 'Salvada Épica', 'Salvaste un punto con la red', '🛡️');
+        window.ArcadeJuice.spawnFloat('RED DEFENSIVA', b.x, b.y - 30, '#ec4899');
+        window.ArcadeJuice.unlockAchievement('fronton', 'goal_net_save', 'Salvada Épica', 'Salvaste un punto con la red', 'shield');
       }
       return;
     }
@@ -810,7 +810,7 @@
         b.y = 25 + CONFIG.BALL_RADIUS;
         b.speed += 12; // Acelera sin límite
         SynthArenaAudio.sfxWallBounce();
-        particles.emit(b.x, b.y, 10, '#00f0ff');
+        particles.emit(b.x, b.y, 10, '#f2c94c');
       }
     } else {
       const p2Top = CONFIG.P2_Y - CONFIG.PADDLE_H / 2;
@@ -833,7 +833,7 @@
           dom.matchRally.textContent = `RALLY: ${State.rally}`;
 
           SynthArenaAudio.sfxPaddleHit(b.speed);
-          particles.emit(b.x, b.y, b.speed > 550 ? 12 : 7, '#ff007f');
+          particles.emit(b.x, b.y, b.speed > 550 ? 12 : 7, '#e07a1f');
         }
       }
     }
@@ -867,14 +867,14 @@
       State.p1Score++;
       SynthArenaAudio.sfxPointScored(true);
       if (window.ArcadeJuice) {
-        window.ArcadeJuice.spawnFloat('¡PUNTO P1!', CONFIG.VIRTUAL_W / 2, CONFIG.VIRTUAL_H / 2, '#00f0ff', 18);
-        window.ArcadeJuice.unlockAchievement('fronton', 'first_point', 'Primer Saque', 'Anotaste tu primer punto', '🎯');
+        window.ArcadeJuice.spawnFloat('PUNTO P1', CONFIG.VIRTUAL_W / 2, CONFIG.VIRTUAL_H / 2, '#f2c94c', 18);
+        window.ArcadeJuice.unlockAchievement('fronton', 'first_point', 'Primer Saque', 'Anotaste tu primer punto', 'target');
       }
     } else {
       State.p2Score++;
       SynthArenaAudio.sfxPointScored(false);
       if (window.ArcadeJuice) {
-        window.ArcadeJuice.spawnFloat('¡PUNTO RIVAL!', CONFIG.VIRTUAL_W / 2, CONFIG.VIRTUAL_H / 2, '#ff007f', 18);
+        window.ArcadeJuice.spawnFloat('PUNTO RIVAL', CONFIG.VIRTUAL_W / 2, CONFIG.VIRTUAL_H / 2, '#e07a1f', 18);
       }
     }
 
@@ -944,23 +944,23 @@
         if (State.currentRivalIdx < CONFIG.TOURNAMENT_RIVALS.length - 1) {
           State.currentRivalIdx++;
           saveTournamentProgress();
-          triggerGameOver(`¡RONDA SUPERADA! Siguiente rival: ${CONFIG.TOURNAMENT_RIVALS[State.currentRivalIdx].name}`, true);
+          triggerGameOver(`Ronda superada. Siguiente rival: ${CONFIG.TOURNAMENT_RIVALS[State.currentRivalIdx].name}`, true);
         } else {
-          triggerGameOver('¡CAMPEÓN DEL TORNEO CUÁNTICO!', true);
+          triggerGameOver('CAMPEÓN DEL TORNEO', true);
           if (window.ArcadeJuice) {
-            window.ArcadeJuice.unlockAchievement('fronton', 'tournament_champ', 'Campeón del Torneo', 'Venciste a los 5 rivales', '👑');
+            window.ArcadeJuice.unlockAchievement('fronton', 'tournament_champ', 'Campeón del Torneo', 'Venciste a los 5 rivales', 'trophy');
           }
         }
       } else {
-        triggerGameOver('¡DERROTA EN EL TORNEO! Entrena y vuelve a intentarlo.', false);
+        triggerGameOver('Derrota en el torneo. Vuelve a intentarlo.', false);
       }
     } else {
-      triggerGameOver(p1Won ? '¡VICTORIA ÉPICA!' : '¡PARTIDO FINALIZADO!', p1Won);
+      triggerGameOver(p1Won ? 'VICTORIA' : 'FIN DEL PARTIDO', p1Won);
     }
 
     // Comprobar logro de blanqueada
     if (p1Won && State.p2Score === 0 && (State.difficulty === 'HARD' || State.gameMode === 'TOURNAMENT') && window.ArcadeJuice) {
-      window.ArcadeJuice.unlockAchievement('fronton', 'clean_sheet', 'Blanqueada Perfecta', 'Ganaste 7-0 en máxima exigencia', '🏆');
+      window.ArcadeJuice.unlockAchievement('fronton', 'clean_sheet', 'Blanqueada Perfecta', 'Ganaste 7-0 en máxima exigencia', 'crown');
     }
   }
 
@@ -1133,37 +1133,38 @@
     ctx.arc(0, 0, pow.radius, 0, Math.PI * 2);
     ctx.stroke();
 
-    ctx.font = '14px system-ui, sans-serif';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText(pow.icon, 0, 1);
+    if (window.ArcadeIcons && ArcadeIcons.drawToCanvas) {
+      ArcadeIcons.drawToCanvas(ctx, pow.icon, -9, -9, 18, pow.color);
+    } else {
+      ctx.fillStyle = pow.color;
+      ctx.font = 'bold 11px monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(pow.type[0], 0, 1);
+    }
     ctx.restore();
   }
 
   function drawPaddles(ctx) {
-    // Paleta 1 (Inferior - Cian)
+    // Paleta 1 (Inferior - Oro)
     ctx.save();
     ctx.translate(State.p1.x, CONFIG.P1_Y);
     ctx.rotate(State.p1.tilt);
 
-    ctx.fillStyle = '#00f0ff';
-    ctx.shadowBlur = 12;
-    ctx.shadowColor = '#00f0ff';
+    ctx.fillStyle = '#f2c94c';
     ctx.fillRect(-State.p1.width / 2, -CONFIG.PADDLE_H / 2, State.p1.width, CONFIG.PADDLE_H);
 
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(-State.p1.width / 4, -CONFIG.PADDLE_H / 4, State.p1.width / 2, CONFIG.PADDLE_H / 2);
     ctx.restore();
 
-    // Paleta 2 (Superior - Magenta)
+    // Paleta 2 (Superior - Ámbar)
     if (State.gameMode !== 'SURVIVAL') {
       ctx.save();
       ctx.translate(State.p2.x, CONFIG.P2_Y);
       ctx.rotate(State.p2.tilt);
 
-      ctx.fillStyle = '#ff007f';
-      ctx.shadowBlur = 12;
-      ctx.shadowColor = '#ff007f';
+      ctx.fillStyle = '#e07a1f';
       ctx.fillRect(-State.p2.width / 2, -CONFIG.PADDLE_H / 2, State.p2.width, CONFIG.PADDLE_H);
 
       ctx.fillStyle = '#ffffff';
@@ -1422,13 +1423,13 @@
       chip.className = `rival-chip ${isCurrent ? 'current' : ''} ${isBeaten ? 'beaten' : ''}`;
       chip.innerHTML = `
         <div class="rival-meta">
-          <span class="rival-avatar">${rival.avatar}</span>
+          <span class="rival-avatar">${window.ArcadeIcons ? ArcadeIcons.getSvg(rival.avatar, 20) : ''}</span>
           <div>
             <div class="rival-name">${rival.name}</div>
             <div class="rival-desc">${rival.desc}</div>
           </div>
         </div>
-        <div class="rival-status">${isBeaten ? '✓ VENCIDO' : isCurrent ? 'ACTUAL' : 'BLOQUEADO'}</div>
+        <div class="rival-status">${isBeaten ? 'VENCIDO' : isCurrent ? 'ACTUAL' : 'BLOQUEADO'}</div>
       `;
       dom.tournamentRoster.appendChild(chip);
     });
@@ -1441,9 +1442,9 @@
       const el = document.createElement('div');
       el.className = `ach-item ${unlocked ? 'unlocked' : ''}`;
       el.innerHTML = `
-        <span class="ach-icon">${ach.icon}</span>
+        <span class="ach-icon">${window.ArcadeIcons ? ArcadeIcons.getSvg(ach.icon, 20) : ''}</span>
         <div class="ach-info">
-          <div class="ach-title">${ach.title} ${unlocked ? '✓' : '🔒'}</div>
+          <div class="ach-title">${ach.title} ${unlocked ? '(Completado)' : '(Bloqueado)'}</div>
           <div class="ach-desc">${ach.desc}</div>
         </div>
       `;

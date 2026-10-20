@@ -8,9 +8,9 @@ const fs = require('fs');
 function test(name, fn) {
   try {
     fn();
-    console.log(`  ✓ [PASSED] ${name}`);
+    console.log(`  OK [PASSED] ${name}`);
   } catch (err) {
-    console.error(`  ✗ [FAILED] ${name}`);
+    console.error(`  X [FAILED] ${name}`);
     console.error(`    ${err.message}`);
     process.exit(1);
   }

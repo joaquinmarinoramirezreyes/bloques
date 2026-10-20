@@ -280,13 +280,13 @@ async function runSmokeSuite() {
 
   const chromePath = getChromeExecutable();
   if (!chromePath) {
-    console.error('❌ Error: No Chrome or Edge executable found. Set CHROME_PATH or PUPPETEER_EXECUTABLE_PATH.');
+    console.error('[FAIL] Error: No Chrome or Edge executable found. Set CHROME_PATH or PUPPETEER_EXECUTABLE_PATH.');
     process.exit(1);
   }
   console.log(`[Browser] Using: ${chromePath}`);
 
   if (!fs.existsSync(GAMES_JSON_PATH)) {
-    console.error(`❌ Error: games.json not found at ${GAMES_JSON_PATH}`);
+    console.error(`[FAIL] Error: games.json not found at ${GAMES_JSON_PATH}`);
     process.exit(1);
   }
 
@@ -334,14 +334,14 @@ async function runSmokeSuite() {
       const nameStr = game.name.padEnd(18);
       const canvasStr = (res.canvas && res.canvas.width ? `${res.canvas.width}x${res.canvas.height}` : 'N/A').padEnd(16);
       const frameStr = `${res.frames} rAF`.padEnd(10);
-      const statusStr = res.passed ? '✅ OK' : '❌ FAIL';
+      const statusStr = res.passed ? '[OK] OK' : '[FAIL] FAIL';
 
       console.log(`${numStr}${idStr}${nameStr}${canvasStr}${frameStr}${statusStr}`);
 
       if (!res.passed) {
         allPassed = false;
         for (const err of res.errors) {
-          console.log(`      ⚠️  ${err}`);
+          console.log(`      [WARN]  ${err}`);
         }
       }
     }
@@ -360,10 +360,10 @@ async function runSmokeSuite() {
   console.log('='.repeat(70));
 
   if (!allPassed) {
-    console.log('\n❌ Fallaron uno o más juegos en la prueba de humo.');
+    console.log('\n[FAIL] Fallaron uno o más juegos en la prueba de humo.');
     process.exit(1);
   } else {
-    console.log('\n🎉 ¡TODOS LOS JUEGOS PASARON LA PRUEBA DE HUMO (0 errores, canvas renderizado, bucle activo)!');
+    console.log('\n[PASS] ¡TODOS LOS JUEGOS PASARON LA PRUEBA DE HUMO (0 errores, canvas renderizado, bucle activo)!');
     process.exit(0);
   }
 }

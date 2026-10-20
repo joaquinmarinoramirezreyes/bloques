@@ -22,7 +22,7 @@ for (const spd of testSpeeds) {
   assert.ok(minSep > 0, `Separación mínima positiva para velocidad ${spd}`);
   assert.ok(maxJump > minSep * 0.5, `Salto máximo suficiente para cubrir fosas a ${spd}`);
 }
-console.log('✓ Física de salto y márgenes de recuperación verificados');
+console.log('OK Física de salto y márgenes de recuperación verificados');
 
 // 3. Simulación de 5,000 obstáculos generados proceduralmente
 const generator = new RunnerGenerator();
@@ -67,7 +67,7 @@ for (let i = 0; i < TOTAL_OBSTACLES; i++) {
   lastObstacle = obs;
 }
 
-console.log(`✓ 5,000 obstáculos generados y verificados: 100% matemáticamente superables sin solapamientos ni trampas imposibles`);
+console.log(`OK 5,000 obstáculos generados y verificados: 100% matemáticamente superables sin solapamientos ni trampas imposibles`);
 
 // 4. Verificación de colisión AABB
 const b1 = { x: 50, y: 50, w: 30, h: 30 };
@@ -77,5 +77,5 @@ const b3NoOverlap = { x: 100, y: 100, w: 30, h: 30 };
 assert.strictEqual(RunnerPhysics.checkAABB(b1, b2Overlap), true, 'Debe detectar colisión con solapamiento');
 assert.strictEqual(RunnerPhysics.checkAABB(b1, b3NoOverlap), false, 'No debe detectar colisión sin solapamiento');
 
-console.log('✓ Detección de colisiones AABB verificada');
+console.log('OK Detección de colisiones AABB verificada');
 console.log('--- TODOS LOS TESTS DE CORREDOR PASARON EXITOSAMENTE (4/4) ---');

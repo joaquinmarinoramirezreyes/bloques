@@ -7,9 +7,9 @@ const fs = require('fs');
 function test(name, fn) {
   try {
     fn();
-    console.log(`  ✓ [PASSED] ${name}`);
+    console.log(`  OK [PASSED] ${name}`);
   } catch (err) {
-    console.error(`  ✗ [FAILED] ${name}`);
+    console.error(`  X [FAILED] ${name}`);
     console.error(`    ${err.message}`);
     process.exit(1);
   }
@@ -72,14 +72,14 @@ test('games.json define campo "eras" para cada juego con valores válidos', () =
     if (!era90.includes(id)) throw new Error(`El juego "${id}" debe pertenecer a la época 90`);
   });
 
-  // 00 = abismo, corredor, cristales, lanzaburbujas
+  // 00 = abismo, corredor, cristales, lanzaburbujas, bastion
   const era00 = games.filter(g => g.eras.includes('00')).map(g => g.id);
-  ['abismo', 'corredor', 'cristales', 'lanzaburbujas'].forEach(id => {
+  ['abismo', 'corredor', 'cristales', 'lanzaburbujas', 'bastion'].forEach(id => {
     if (!era00.includes(id)) throw new Error(`El juego "${id}" debe pertenecer a la época 00`);
   });
 
   // Juegos que aún no existen deben estar fuera del catálogo
-  const unreleased = ['bastion'];
+  const unreleased = [];
   unreleased.forEach(u => {
     if (games.some(g => g.id === u)) {
       throw new Error(`El juego aún no creado "${u}" debe quedar fuera del catálogo`);
@@ -161,7 +161,7 @@ test('FALLBACK_GAMES en menu.js está sincronizado con las épocas asignadas', (
 
   if (count80 !== 6) throw new Error(`Época 80 debe tener 6 juegos, encontrados: ${count80}`);
   if (count90 !== 5) throw new Error(`Época 90 debe tener 5 juegos, encontrados: ${count90}`);
-  if (count00 !== 4) throw new Error(`Época 00 debe tener 4 juegos, encontrados: ${count00}`);
+  if (count00 !== 5) throw new Error(`Época 00 debe tener 5 juegos, encontrados: ${count00}`);
 });
 
 console.log('\n==========================================================');

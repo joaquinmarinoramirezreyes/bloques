@@ -33,10 +33,10 @@
     totalTests++;
     try {
       fn();
-      console.log(`  ✓ [PASSED] ${name}`);
+      console.log(`  OK [PASSED] ${name}`);
       passedTests++;
     } catch (err) {
-      console.error(`  ✗ [FAILED] ${name}`);
+      console.error(`  X [FAILED] ${name}`);
       console.error(`    Error: ${err.message}`);
       if (err.stack) {
         console.error(`    Stack: ${err.stack.split('\n').slice(1, 4).join('\n')}`);

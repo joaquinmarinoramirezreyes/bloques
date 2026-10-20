@@ -22,7 +22,7 @@ function checkInvariantsAfterResolution(grid, context) {
   for (let r = 0; r < CONFIG.ROWS; r++) {
     for (let c = 0; c < CONFIG.COLS; c++) {
       if (grid[r][c].type === 0 && grid[r][c].obstacle !== CONFIG.OBSTACLES.LOCKED) {
-        console.error(`🚨 INVARIANT A BROKEN [Empty cell after resolution] in ${context} at (${r},${c}):`);
+        console.error(`[ALERT] INVARIANT A BROKEN [Empty cell after resolution] in ${context} at (${r},${c}):`);
         console.error(grid[r][c]);
         return false;
       }
@@ -82,7 +82,7 @@ function testDoubleSpecialSimulation() {
         // game.js EXITS WITHOUT APPLYING GRAVITY OR REFILL!
         const ok = checkInvariantsAfterResolution(grid, `DoubleSpecial (${s1} + ${s2}) with matches.length === 0`);
         if (!ok) {
-          console.log(`💥 REPRODUCED INVARIANT A BREAK in DoubleSpecial (${s1} + ${s2})! Empty cells left on board.`);
+          console.log(`[BOOM] REPRODUCED INVARIANT A BREAK in DoubleSpecial (${s1} + ${s2})! Empty cells left on board.`);
         }
       }
     }
@@ -106,7 +106,7 @@ function testColorPrismSimulation() {
   if (matches.length === 0) {
     const ok = checkInvariantsAfterResolution(grid, `ColorPrism with targetColor ${targetColor}`);
     if (!ok) {
-      console.log(`💥 REPRODUCED INVARIANT A BREAK in ColorPrism! Empty cells left on board.`);
+      console.log(`[BOOM] REPRODUCED INVARIANT A BREAK in ColorPrism! Empty cells left on board.`);
     }
   }
 }
@@ -120,7 +120,7 @@ function testHammerSimulation() {
   if (matches.length === 0) {
     const ok = checkInvariantsAfterResolution(grid, 'Hammer at (2,3)');
     if (!ok) {
-      console.log(`💥 REPRODUCED INVARIANT A BREAK in Hammer! Empty cell left on board.`);
+      console.log(`[BOOM] REPRODUCED INVARIANT A BREAK in Hammer! Empty cell left on board.`);
     }
   }
 }

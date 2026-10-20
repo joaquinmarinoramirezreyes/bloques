@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#070913">
+  <meta name="theme-color" content="#f3d9b1">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="description" content="Rompe Muros - Clásico juego arcade de romper ladrillos, rebotes dinámicos y power-ups.">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070913'/%3E%3Crect x='4' y='6' width='11' height='6' rx='2' fill='%23ff3366'/%3E%3Crect x='17' y='6' width='11' height='6' rx='2' fill='%23ffd000'/%3E%3Crect x='9' y='14' width='14' height='6' rx='2' fill='%2300f0ff'/%3E%3Crect x='6' y='24' width='20' height='4' rx='2' fill='%23f8fafc'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23f3d9b1'/%3E%3Crect x='4' y='6' width='11' height='6' rx='2' fill='%23e07a1f'/%3E%3Crect x='17' y='6' width='11' height='6' rx='2' fill='%23d97706'/%3E%3Crect x='9' y='14' width='14' height='6' rx='2' fill='%239a3412'/%3E%3Crect x='6' y='24' width='20' height='4' rx='2' fill='%234a2412'/%3E%3C/svg%3E">
   <title>Rompe Muros - Arcade</title>
   <link rel="stylesheet" href="../../shared/theme.css">
   <link rel="stylesheet" href="style.css">
@@ -59,7 +59,7 @@
 
         <!-- Notificación de Power-Up activo -->
         <div id="powerup-badge" class="powerup-badge hidden">
-          <span id="powerup-icon" class="powerup-icon">⚡</span>
+          <span id="powerup-icon" class="powerup-icon"></span>
           <span id="powerup-text">PALETA ANCHA</span>
           <span id="powerup-timer" class="powerup-timer">10s</span>
         </div>
@@ -67,7 +67,7 @@
         <!-- Mensaje de Nivel Completado -->
         <div id="overlay-level-win" class="game-overlay hidden">
           <div class="overlay-card">
-            <h2 class="level-title">¡NIVEL SUPERADO!</h2>
+            <h2 class="level-title">NIVEL COMPLETADO</h2>
             <p>Preparando siguiente muro...</p>
           </div>
         </div>
@@ -103,7 +103,7 @@
                 <strong id="final-highscore">0</strong>
               </div>
             </div>
-            <div id="new-record-tag" class="badge-new-record hidden">¡NUEVO RÉCORD!</div>
+            <div id="new-record-tag" class="badge-new-record hidden">NUEVO RÉCORD</div>
             <div class="overlay-actions">
               <button id="btn-gameover-restart" class="btn-primary">Jugar de nuevo</button>
               <a href="../../index.html" class="btn-secondary">Menú Principal</a>
@@ -125,7 +125,7 @@
           </div>
           <div class="stat-item">
             <span class="stat-title">VIDAS</span>
-            <span id="lives-display" class="stat-value val-lives">♥♥♥</span>
+            <span id="lives-display" class="stat-value val-lives"></span>
           </div>
           <div class="stat-item">
             <span class="stat-title">NIVEL</span>
@@ -137,7 +137,7 @@
         <div class="panel-box desktop-help">
           <div class="panel-label">CONTROLES</div>
           <ul class="keyboard-legend">
-            <li><kbd>◄</kbd><kbd>►</kbd> o Ratón Mover</li>
+            <li><kbd>Flechas</kbd> o Ratón Mover</li>
             <li><kbd>Espacio</kbd> Lanzar pelota</li>
             <li><kbd>P</kbd> Pausar</li>
           </ul>
@@ -149,6 +149,7 @@
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
   <script src="../../shared/canvas.js"></script>
+  <script src="../../shared/icons.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

@@ -2,14 +2,23 @@
    SOMBRAS - ESTILOS ARCADE DE SIGILO & RESPONSIVE
    ========================================================================== */
 
+:root {
+  --bg-space: #e8e6e1;
+  --panel-space: #ffffff;
+  --text-main: #111111;
+  --text-accent: #d33a2c;
+  --alert-amber: #d33a2c;
+  --border-color: rgba(17, 17, 17, 0.15);
+}
+
 html, body {
   width: 100%;
   height: 100%;
   height: 100dvh;
-  background-color: var(--bg-space, #06040a);
-  color: var(--text-main, #f8fafc);
+  background-color: #e8e6e1 !important;
+  color: #111111 !important;
   font-family: var(--font-family);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 #app-root {
@@ -34,6 +43,7 @@ html, body {
    -------------------------------------------------------------------------- */
 .hud-header {
   height: var(--header-height, 44px);
+  min-height: 44px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -53,28 +63,34 @@ html, body {
   border: 1px solid rgba(255, 255, 255, 0.2);
   color: var(--text-main);
   text-decoration: none;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
 }
 
 .back-button:hover, .back-button:active {
-  border-color: var(--text-accent, #a855f7);
-  color: var(--text-accent, #a855f7);
+  border-color: var(--text-accent);
+  color: var(--text-accent);
 }
 
 .badge-purple {
-  background: linear-gradient(135deg, #a855f7, #6b21a8);
-  color: #f8fafc;
+  background: #d33a2c;
+  color: #ffffff;
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.12em;
   padding: 2px 7px;
   border-radius: 4px;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.3);
 }
 
 .brand-purple {
-  background: linear-gradient(90deg, #ffffff 30%, #c084fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #d33a2c;
   font-size: 1.15rem;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -91,10 +107,13 @@ html, body {
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--text-main);
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
   border-radius: 8px;
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
@@ -471,9 +490,7 @@ html, body {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(6, 4, 10, 0.88);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(9, 7, 15, 0.95);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -488,9 +505,9 @@ html, body {
 }
 
 .overlay-card {
-  background: #110d22;
-  border: 2px solid rgba(168, 85, 247, 0.45);
-  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 0 0 30px rgba(168, 85, 247, 0.25);
+  background: #ffffff;
+  border: 2px solid #d33a2c;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.15), 0 0 20px rgba(211, 58, 44, 0.15);
   border-radius: 14px;
   padding: 24px 28px;
   text-align: center;
@@ -505,16 +522,16 @@ html, body {
   font-size: 1.4rem;
   font-weight: 900;
   letter-spacing: 0.08em;
-  color: #c084fc;
+  color: #d33a2c;
   margin: 0;
 }
 
 .overlay-card .danger-title {
-  color: #ef4444;
+  color: #d33a2c;
 }
 
 .overlay-card p {
-  color: #94a3b8;
+  color: #333333;
   font-size: 0.85rem;
   margin: 0;
 }
@@ -572,31 +589,34 @@ html, body {
   letter-spacing: 0.06em;
   cursor: pointer;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
+  min-height: 44px;
   transition: transform 0.08s ease, background 0.15s ease;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #a855f7, #7e22ce);
-  border: 1px solid #c084fc;
-  color: #ffffff;
-  box-shadow: 0 4px 15px rgba(168, 85, 247, 0.4);
+  background: #d33a2c !important;
+  border: 1px solid #b32a1e !important;
+  color: #ffffff !important;
 }
 
 .btn-primary:active {
   transform: scale(0.96);
+  background: #b32a1e !important;
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #f8fafc;
+  background: #f0ede6;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  color: #111111;
 }
 
 .btn-secondary:active {
   transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.16);
+  background: #e2ded5;
 }
 
 /* --------------------------------------------------------------------------

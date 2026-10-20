@@ -1,6 +1,6 @@
 /**
  * games/bastion/data/mejoras.js - Árbol de Metaprogreso Permanente de Bastión (Fase 3)
- * Mejoras pasivas compradas con Esquirlas del Vacío (🟣 shards) que persisten entre partidas.
+ * Mejoras pasivas compradas con Esquirlas del Vacío (shards) que persisten entre partidas.
  */
 (() => {
   'use strict';
@@ -11,7 +11,7 @@
     reserva_inicial: {
       id: 'reserva_inicial',
       name: 'Reserva Cuántica',
-      icon: '🪙',
+      icon: 'coin',
       desc: '+25 de oro inicial por cada rango.',
       maxLevel: 5,
       costs: [5, 10, 20, 35, 55],
@@ -21,7 +21,7 @@
     baluarte_nucleo: {
       id: 'baluarte_nucleo',
       name: 'Baluarte del Núcleo',
-      icon: '💖',
+      icon: 'heart',
       desc: '+2 vidas máximas para el santuario por cada rango.',
       maxLevel: 5,
       costs: [4, 8, 16, 28, 45],
@@ -31,7 +31,7 @@
     ingenieria_arcana: {
       id: 'ingenieria_arcana',
       name: 'Ingeniería Eficiente',
-      icon: '⚙️',
+      icon: 'gear',
       desc: '-4% en el coste de construcción de torres por rango.',
       maxLevel: 5,
       costs: [6, 12, 24, 40, 65],
@@ -41,7 +41,7 @@
     amplificador_plasma: {
       id: 'amplificador_plasma',
       name: 'Potencia de Plasma',
-      icon: '💥',
+      icon: 'fire',
       desc: '+5% de daño global para todas las torres por rango.',
       maxLevel: 5,
       costs: [8, 16, 30, 50, 80],
@@ -51,7 +51,7 @@
     sobremarcha_cinetica: {
       id: 'sobremarcha_cinetica',
       name: 'Cadencia Sobrecargada',
-      icon: '⚡',
+      icon: 'speed',
       desc: '+4% en velocidad de disparo para todas las torres por rango.',
       maxLevel: 5,
       costs: [7, 14, 28, 45, 70],
@@ -61,7 +61,7 @@
     recuperacion_tactica: {
       id: 'recuperacion_tactica',
       name: 'Desguace Táctico',
-      icon: '♻️',
+      icon: 'recycle',
       desc: '+4% de reembolso al vender torres por rango (base 70%).',
       maxLevel: 5,
       costs: [4, 8, 15, 25, 40],

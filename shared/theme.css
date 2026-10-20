@@ -13,8 +13,8 @@
   --text-dim: #94a3b8;
   --text-accent: #38bdf8;
   
-  /* Paleta neón arcade (sin marcas comerciales) */
-  --neon-cyan: #00f0ff;
+  /* Variables de apoyo */
+  --neon-cyan: var(--accent-primary, #38bdf8);
   --neon-green: #00e676;
   --neon-gold: #ffd000;
   --neon-purple: #b026ff;
@@ -41,22 +41,20 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Base de página oscura retro-arcade */
+/* Base de página retro-arcade */
 html {
   background-color: var(--bg-space);
-  color-scheme: dark;
 }
 
 body {
   background-color: var(--bg-space);
-  background: radial-gradient(circle at 50% 12%, #111736 0%, #070913 70%, #04050a 100%);
+  background: var(--bg-space);
   color: var(--text-main);
   font-family: var(--font-family);
   min-height: 100vh;
   min-height: 100dvh;
   margin: 0;
   padding: 0;
-  color-scheme: dark;
 }
 
 /* Bloqueo estricto de rebote, zoom y scroll no deseado */
@@ -71,23 +69,22 @@ body {
   touch-action: none;
   position: fixed;
   inset: 0;
-  background-color: #070913 !important;
-  background: radial-gradient(circle at 50% 12%, #111736 0%, #070913 70%, #04050a 100%) !important;
-  color: #f8fafc;
+  background-color: var(--bg-space);
+  background: var(--bg-space);
+  color: var(--text-main);
 }
 
-/* Efecto de cuadrícula y nebulosa arcade sutil */
+/* Efecto de cuadrícula arcade sutil */
 body::before,
 .arcade-lock::before {
   content: "";
   position: fixed;
   inset: 0;
   background: 
-    radial-gradient(circle at 50% 10%, rgba(99, 102, 241, 0.14) 0%, transparent 60%),
-    radial-gradient(circle at 85% 85%, rgba(0, 240, 255, 0.07) 0%, transparent 50%),
+    radial-gradient(circle at 50% 10%, rgba(99, 102, 241, 0.08) 0%, transparent 60%),
     linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
     linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
-  background-size: 100% 100%, 100% 100%, 28px 28px, 28px 28px;
+  background-size: 100% 100%, 28px 28px, 28px 28px;
   pointer-events: none;
   z-index: 0;
 }
@@ -111,7 +108,7 @@ body::before,
 .arcade-icon-btn:active {
   transform: scale(0.92);
   background: rgba(255, 255, 255, 0.18);
-  border-color: var(--neon-cyan);
+  border-color: var(--accent-primary, #38bdf8);
 }
 
 /* Badges estilizados */

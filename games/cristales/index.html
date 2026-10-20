@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#0a192f">
+  <meta name="theme-color" content="#eef3f8">
   <title>Cristales - Arcade 00s</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230a192f'/%3E%3Cpolygon points='16,5 27,14 16,27 5,14' fill='%2300d2ff'/%3E%3Cpolygon points='16,9 23,14 16,23 9,14' fill='%23ffffff'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23eef3f8'/%3E%3Cpolygon points='16,5 27,14 16,27 5,14' fill='%23d6249f'/%3E%3Cpolygon points='16,9 23,14 16,23 9,14' fill='%23ffffff'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="../../shared/theme.css">
   <link rel="stylesheet" href="style.css">
 </head>
@@ -21,7 +21,7 @@
         </a>
         <!-- Indicador de Vidas / Energía -->
         <div class="lives-pill" id="lives-pill" title="Vidas disponibles (recarga cada 20 min)">
-          <span class="heart-icon">❤️</span>
+          <span class="heart-icon"><svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg></span>
           <span id="lives-count">5</span>
           <small id="lives-timer" class="lives-timer hidden">19:59</small>
         </div>
@@ -39,10 +39,10 @@
 
       <div class="header-actions">
         <button id="btn-achievements-header" class="glass-btn btn-icon" title="Logros">
-          🏆
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M6 9V4h12v5a6 6 0 0 1-12 0z"/><path d="M6 6H3a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h1"/><path d="M18 6h3a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-1"/><path d="M12 15v4"/><path d="M8 19h8v2H8z"/></svg>
         </button>
         <button id="btn-options-header" class="glass-btn btn-icon" title="Ajustes">
-          ⚙️
+          <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M19.4 13a7.7 7.7 0 0 0 .1-1 7.7 7.7 0 0 0-.1-1l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.8 7.8 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4l-.4 2.6a7.8 7.8 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6l2.1 1.6a7.7 7.7 0 0 0-.1 1 7.7 7.7 0 0 0 .1 1l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5a.5.5 0 0 0 .6.2l2.5-1a7.8 7.8 0 0 0 1.7 1l.4 2.6a.5.5 0 0 0 .5.4h4a.5.5 0 0 0 .5-.4l.4-2.6a7.8 7.8 0 0 0 1.7-1l2.5 1a.5.5 0 0 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6z"/><circle cx="12" cy="12" r="3"/></svg>
         </button>
         <button id="btn-sound-toggle" class="glass-btn btn-icon" title="Sonido">
           <svg id="icon-sound-on" viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
@@ -64,19 +64,19 @@
     <!-- Sub-barra de meta y potenciadores ganables -->
     <div id="sub-bar">
       <div class="goal-pill">
-        <span class="goal-icon">🎯</span>
+        <span class="goal-icon"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="6"/><circle cx="12" cy="12" r="2"/></svg></span>
         <span id="goal-text">Nivel 1: 1,500 pts</span>
       </div>
 
       <div class="powerup-bar">
         <button id="btn-powerup-hammer" class="powerup-btn" title="Martillo de Cuarzo: Rompe una gema u obstáculo">
-          🔨 <span class="powerup-count" id="count-hammer">3</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M15 4l5 5-2 2-5-5 2-2z"/><path d="M14 9l-9 9a1.5 1.5 0 0 0 2 2l9-9-2-2z"/></svg> <span class="powerup-count" id="count-hammer">3</span>
         </button>
         <button id="btn-powerup-shuffle" class="powerup-btn" title="Mezcla Cósmica: Reordena el tablero">
-          🌀 <span class="powerup-count" id="count-shuffle">2</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M16 3h5v5"/><path d="M4 20L21 3"/><path d="M21 16v5h-5"/><path d="M15 15l6 6"/><path d="M4 4l5 5"/></svg> <span class="powerup-count" id="count-shuffle">2</span>
         </button>
         <button id="btn-powerup-swap" class="powerup-btn" title="Intercambio Libre: Cambia dos gemas sin match">
-          🔄 <span class="powerup-count" id="count-swap">2</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M8 7h12m0 0l-4-4m4 4l-4 4"/><path d="M16 17H4m0 0l4-4m-4 4l4 4"/></svg> <span class="powerup-count" id="count-swap">2</span>
         </button>
       </div>
 
@@ -85,7 +85,7 @@
       </div>
 
       <button id="btn-hint" class="glass-btn hint-btn" title="Pista">
-        <span class="hint-sparkle">✨</span> Pista
+        <span class="hint-sparkle"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 3l2 6 6 2-6 2-2 6-2-6-6-2 6-2 2-6z"/></svg></span> Pista
       </button>
     </div>
 
@@ -98,10 +98,10 @@
     <div id="start-card" class="glass-modal">
       <div class="modal-content glass-panel map-panel">
         <div class="crystal-logo-wrapper">
-          <div class="crystal-prism-icon">💎</div>
+          <div class="crystal-prism-icon"><svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2" fill="none"><path d="M6 3h12l4 6-10 12L2 9l4-6z"/><path d="M2 9h20"/><path d="M12 21L7 9 10 3"/><path d="M12 21l5-12-3-6"/></svg></div>
         </div>
-        <h1 class="glass-title">CRISTALES 00</h1>
-        <p class="glass-subtitle">Aero-Glass Match-3 con 4 mundos, facetas 3D y gemas especiales</p>
+        <h1 class="glass-title">CRISTALES</h1>
+        <p class="glass-subtitle">Rompecabezas de gemas con 4 mundos y gemas especiales</p>
 
         <!-- Selector de Mundos -->
         <div class="world-tabs">
@@ -124,7 +124,7 @@
         </div>
 
         <div class="modal-footer-actions">
-          <button id="btn-open-daily" class="glass-btn btn-secondary">🎁 Recompensa Diaria</button>
+          <button id="btn-open-daily" class="glass-btn btn-secondary"><svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none" style="margin-right: 6px;"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>Recompensa diaria</button>
           <button id="btn-start-endless" class="glass-btn glow-btn">Modo Infinito</button>
         </div>
       </div>
@@ -133,21 +133,21 @@
     <!-- Modal de Recompensa Diaria -->
     <div id="modal-daily" class="glass-modal hidden">
       <div class="modal-content glass-panel">
-        <div class="crystal-prism-icon">🎁</div>
+        <div class="crystal-prism-icon"><svg viewBox="0 0 24 24" width="36" height="36" stroke="currentColor" stroke-width="2" fill="none"><path d="M20 12v10H4V12"/><path d="M2 7h20v5H2z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg></div>
         <h2 class="glass-title">RECOMPENSA DIARIA</h2>
         <p class="result-subtitle">Vuelve cada 24 horas para recargar potenciadores y vidas</p>
         <div class="daily-reward-box" id="daily-reward-box">
-          <span style="font-size: 26px;">🔨 + 🔄</span>
-          <p style="font-weight: 800; color: #ffdd44; margin-top: 6px;">¡+1 Martillo y +1 Intercambio Libre!</p>
+          <span style="display: inline-flex; gap: 8px; align-items: center;"><svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M15 4l5 5-2 2-5-5 2-2z"/><path d="M14 9l-9 9a1.5 1.5 0 0 0 2 2l9-9-2-2z"/></svg> + <svg viewBox="0 0 24 24" width="22" height="22" stroke="currentColor" stroke-width="2" fill="none"><path d="M8 7h12m0 0l-4-4m4 4l-4 4"/><path d="M16 17H4m0 0l4-4m-4 4l4 4"/></svg></span>
+          <p style="font-weight: 800; color: var(--accent-gold); margin-top: 6px;">+1 Martillo y +1 Intercambio</p>
         </div>
-        <button id="btn-claim-daily" class="glass-btn glow-btn btn-large">¡RECLAMAR!</button>
+        <button id="btn-claim-daily" class="glass-btn glow-btn btn-large">Reclamar</button>
       </div>
     </div>
 
     <!-- Modal de Vidas Agotadas -->
     <div id="modal-no-lives" class="glass-modal hidden">
       <div class="modal-content glass-panel">
-        <div style="font-size: 40px; margin-bottom: 8px;">💔</div>
+        <div class="crystal-prism-icon" style="margin-bottom: 8px;"><svg viewBox="0 0 24 24" width="40" height="40" stroke="currentColor" stroke-width="2" fill="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/><path d="M12 4l-2 5 4 3-2 5"/></svg></div>
         <h2 class="glass-title">ENERGÍA AGOTADA</h2>
         <p class="result-subtitle">Tus cristales necesitan tiempo para resonar. Cada 20 minutos recuperas 1 vida gratis de forma local.</p>
         <div class="best-record-pill" style="margin-bottom: 16px;">
@@ -173,8 +173,8 @@
     <!-- Modal de Fin de Nivel / Victoria -->
     <div id="overlay-result" class="glass-modal hidden">
       <div class="modal-content glass-panel">
-        <div id="result-icon" class="result-badge">🌟</div>
-        <h2 id="result-title" class="glass-title">¡NIVEL SUPERADO!</h2>
+        <div id="result-icon" class="result-badge"><svg viewBox="0 0 24 24" width="40" height="40" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></div>
+        <h2 id="result-title" class="glass-title">Nivel superado</h2>
         <p id="result-subtitle" class="result-subtitle">Has alcanzado el objetivo.</p>
 
         <div class="result-stats">
@@ -187,9 +187,9 @@
             <strong id="result-best-val">0</strong>
           </div>
           <div class="stars-row" id="stars-row">
-            <span class="star-slot filled">★</span>
-            <span class="star-slot filled">★</span>
-            <span class="star-slot filled">★</span>
+            <span class="star-slot filled"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+            <span class="star-slot filled"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
+            <span class="star-slot filled"><svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg></span>
           </div>
         </div>
 
@@ -204,7 +204,7 @@
     <!-- Modal de Logros -->
     <div id="modal-achievements" class="glass-modal hidden">
       <div class="modal-content glass-panel">
-        <h2 class="glass-title">🏆 LOGROS PRISMÁTICOS</h2>
+        <h2 class="glass-title">LOGROS</h2>
         <p class="result-subtitle" style="margin-bottom: 12px;">Hazañas y maestrías en Cristales</p>
         <div class="ach-list" id="ach-list">
           <!-- Rellenado dinámicamente -->
@@ -218,7 +218,7 @@
     <!-- Modal de Opciones y Accesibilidad -->
     <div id="modal-options" class="glass-modal hidden">
       <div class="modal-content glass-panel">
-        <h2 class="glass-title">⚙️ AJUSTES Y ACCESIBILIDAD</h2>
+        <h2 class="glass-title">AJUSTES</h2>
         <div class="options-group">
           <label class="opt-row">
             <span>Efectos de Sonido (SFX)</span>
@@ -236,6 +236,10 @@
             <span>Modo Alto Contraste</span>
             <input type="checkbox" id="opt-contrast">
           </label>
+          <label class="opt-row">
+            <span>Animaciones Rápidas</span>
+            <input type="checkbox" id="opt-fast-anim">
+          </label>
         </div>
         <div class="modal-buttons" style="margin-top: 16px;">
           <button id="btn-close-options" class="glass-btn glow-btn btn-large">GUARDAR Y CERRAR</button>
@@ -249,6 +253,8 @@
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
   <script src="../../shared/juice.js"></script>
+  <script src="../../shared/tween.js"></script>
+  <script src="../../shared/icons.js"></script>
   <!-- Lógica y render de Cristales -->
   <script src="game.js"></script>
 </body>

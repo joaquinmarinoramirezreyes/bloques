@@ -1,12 +1,14 @@
-/* games/fronton/style.css - Estilos Arena Futurista 80s con perspectiva y toques neón */
 :root {
-  --neon-cyan: #00f0ff;
-  --neon-magenta: #ff007f;
-  --neon-amber: #ffd000;
-  --neon-green: #10b981;
-  --bg-deep: #070913;
-  --panel-bg: rgba(14, 20, 36, 0.92);
-  --border-neon: rgba(0, 240, 255, 0.4);
+  --neon-cyan: #f2c94c;
+  --neon-magenta: #e07a1f;
+  --neon-amber: #f2c94c;
+  --neon-green: #9fe3be;
+  --bg-deep: #0f3d2e;
+  --panel-bg: #164f3c;
+  --border-neon: #2b7a60;
+  --accent-gold: #f2c94c;
+  --text-main: #f4f1e8;
+  --text-dim: #c5c0b0;
 }
 
 * {
@@ -18,7 +20,7 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-body.arcade-lock {
+body, body.arcade-lock {
   position: fixed;
   inset: 0;
   width: 100vw;
@@ -26,10 +28,11 @@ body.arcade-lock {
   height: 100dvh;
   min-height: -webkit-fill-available;
   overflow: hidden;
-  background-color: var(--bg-deep);
-  color: #f0f4fc;
+  background-color: var(--bg-deep) !important;
+  color: var(--text-main);
   font-family: 'Courier New', Courier, monospace, system-ui, sans-serif;
   touch-action: none;
+  color-scheme: dark;
 }
 
 /* Modo Alto Contraste para Accesibilidad */
@@ -73,12 +76,16 @@ body.high-contrast {
   gap: 8px;
 }
 
-.icon-button {
+.icon-button,
+.back-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.08);
   color: #fff;
@@ -89,9 +96,10 @@ body.high-contrast {
   transition: background 0.15s, transform 0.1s;
 }
 
-.icon-button:active {
+.icon-button:active,
+.back-button:active {
   transform: scale(0.94);
-  background: rgba(0, 240, 255, 0.25);
+  background: rgba(2, 132, 199, 0.25);
 }
 
 .brand-badge {
@@ -444,8 +452,8 @@ body.high-contrast {
 .btn-serve, .btn-primary {
   width: 100%;
   padding: 12px;
-  background: linear-gradient(180deg, var(--neon-cyan) 0%, #0284c7 100%);
-  color: #000;
+  background: var(--accent-gold);
+  color: #0f3d2e;
   border: none;
   border-radius: 8px;
   font-family: inherit;
@@ -454,7 +462,7 @@ body.high-contrast {
   letter-spacing: 1px;
   cursor: pointer;
   min-height: 48px;
-  box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4);
+  box-shadow: 0 4px 15px rgba(242, 201, 76, 0.25);
   transition: transform 0.1s, filter 0.15s;
 }
 
@@ -511,8 +519,7 @@ body.high-contrast {
 .game-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(4, 7, 13, 0.88);
-  backdrop-filter: blur(4px);
+  background: rgba(8, 16, 29, 0.94);
   display: flex;
   align-items: center;
   justify-content: center;

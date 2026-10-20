@@ -1,0 +1,610 @@
+[
+  {
+    "id": "bloques",
+    "bodyBg": "#efe6d2",
+    "bodyRgb": {
+      "r": 239,
+      "g": 230,
+      "b": 210
+    },
+    "bodyLuminance": 0.7959749435445154,
+    "panelBg": "#e2d7be",
+    "panelRgb": {
+      "r": 226,
+      "g": 215,
+      "b": 190
+    },
+    "panelLuminance": 0.6848733394157407,
+    "textColor": "#1f2a44",
+    "textRgb": {
+      "r": 31,
+      "g": 42,
+      "b": 68
+    },
+    "textLuminance": 0.023645902406233408,
+    "contrastRatio": 11.487060595416262,
+    "accentColor": "#c0392b",
+    "accentRgb": {
+      "r": 192,
+      "g": 57,
+      "b": 43
+    },
+    "dominant5": [
+      "#f0f0d0",
+      "#f0d0b0",
+      "#f0d0d0",
+      "#303050",
+      "#d0d0b0"
+    ]
+  },
+  {
+    "id": "snake",
+    "bodyBg": "#1a1200",
+    "bodyRgb": {
+      "r": 26,
+      "g": 18,
+      "b": 0
+    },
+    "bodyLuminance": 0.006522245754046051,
+    "panelBg": "#281c00",
+    "panelRgb": {
+      "r": 40,
+      "g": 28,
+      "b": 0
+    },
+    "panelLuminance": 0.012816239358491181,
+    "textColor": "#ffb000",
+    "textRgb": {
+      "r": 255,
+      "g": 176,
+      "b": 0
+    },
+    "textLuminance": 0.5231066805921805,
+    "contrastRatio": 10.139488849859713,
+    "accentColor": "#ffd866",
+    "accentRgb": {
+      "r": 255,
+      "g": 216,
+      "b": 102
+    },
+    "dominant5": [
+      "#101010",
+      "#303010",
+      "#301010",
+      "#f0d070",
+      "#101030"
+    ]
+  },
+  {
+    "id": "rompemuros",
+    "bodyBg": "#f3d9b1",
+    "bodyRgb": {
+      "r": 243,
+      "g": 217,
+      "b": 177
+    },
+    "bodyLuminance": 0.7185471961547145,
+    "panelBg": "#e8c697",
+    "panelRgb": {
+      "r": 232,
+      "g": 198,
+      "b": 151
+    },
+    "panelLuminance": 0.5977833750880723,
+    "textColor": "#4a2412",
+    "textRgb": {
+      "r": 74,
+      "g": 36,
+      "b": 18
+    },
+    "textLuminance": 0.027612710503262045,
+    "contrastRatio": 9.902336758647447,
+    "accentColor": "#e07a1f",
+    "accentRgb": {
+      "r": 224,
+      "g": 122,
+      "b": 31
+    },
+    "dominant5": [
+      "#101010",
+      "#f0d0b0",
+      "#f0f0d0",
+      "#d0b090",
+      "#503010"
+    ]
+  },
+  {
+    "id": "fronton",
+    "bodyBg": "#0f3d2e",
+    "bodyRgb": {
+      "r": 15,
+      "g": 61,
+      "b": 46
+    },
+    "bodyLuminance": 0.03636301843447334,
+    "panelBg": "#0f172a",
+    "panelRgb": {
+      "r": 15,
+      "g": 23,
+      "b": 42
+    },
+    "panelLuminance": 0.008815176790098227,
+    "textColor": "#f4f1e8",
+    "textRgb": {
+      "r": 244,
+      "g": 241,
+      "b": 232
+    },
+    "textLuminance": 0.8796988569334555,
+    "contrastRatio": 10.76501115623756,
+    "accentColor": "#f2c94c",
+    "accentRgb": {
+      "r": 242,
+      "g": 201,
+      "b": 76
+    },
+    "dominant5": [
+      "#105030",
+      "#305050",
+      "#101010",
+      "#f0d050",
+      "#307050"
+    ]
+  },
+  {
+    "id": "defensaorbital",
+    "bodyBg": "#0a1a3a",
+    "bodyRgb": {
+      "r": 10,
+      "g": 26,
+      "b": 58
+    },
+    "bodyLuminance": 0.011088071644636472,
+    "panelBg": "#12162a",
+    "panelRgb": {
+      "r": 18,
+      "g": 22,
+      "b": 42
+    },
+    "panelLuminance": 0.008695842561866328,
+    "textColor": "#e8eefc",
+    "textRgb": {
+      "r": 232,
+      "g": 238,
+      "b": 252
+    },
+    "textLuminance": 0.8533315132777003,
+    "contrastRatio": 14.78736337484329,
+    "accentColor": "#ff6b4a",
+    "accentRgb": {
+      "r": 255,
+      "g": 107,
+      "b": 74
+    },
+    "dominant5": [
+      "#101030",
+      "#101050",
+      "#101010",
+      "#103050",
+      "#103070"
+    ]
+  },
+  {
+    "id": "sombras",
+    "bodyBg": "#e8e6e1",
+    "bodyRgb": {
+      "r": 232,
+      "g": 230,
+      "b": 225
+    },
+    "bodyLuminance": 0.7918567649576128,
+    "panelBg": "#ffffff",
+    "panelRgb": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "panelLuminance": 1,
+    "textColor": "#111111",
+    "textRgb": {
+      "r": 17,
+      "g": 17,
+      "b": 17
+    },
+    "textLuminance": 0.005605391624202723,
+    "contrastRatio": 15.139840586810783,
+    "accentColor": "#d33a2c",
+    "accentRgb": {
+      "r": 211,
+      "g": 58,
+      "b": 44
+    },
+    "dominant5": [
+      "#f0f0f0",
+      "#f0d0f0",
+      "#303050",
+      "#d0d0f0",
+      "#d0d0d0"
+    ]
+  },
+  {
+    "id": "campominado",
+    "bodyBg": "#1b4b8a",
+    "bodyRgb": {
+      "r": 27,
+      "g": 75,
+      "b": 138
+    },
+    "bodyLuminance": 0.07100143763867046,
+    "panelBg": "#123360",
+    "panelRgb": {
+      "r": 18,
+      "g": 51,
+      "b": 96
+    },
+    "panelLuminance": 0.03340779316432088,
+    "textColor": "#f2f6ff",
+    "textRgb": {
+      "r": 242,
+      "g": 246,
+      "b": 255
+    },
+    "textLuminance": 0.9200877984712271,
+    "contrastRatio": 8.01715927845472,
+    "accentColor": "#9fd3ff",
+    "accentRgb": {
+      "r": 159,
+      "g": 211,
+      "b": 255
+    },
+    "dominant5": [
+      "#303050",
+      "#101030",
+      "#103030",
+      "#305050",
+      "#303030"
+    ]
+  },
+  {
+    "id": "corredor",
+    "bodyBg": "#f4c27a",
+    "bodyRgb": {
+      "r": 244,
+      "g": 194,
+      "b": 122
+    },
+    "bodyLuminance": 0.5922181035748992,
+    "panelBg": "#fdf5ea",
+    "panelRgb": {
+      "r": 253,
+      "g": 245,
+      "b": 234
+    },
+    "panelLuminance": 0.9212797542308858,
+    "textColor": "#3a1f0f",
+    "textRgb": {
+      "r": 58,
+      "g": 31,
+      "b": 15
+    },
+    "textLuminance": 0.019140031734711807,
+    "contrastRatio": 9.288657923083845,
+    "accentColor": "#e4572e",
+    "accentRgb": {
+      "r": 228,
+      "g": 87,
+      "b": 46
+    },
+    "dominant5": [
+      "#f0f0f0",
+      "#301010",
+      "#f0b090",
+      "#907070",
+      "#f0d070"
+    ]
+  },
+  {
+    "id": "abismo",
+    "bodyBg": "#12070a",
+    "bodyRgb": {
+      "r": 18,
+      "g": 7,
+      "b": 10
+    },
+    "bodyLuminance": 0.0030247058732205704,
+    "panelBg": "#1a0c11",
+    "panelRgb": {
+      "r": 26,
+      "g": 12,
+      "b": 17
+    },
+    "panelLuminance": 0.005230267689524849,
+    "textColor": "#e8dcd0",
+    "textRgb": {
+      "r": 232,
+      "g": 220,
+      "b": 208
+    },
+    "textLuminance": 0.7289627067869097,
+    "contrastRatio": 14.690561578019324,
+    "accentColor": "#b3122a",
+    "accentRgb": {
+      "r": 179,
+      "g": 18,
+      "b": 42
+    },
+    "dominant5": [
+      "#101010",
+      "#101030",
+      "#301010",
+      "#103030",
+      "#301030"
+    ]
+  },
+  {
+    "id": "bastion",
+    "bodyBg": "#2f3a33",
+    "bodyRgb": {
+      "r": 47,
+      "g": 58,
+      "b": 51
+    },
+    "bodyLuminance": 0.03869466102106084,
+    "panelBg": "#38463e",
+    "panelRgb": {
+      "r": 56,
+      "g": 70,
+      "b": 62
+    },
+    "panelLuminance": 0.05568871331546773,
+    "textColor": "#e6dcc3",
+    "textRgb": {
+      "r": 230,
+      "g": 220,
+      "b": 195
+    },
+    "textLuminance": 0.7194952397878797,
+    "contrastRatio": 8.675778574824932,
+    "accentColor": "#b8860b",
+    "accentRgb": {
+      "r": 184,
+      "g": 134,
+      "b": 11
+    },
+    "dominant5": [
+      "#303030",
+      "#103030",
+      "#703010",
+      "#101030",
+      "#305030"
+    ]
+  },
+  {
+    "id": "gotas",
+    "bodyBg": "#f4f7f9",
+    "bodyRgb": {
+      "r": 244,
+      "g": 247,
+      "b": 249
+    },
+    "bodyLuminance": 0.9259417835377984,
+    "panelBg": "#ffffff",
+    "panelRgb": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "panelLuminance": 1,
+    "textColor": "#12303a",
+    "textRgb": {
+      "r": 18,
+      "g": 48,
+      "b": 58
+    },
+    "textLuminance": 0.02547991373740272,
+    "contrastRatio": 12.9298211300709,
+    "accentColor": "#0fa3a3",
+    "accentRgb": {
+      "r": 15,
+      "g": 163,
+      "b": 163
+    },
+    "dominant5": [
+      "#f0f0f0",
+      "#10b0b0",
+      "#101010",
+      "#d0f0f0",
+      "#d0d0d0"
+    ]
+  },
+  {
+    "id": "cristales",
+    "bodyBg": "#eef3f8",
+    "bodyRgb": {
+      "r": 238,
+      "g": 243,
+      "b": 248
+    },
+    "bodyLuminance": 0.8905563796151469,
+    "panelBg": "#ffffff",
+    "panelRgb": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "panelLuminance": 1,
+    "textColor": "#1d2433",
+    "textRgb": {
+      "r": 29,
+      "g": 36,
+      "b": 51
+    },
+    "textLuminance": 0.017619797421190506,
+    "contrastRatio": 13.909482362932929,
+    "accentColor": "#d6249f",
+    "accentRgb": {
+      "r": 214,
+      "g": 36,
+      "b": 159
+    },
+    "dominant5": [
+      "#303030",
+      "#101030",
+      "#b0b0b0",
+      "#f0f0f0",
+      "#101010"
+    ]
+  },
+  {
+    "id": "lanzaburbujas",
+    "bodyBg": "#d9f3f0",
+    "bodyRgb": {
+      "r": 217,
+      "g": 243,
+      "b": 240
+    },
+    "bodyLuminance": 0.8514416839901056,
+    "panelBg": "#ffffff",
+    "panelRgb": {
+      "r": 255,
+      "g": 255,
+      "b": 255
+    },
+    "panelLuminance": 1,
+    "textColor": "#0b3954",
+    "textRgb": {
+      "r": 11,
+      "g": 57,
+      "b": 84
+    },
+    "textLuminance": 0.036374955661019163,
+    "contrastRatio": 10.436377965018446,
+    "accentColor": "#ff6f59",
+    "accentRgb": {
+      "r": 255,
+      "g": 111,
+      "b": 89
+    },
+    "dominant5": [
+      "#101030",
+      "#103030",
+      "#f0f0f0",
+      "#b0b0b0",
+      "#d0f0f0"
+    ]
+  },
+  {
+    "id": "lumen",
+    "bodyBg": "#2a1a10",
+    "bodyRgb": {
+      "r": 42,
+      "g": 26,
+      "b": 16
+    },
+    "bodyLuminance": 0.01268440058616429,
+    "panelBg": "#3d2719",
+    "panelRgb": {
+      "r": 61,
+      "g": 39,
+      "b": 25
+    },
+    "panelLuminance": 0.02513324954385968,
+    "textColor": "#f6e7c8",
+    "textRgb": {
+      "r": 246,
+      "g": 231,
+      "b": 200
+    },
+    "textLuminance": 0.8091478886714789,
+    "contrastRatio": 13.705928119875972,
+    "accentColor": "#ffd27a",
+    "accentRgb": {
+      "r": 255,
+      "g": 210,
+      "b": 122
+    },
+    "dominant5": [
+      "#103010",
+      "#301010",
+      "#103030",
+      "#303010",
+      "#101010"
+    ]
+  },
+  {
+    "id": "cargas",
+    "bodyBg": "#cfcac2",
+    "bodyRgb": {
+      "r": 207,
+      "g": 202,
+      "b": 194
+    },
+    "bodyLuminance": 0.594014993402305,
+    "panelBg": "#e4dfd7",
+    "panelRgb": {
+      "r": 228,
+      "g": 223,
+      "b": 215
+    },
+    "panelLuminance": 0.7417562942760507,
+    "textColor": "#2b2b2b",
+    "textRgb": {
+      "r": 43,
+      "g": 43,
+      "b": 43
+    },
+    "textLuminance": 0.024157632448504756,
+    "contrastRatio": 8.684406070400247,
+    "accentColor": "#ff5a1f",
+    "accentRgb": {
+      "r": 255,
+      "g": 90,
+      "b": 31
+    },
+    "dominant5": [
+      "#101030",
+      "#f0d0d0",
+      "#909090",
+      "#103030",
+      "#505050"
+    ]
+  },
+  {
+    "id": "derrape",
+    "bodyBg": "#2b2d31",
+    "bodyRgb": {
+      "r": 43,
+      "g": 45,
+      "b": 49
+    },
+    "bodyLuminance": 0.0261211451952709,
+    "panelBg": "#2b2d31",
+    "panelRgb": {
+      "r": 43,
+      "g": 45,
+      "b": 49
+    },
+    "panelLuminance": 0.0261211451952709,
+    "textColor": "#f2f2f2",
+    "textRgb": {
+      "r": 242,
+      "g": 242,
+      "b": 242
+    },
+    "textLuminance": 0.8879231178819662,
+    "contrastRatio": 12.321453066371308,
+    "accentColor": "#ffd400",
+    "accentRgb": {
+      "r": 255,
+      "g": 212,
+      "b": 0
+    },
+    "dominant5": [
+      "#303030",
+      "#101030",
+      "#f0d010",
+      "#503030",
+      "#101010"
+    ]
+  }
+]

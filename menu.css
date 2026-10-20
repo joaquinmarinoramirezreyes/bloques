@@ -100,6 +100,17 @@ body::before {
   border: 1px solid rgba(0, 230, 118, 0.25);
   padding: 3px 8px;
   border-radius: 12px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.offline-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--neon-green);
+  display: inline-block;
 }
 
 .hub-subtitle {
@@ -125,12 +136,12 @@ body::before {
 .game-card {
   background: var(--bg-card);
   border: 1.5px solid var(--card-accent, rgba(99, 102, 241, 0.3));
-  border-radius: 14px;
+  border-radius: 12px;
   padding: 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45);
   transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
   position: relative;
   overflow: hidden;
@@ -149,7 +160,7 @@ body::before {
 
 .game-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.6), 0 0 20px var(--card-glow, rgba(0, 240, 255, 0.15));
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.55);
 }
 
 .card-top {
@@ -243,11 +254,14 @@ body::before {
   font-weight: 800;
   font-size: 0.9rem;
   letter-spacing: 0.08em;
-  padding: 10px 20px;
+  padding: 12px 20px;
+  min-height: 44px;
+  box-sizing: border-box;
   border-radius: 8px;
   text-decoration: none;
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
   transition: transform 0.1s ease, filter 0.15s ease;
@@ -307,19 +321,20 @@ body::before {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 7px 14px;
-  font-size: 0.72rem;
+  padding: 10px 16px;
+  font-size: 0.75rem;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-decoration: none;
-  border-radius: 20px;
+  border-radius: 22px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
   color: var(--text-dim);
   cursor: pointer;
   white-space: nowrap;
   transition: all 0.18s ease;
-  min-height: 36px;
+  min-height: 44px;
+  box-sizing: border-box;
   touch-action: manipulation;
 }
 
@@ -337,42 +352,119 @@ body::before {
 }
 
 /* ==========================================================================
-   TEMAS VISUALES POR ÉPOCA (CAMBIANDO VARIABLES CSS SIN DUPLICAR CÓDIGO)
+   TEMAS VISUALES POR ÉPOCA (FORMA, BOTONES, TIPOGRAFÍA Y PALETA)
    ========================================================================== */
 
 /* --------------------------------------------------------------------------
-   TEMA 80: Fondo casi negro, neón (cian, magenta), monoespaciado, scanlines
+   TEMA 80: Fósforo CRT verde/cian, geometría 100% rectangular, monoespaciada
    -------------------------------------------------------------------------- */
 body[data-era="80"] {
-  --bg-space: #030408;
-  --bg-card: rgba(6, 8, 18, 0.96);
-  --bg-card-border: rgba(0, 240, 255, 0.4);
-  --text-main: #f0fdf4;
-  --text-dim: #94a3b8;
-  --text-accent: #00f0ff;
-  --font-family: var(--font-mono);
-  background: #030408 !important;
+  --bg-space: #020406;
+  --bg-card: #040a06;
+  --bg-card-border: #00ff66;
+  --text-main: #f0fff4;
+  --text-dim: #86efac;
+  --text-accent: #00ff66;
+  --font-family: ui-monospace, "Courier New", Consolas, monospace !important;
+  background: #020406 !important;
+}
+
+body[data-era="80"] * {
+  font-family: ui-monospace, "Courier New", Consolas, monospace !important;
 }
 
 body[data-era="80"] .hub-title {
-  background: linear-gradient(90deg, #00f0ff 0%, #ff007f 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  font-family: var(--font-mono);
+  background: none;
+  -webkit-text-fill-color: #00ff66;
+  color: #00ff66;
   letter-spacing: 0.16em;
-  text-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
+  text-shadow: 0 0 10px rgba(0, 255, 102, 0.5);
 }
 
+body[data-era="80"] .hub-tag {
+  color: #00ff66;
+}
+
+/* Tarjetas 80s: Geometría rectangular estricta, marco sólido 2px */
 body[data-era="80"] .game-card {
-  border: 1.5px solid rgba(0, 240, 255, 0.45);
-  box-shadow: 0 0 16px rgba(0, 240, 255, 0.22), inset 0 0 12px rgba(255, 0, 127, 0.12);
+  border-radius: 0px !important;
+  border: 2px solid #00ff66 !important;
+  background: #040a06 !important;
+  box-shadow: 4px 4px 0px #003311 !important;
+}
+
+body[data-era="80"] .game-card::before {
+  display: none !important;
+}
+
+body[data-era="80"] .card-icon {
+  border-radius: 0px !important;
+  border: 2px solid #00ff66 !important;
+  background: #000000 !important;
+  color: #00ff66 !important;
+}
+
+body[data-era="80"] .card-badge {
+  border-radius: 0px !important;
+  border: 1px solid #00ff66 !important;
+  background: #000000 !important;
+  color: #00ff66 !important;
+}
+
+body[data-era="80"] .record-value {
+  color: #00ff66 !important;
+}
+
+/* Botón 80s: Rectangular con borde de fósforo */
+body[data-era="80"] .play-btn {
+  border-radius: 0px !important;
+  border: 2px solid #00ff66 !important;
+  background: #000000 !important;
+  color: #00ff66 !important;
+  font-weight: 900 !important;
+  letter-spacing: 0.14em !important;
+  min-height: 44px !important;
+  padding: 12px 20px !important;
+  box-sizing: border-box !important;
+  box-shadow: 3px 3px 0px #003311 !important;
+  text-transform: uppercase !important;
+}
+
+body[data-era="80"] .play-btn:active {
+  background: #00ff66 !important;
+  color: #000000 !important;
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 1px 0px #003311 !important;
+}
+
+body[data-era="80"] .era-nav {
+  border-radius: 0px !important;
+  border: 2px solid #16331e !important;
+  background: #030805 !important;
+}
+
+body[data-era="80"] .era-tab {
+  border-radius: 0px !important;
+  border: 1px solid transparent !important;
 }
 
 body[data-era="80"] .era-tab.active {
-  background: #00f0ff;
-  color: #030408;
-  border-color: #00f0ff;
-  box-shadow: 0 0 14px rgba(0, 240, 255, 0.6);
+  background: #00ff66 !important;
+  color: #000000 !important;
+  border-color: #00ff66 !important;
+  font-weight: 900 !important;
+  box-shadow: none !important;
+}
+
+body[data-era="80"] .offline-pill {
+  border-radius: 0px !important;
+  border: 1px solid #00ff66 !important;
+  color: #00ff66 !important;
+}
+
+body[data-era="80"] .offline-dot {
+  border-radius: 0px !important;
+  background: #00ff66 !important;
 }
 
 /* Efecto leve de líneas de escaneo (CRT Scanlines) */
@@ -384,8 +476,8 @@ body[data-era="80"]::after {
   z-index: 99;
   background: repeating-linear-gradient(
     0deg,
-    rgba(0, 0, 0, 0.32) 0px,
-    rgba(0, 0, 0, 0.32) 1px,
+    rgba(0, 0, 0, 0.35) 0px,
+    rgba(0, 0, 0, 0.35) 1px,
     transparent 1px,
     transparent 3px
   );
@@ -393,104 +485,229 @@ body[data-era="80"]::after {
 }
 
 /* --------------------------------------------------------------------------
-   TEMA 90: Colores saturados con degradados, tarjetas con relieve, redondeada
+   TEMA 90: Paleta contenida de 3 colores (índigo, amarillo, naranja), bisel 3D
    -------------------------------------------------------------------------- */
 body[data-era="90"] {
-  --bg-space: #160824;
-  --bg-card: #24113e;
-  --bg-card-border: #f43f5e;
+  --bg-space: #180a30;
+  --bg-card: #250f42;
+  --bg-card-border: #ffd000;
   --text-main: #fef08a;
-  --text-dim: #cbd5e1;
-  --text-accent: #facc15;
-  --font-family: ui-rounded, "Arial Rounded MT Bold", "Nunito", system-ui, -apple-system, sans-serif;
-  background: radial-gradient(circle at 50% 12%, #431248 0%, #1e0734 50%, #0d0118 100%) !important;
+  --text-dim: #e2e8f0;
+  --text-accent: #ffd000;
+  --font-family: ui-rounded, "Arial Rounded MT Bold", "Nunito", system-ui, sans-serif !important;
+  background: radial-gradient(circle at 50% 12%, #2d1052 0%, #1a0833 50%, #0d031c 100%) !important;
+}
+
+body[data-era="90"] * {
+  font-family: ui-rounded, "Arial Rounded MT Bold", "Nunito", system-ui, sans-serif !important;
 }
 
 body[data-era="90"] .hub-title {
-  background: linear-gradient(90deg, #facc15 0%, #ff007f 50%, #38bdf8 100%);
+  background: linear-gradient(90deg, #ffd000 0%, #f97316 60%, #ea580c 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   font-weight: 900;
   letter-spacing: 0.08em;
 }
 
-/* Tarjetas con relieve noventero (Bisel y sombra de relieve 3D) */
-body[data-era="90"] .game-card {
-  border-top: 3px solid #ff49db;
-  border-left: 3px solid #00f0ff;
-  border-right: 3px solid #200533;
-  border-bottom: 3px solid #0e0117;
-  border-radius: 12px;
-  background: linear-gradient(135deg, #2d144e 0%, #1a082d 100%);
-  box-shadow: 
-    4px 6px 0px rgba(0, 0, 0, 0.75),
-    inset 1px 1px 0px rgba(255, 255, 255, 0.3);
-}
-
-body[data-era="90"] .play-btn {
-  border-top: 2px solid rgba(255, 255, 255, 0.65);
-  border-left: 2px solid rgba(255, 255, 255, 0.45);
-  border-right: 2px solid rgba(0, 0, 0, 0.55);
-  border-bottom: 2px solid rgba(0, 0, 0, 0.75);
-  box-shadow: 2px 3px 0px rgba(0, 0, 0, 0.65);
-  background: linear-gradient(180deg, #facc15 0%, #ea580c 100%);
-  color: #170322;
+body[data-era="90"] .hub-tag {
+  color: #ffd000;
   font-weight: 900;
 }
 
+/* Tarjetas 90s: Bisel dimensional 16-bit con sombra dura sólida (sin mezcla magenta/cian) */
+body[data-era="90"] .game-card {
+  border-top: 3px solid #ffd000 !important;
+  border-left: 3px solid #ffd000 !important;
+  border-right: 3px solid #0d041a !important;
+  border-bottom: 3px solid #0d041a !important;
+  border-radius: 10px !important;
+  background: #250f42 !important;
+  box-shadow: 4px 6px 0px #000000 !important;
+}
+
+body[data-era="90"] .game-card::before {
+  display: none !important;
+}
+
+body[data-era="90"] .card-icon {
+  border-radius: 8px !important;
+  border: 2px solid #ffd000 !important;
+  background: #180a30 !important;
+  color: #ffd000 !important;
+  box-shadow: 2px 2px 0px #000 !important;
+}
+
+body[data-era="90"] .card-badge {
+  border-radius: 6px !important;
+  border: 1.5px solid #ffd000 !important;
+  background: rgba(255, 208, 0, 0.14) !important;
+  color: #ffd000 !important;
+  font-weight: 900 !important;
+}
+
+body[data-era="90"] .record-value {
+  color: #ffd000 !important;
+}
+
+/* Botón 90s: Bisel dimensional estilo arcade con sombra sólida naranja/amarillo */
+body[data-era="90"] .play-btn {
+  border-top: 2.5px solid #ffffff !important;
+  border-left: 2.5px solid #ffd000 !important;
+  border-right: 2.5px solid #78350f !important;
+  border-bottom: 2.5px solid #451a03 !important;
+  border-radius: 8px !important;
+  background: linear-gradient(180deg, #ffd000 0%, #ea580c 100%) !important;
+  color: #170322 !important;
+  font-weight: 900 !important;
+  min-height: 44px !important;
+  padding: 12px 20px !important;
+  box-sizing: border-box !important;
+  box-shadow: 3px 4px 0px #000000 !important;
+}
+
+body[data-era="90"] .play-btn:active {
+  transform: translate(2px, 2px) !important;
+  box-shadow: 1px 2px 0px #000000 !important;
+}
+
+body[data-era="90"] .era-nav {
+  border-radius: 10px !important;
+  border: 2px solid #3b145e !important;
+  background: #18062d !important;
+}
+
+body[data-era="90"] .era-tab {
+  border-radius: 8px !important;
+}
+
 body[data-era="90"] .era-tab.active {
-  background: linear-gradient(135deg, #facc15 0%, #ea580c 100%);
-  color: #1a0826;
-  border-color: #facc15;
-  box-shadow: 0 0 14px rgba(250, 204, 21, 0.5);
+  background: linear-gradient(135deg, #ffd000 0%, #ea580c 100%) !important;
+  color: #1a0826 !important;
+  font-weight: 900 !important;
+  border-color: #ffd000 !important;
+  box-shadow: 2px 3px 0px #000 !important;
+}
+
+body[data-era="90"] .offline-pill {
+  border-radius: 8px !important;
+  border: 1.5px solid #ffd000 !important;
+  color: #ffd000 !important;
+  background: #250f42 !important;
+}
+
+body[data-era="90"] .offline-dot {
+  border-radius: 2px !important;
+  background: #ffd000 !important;
 }
 
 /* --------------------------------------------------------------------------
-   TEMA 00: Brillos tipo vidrio, botones redondeados con reflejo, degradado suave
+   TEMA 00: Fondo sólido semitransparente (sin blur), esquinas amplias, cápsulas
    -------------------------------------------------------------------------- */
 body[data-era="00"] {
-  --bg-space: #071324;
-  --bg-card: rgba(255, 255, 255, 0.06);
-  --bg-card-border: rgba(255, 255, 255, 0.25);
+  --bg-space: #040914;
+  --bg-card: #0c192c;
+  --bg-card-border: rgba(56, 189, 248, 0.25);
   --text-main: #f0f9ff;
   --text-dim: #94a3b8;
   --text-accent: #38bdf8;
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
-  background: radial-gradient(circle at 50% 0%, #183c66 0%, #0b1f38 45%, #040c18 100%) !important;
+  --font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif !important;
+  background: #040914 !important;
+}
+
+body[data-era="00"] * {
+  font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", sans-serif !important;
 }
 
 body[data-era="00"] .hub-title {
   background: linear-gradient(180deg, #ffffff 0%, #93c5fd 55%, #3b82f6 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  filter: drop-shadow(0 3px 10px rgba(59, 130, 246, 0.45));
+  font-weight: 800;
+  letter-spacing: 0.05em;
 }
 
-/* Brillos tipo vidrio (Glassmorphism con bisel especular) */
-body[data-era="00"] .game-card {
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.12) 0%, rgba(255, 255, 255, 0.02) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.26);
-  border-radius: 18px;
-  box-shadow: 
-    0 12px 32px rgba(0, 0, 0, 0.5),
-    inset 0 1px 1px rgba(255, 255, 255, 0.65),
-    inset 0 -1px 1px rgba(0, 0, 0, 0.3);
-}
-
-/* Botones redondeados con reflejo especular */
-body[data-era="00"] .play-btn {
-  border-radius: 24px;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.55) 0%, rgba(255, 255, 255, 0.1) 48%, rgba(0, 0, 0, 0.12) 52%, rgba(0, 0, 0, 0.3) 100%), #0284c7;
-  border: 1px solid rgba(255, 255, 255, 0.45);
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.45), inset 0 1px 2px rgba(255, 255, 255, 0.85);
+body[data-era="00"] .hub-tag {
+  color: #38bdf8;
   font-weight: 800;
 }
 
+/* Tarjetas 00s: Fondo sólido semitransparente sin blur, esquinas de 20px */
+body[data-era="00"] .game-card {
+  border-radius: 20px !important;
+  border: 1px solid rgba(56, 189, 248, 0.25) !important;
+  border-top: 1.5px solid rgba(255, 255, 255, 0.4) !important;
+  background: #0c192c !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.15) !important;
+}
+
+body[data-era="00"] .game-card::before {
+  display: none !important;
+}
+
+body[data-era="00"] .card-icon {
+  border-radius: 50% !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  background: rgba(2, 132, 199, 0.16) !important;
+  color: #38bdf8 !important;
+  box-shadow: inset 0 1px 2px rgba(255, 255, 255, 0.35) !important;
+}
+
+body[data-era="00"] .card-badge {
+  border-radius: 12px !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  background: rgba(2, 132, 199, 0.15) !important;
+  color: #bae6fd !important;
+}
+
+body[data-era="00"] .record-value {
+  color: #38bdf8 !important;
+}
+
+/* Botón 00s: Cápsula redondeada (24px) con relieve especular */
+body[data-era="00"] .play-btn {
+  border-radius: 24px !important;
+  padding: 12px 22px !important;
+  min-height: 44px !important;
+  box-sizing: border-box !important;
+  background: linear-gradient(180deg, #38bdf8 0%, #0284c7 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35), inset 0 1px 1px rgba(255, 255, 255, 0.7) !important;
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+body[data-era="00"] .play-btn:active {
+  transform: scale(0.96) !important;
+  box-shadow: 0 2px 6px rgba(2, 132, 199, 0.4) !important;
+}
+
+body[data-era="00"] .era-nav {
+  border-radius: 24px !important;
+  border: 1px solid rgba(255, 255, 255, 0.18) !important;
+  background: rgba(15, 34, 61, 0.55) !important;
+}
+
+body[data-era="00"] .era-tab {
+  border-radius: 20px !important;
+}
+
 body[data-era="00"] .era-tab.active {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4) 0%, #0284c7 100%);
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.4);
-  box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+  border-radius: 20px !important;
+  background: #0284c7 !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.45) !important;
+  box-shadow: 0 2px 10px rgba(2, 132, 199, 0.45) !important;
+}
+
+body[data-era="00"] .offline-pill {
+  border-radius: 16px !important;
+  border: 1px solid rgba(56, 189, 248, 0.4) !important;
+  color: #38bdf8 !important;
+  background: rgba(2, 132, 199, 0.15) !important;
+}
+
+body[data-era="00"] .offline-dot {
+  border-radius: 50% !important;
+  background: #38bdf8 !important;
 }

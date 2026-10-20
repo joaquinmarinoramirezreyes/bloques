@@ -38,8 +38,8 @@
     // Dimensiones y Geometría del Auto
     CAR_WIDTH: 22,              // Ancho del vehículo (px)
     CAR_LENGTH: 42,             // Longitud del vehículo (px)
-    CAR_COLOR: '#f97316',       // Color neón principal de la carrocería
-    CAR_ACCENT: '#fb923c',      // Color secundario / alerón
+    CAR_COLOR: '#ffd400',       // Color amarillo de competición
+    CAR_ACCENT: '#ffe566',      // Color secundario / alerón
 
     // Pista y Cámara
     TRACK_WIDTH: 145,           // Ancho de la calzada de asfalto (px)
@@ -65,7 +65,13 @@
 
     // Frecuencia fija del motor de físicas
     FIXED_STEP: 1 / 120,        // Simulación a 120 Hz para alta precisión
-    MAX_SUB_STEPS: 4
+    MAX_SUB_STEPS: 4,
+
+    // Detección de atascos, rebote en barreras y recuperación a pista
+    PHYSICS_SUBSTEPS: 4,          // Subpasos por frame para evitar tunelado y atascos
+    MIN_BARRIER_BOUNCE_IMPULSE: 36,// Impulso mínimo hacia el centro de la pista (px/s)
+    STUCK_THRESHOLD_TIME: 1.5,    // Segundos atascado antes de recolocar automáticamente
+    RESPAWN_TIME_PENALTY: 1.5     // Segundos de penalización al recolocarse
   };
 
   // ============================================================================
@@ -232,10 +238,10 @@
   const PLAYER_PROFILE = {
     id: 'player',
     name: 'TÚ',
-    color: '#f97316',            // Naranja Neón
-    accentColor: '#fb923c',
-    darkColor: '#c2410c',
-    spoilerColor: '#7c2d12',
+    color: '#ffd400',            // Amarillo Competición
+    accentColor: '#ffe566',
+    darkColor: '#cca700',
+    spoilerColor: '#806900',
     isPlayer: true
   };
 
@@ -1023,6 +1029,11 @@
       this.boostPadTimer = 0;
       this.oilSpinTimer = 0;
       this.oilSpinDir = 1;
+
+      // Detección de atascos e invulnerabilidad (Fase 5)
+      this.stuckTimer = 0;
+      this.invulnerableTimer = 0;
+      this.justRespawned = false;
     }
 
     update(dt, track) {
@@ -1140,69 +1151,213 @@
       if (this.oilSpinTimer > 0) {
         targetAngularVel += (this.oilSpinDir || 1) * (3.5 + Math.sin(this.oilSpinTimer * 12) * 2.0); // Giro incontrolado
       }
-
       this.angularVelocity = targetAngularVel;
-      this.angle += this.angularVelocity * dt;
 
-      // 8. Reconstruir vector de velocidad en coordenadas globales
-      this.vx = forwardX * newForwardVel + lateralX * newLateralVel;
-      this.vy = forwardY * newForwardVel + lateralY * newLateralVel;
-
-      // 9. Actualizar posición
-      this.x += this.vx * dt;
-      this.y += this.vy * dt;
-
-      // 10. Colisión con barreras de contención (Fase 2)
+      // 8, 9 & 10. Integración física con subpasos y colisión robusta con barrera
+      const subSteps = CONFIG.PHYSICS_SUBSTEPS || 4;
+      const subDt = dt / subSteps;
       let barrierCollision = null;
-      if (track) {
-        const queryAfter = track.queryTrackPosition(this.x, this.y);
-        const barrierRadius = (track.width / 2) + CONFIG.BARRIER_MARGIN;
-        const carCollisionRadius = 14;
+      let wasInBarrierContact = false;
 
-        if (queryAfter.distToCenter + carCollisionRadius > barrierRadius) {
-          const dx = queryAfter.closestSample.x - this.x;
-          const dy = queryAfter.closestSample.y - this.y;
-          const dist = Math.hypot(dx, dy) || 1;
-          const nx = dx / dist; // Vector normal hacia el centro de la pista
-          const ny = dy / dist;
+      let curForwardVel = newForwardVel;
+      let curLateralVel = newLateralVel;
 
-          const overlap = (queryAfter.distToCenter + carCollisionRadius) - barrierRadius;
-          this.x += nx * overlap;
-          this.y += ny * overlap;
+      for (let s = 0; s < subSteps; s++) {
+        // Actualizar orientación angular en cada subpaso
+        this.angle += this.angularVelocity * subDt;
 
-          // Descomponer velocidad en normal y tangencial
-          const vn = this.vx * nx + this.vy * ny;
-          const vt = -this.vx * ny + this.vy * nx;
+        const fX = Math.cos(this.angle);
+        const fY = Math.sin(this.angle);
+        const lX = -Math.sin(this.angle);
+        const lY = Math.cos(this.angle);
 
-          if (vn < 0) { // Impacto hacia afuera contra el muro
-            const bounceVn = -vn * CONFIG.BARRIER_BOUNCE;
+        this.vx = fX * curForwardVel + lX * curLateralVel;
+        this.vy = fY * curForwardVel + lY * curLateralVel;
+
+        this.x += this.vx * subDt;
+        this.y += this.vy * subDt;
+
+        if (track) {
+          const queryAfter = track.queryTrackPosition(this.x, this.y);
+          const barrierRadius = (track.width / 2) + CONFIG.BARRIER_MARGIN;
+          const carCollisionRadius = CONFIG.CAR_COLLISION_RADIUS || 14;
+          const distToCenter = queryAfter.distToCenter + carCollisionRadius;
+
+          if (distToCenter > barrierRadius) {
+            wasInBarrierContact = true;
+            const dx = queryAfter.closestSample.x - this.x;
+            const dy = queryAfter.closestSample.y - this.y;
+            const dist = Math.hypot(dx, dy) || 1;
+            const nx = dx / dist; // Vector unitario normal hacia el centro de la pista
+            const ny = dy / dist;
+
+            const overlap = distToCenter - barrierRadius;
+            this.x += nx * overlap;
+            this.y += ny * overlap;
+
+            // Descomponer velocidad en normal (hacia el centro) y tangencial
+            const vn = this.vx * nx + this.vy * ny;
+            const vt = -this.vx * ny + this.vy * nx;
+
+            // Ajustar velocidad SIEMPRE: eliminar empuje contra el muro y asegurar rebote hacia afuera
+            const minBounce = CONFIG.MIN_BARRIER_BOUNCE_IMPULSE || 36;
+            let bounceVn;
+            if (vn < 0) { // Se mueve hacia afuera contra el muro
+              bounceVn = Math.max(minBounce, -vn * CONFIG.BARRIER_BOUNCE);
+            } else { // Ya se mueve hacia adentro o rozando, añadir rebote mínimo
+              bounceVn = Math.max(minBounce, vn * 0.7);
+            }
+
             const frictionVt = vt * CONFIG.BARRIER_FRICTION;
             this.vx = nx * bounceVn - ny * frictionVt;
             this.vy = ny * bounceVn + nx * frictionVt;
 
-            barrierCollision = {
-              intensity: Math.min(1.0, Math.abs(vn) / 220),
-              nx,
-              ny,
-              x: this.x - nx * carCollisionRadius,
-              y: this.y - ny * carCollisionRadius
-            };
-          }
-        }
+            // Alinear parcialmente con la pared (raspe y salga sin clavarse)
+            const sampleTanX = queryAfter.closestSample.tangentX;
+            const sampleTanY = queryAfter.closestSample.tangentY;
+            let wallAngle = Math.atan2(sampleTanY, sampleTanX);
+            let diff = wallAngle - this.angle;
+            while (diff > Math.PI) diff -= Math.PI * 2;
+            while (diff < -Math.PI) diff += Math.PI * 2;
+            if (Math.abs(diff) > Math.PI / 2) {
+              let revDiff = (wallAngle + Math.PI) - this.angle;
+              while (revDiff > Math.PI) revDiff -= Math.PI * 2;
+              while (revDiff < -Math.PI) revDiff += Math.PI * 2;
+              if (Math.abs(revDiff) < Math.abs(diff)) diff = revDiff;
+            }
+            this.angle += diff * Math.min(0.4, 20.0 * subDt);
+            this.angularVelocity *= 0.5;
 
-        // Límite perimetral absoluto del recinto exterior (delimita el mapa completamente)
-        const pad = 42;
-        const b = track.bounds;
-        if (this.x < b.minX + pad) { this.x = b.minX + pad; this.vx = Math.abs(this.vx) * 0.4; }
-        if (this.x > b.maxX - pad) { this.x = b.maxX - pad; this.vx = -Math.abs(this.vx) * 0.4; }
-        if (this.y < b.minY + pad) { this.y = b.minY + pad; this.vy = Math.abs(this.vy) * 0.4; }
-        if (this.y > b.maxY - pad) { this.y = b.maxY - pad; this.vy = -Math.abs(this.vy) * 0.4; }
+            // Recalcular velocidades locales para el siguiente subpaso
+            const updatedFX = Math.cos(this.angle);
+            const updatedFY = Math.sin(this.angle);
+            const updatedLX = -Math.sin(this.angle);
+            const updatedLY = Math.cos(this.angle);
+            curForwardVel = this.vx * updatedFX + this.vy * updatedFY;
+            curLateralVel = this.vx * updatedLX + this.vy * updatedLY;
+
+            if (!barrierCollision) {
+              barrierCollision = {
+                intensity: Math.min(1.0, Math.max(0.15, Math.abs(vn) / 220)),
+                nx,
+                ny,
+                x: this.x - nx * carCollisionRadius,
+                y: this.y - ny * carCollisionRadius
+              };
+            }
+          }
+
+          // Límite perimetral absoluto del recinto exterior (delimita el mapa completamente)
+          const pad = 42;
+          const b = track.bounds;
+          const minB = CONFIG.MIN_BARRIER_BOUNCE_IMPULSE || 36;
+          if (this.x < b.minX + pad) { this.x = b.minX + pad; this.vx = Math.max(minB, Math.abs(this.vx) * 0.4); }
+          if (this.x > b.maxX - pad) { this.x = b.maxX - pad; this.vx = -Math.max(minB, Math.abs(this.vx) * 0.4); }
+          if (this.y < b.minY + pad) { this.y = b.minY + pad; this.vy = Math.max(minB, Math.abs(this.vy) * 0.4); }
+          if (this.y > b.maxY - pad) { this.y = b.maxY - pad; this.vy = -Math.max(minB, Math.abs(this.vy) * 0.4); }
+        }
       }
 
-      return { barrierCollision };
+      // Actualizar velocidad escalar y deslizamiento lateral final
+      const finalFX = Math.cos(this.angle);
+      const finalFY = Math.sin(this.angle);
+      const finalLX = -Math.sin(this.angle);
+      const finalLY = Math.cos(this.angle);
+      this.speed = this.vx * finalFX + this.vy * finalFY;
+      this.lateralSlip = Math.abs(this.vx * finalLX + this.vy * finalLY);
+
+      // Decrementar temporizador de invulnerabilidad
+      if (this.invulnerableTimer > 0) {
+        this.invulnerableTimer = Math.max(0, this.invulnerableTimer - dt);
+      }
+
+      // Detección de atasco (más de 1.5s sin velocidad en contacto con barrera o sin avanzar)
+      let autoRespawnResult = null;
+      this.justRespawned = false;
+
+      if (track) {
+        const queryPos = track.queryTrackPosition(this.x, this.y);
+        const sample = queryPos.closestSample;
+        const trackTanSpeed = this.vx * sample.tangentX + this.vy * sample.tangentY;
+        const isNearOrOnBarrier = wasInBarrierContact || (queryPos.distToCenter + 14 >= (track.width / 2) + CONFIG.BARRIER_MARGIN - 4);
+        const isBlocked = trackTanSpeed < 35 || Math.abs(this.speed) < 25;
+
+        if (isNearOrOnBarrier && isBlocked) {
+          this.stuckTimer += dt;
+        } else if (!isNearOrOnBarrier && trackTanSpeed >= 40) {
+          this.stuckTimer = Math.max(0, this.stuckTimer - dt * 2);
+        }
+
+        // Falta de avance hacia el siguiente punto de control
+        if (track.checkpoints && track.checkpoints.length > 0 && (this.inputThrottle > 0 || this.isAI)) {
+          const nextCp = track.checkpoints[this.nextCheckpoint % track.checkpoints.length];
+          const distToCp = Math.hypot(nextCp.x - this.x, nextCp.y - this.y);
+          if (this.lastCpDist === undefined || Math.abs(this.lastCpDist - distToCp) > 20) {
+            this.lastCpDist = distToCp;
+            this.noProgressTimer = 0;
+          } else {
+            this.noProgressTimer = (this.noProgressTimer || 0) + dt;
+          }
+        } else {
+          this.noProgressTimer = 0;
+        }
+
+        if (this.stuckTimer >= CONFIG.STUCK_THRESHOLD_TIME || (this.noProgressTimer || 0) >= CONFIG.STUCK_THRESHOLD_TIME) {
+          autoRespawnResult = this.respawnOnTrack(track, false);
+          this.stuckTimer = 0;
+          this.noProgressTimer = 0;
+        }
+      }
+
+      return {
+        barrierCollision,
+        respawned: autoRespawnResult ? autoRespawnResult.respawned : false,
+        penalty: autoRespawnResult ? autoRespawnResult.penalty : 0,
+        manual: false
+      };
+    }
+
+    respawnOnTrack(track, manual = false) {
+      if (!track || !track.checkpoints || track.checkpoints.length === 0) {
+        return { respawned: false, penalty: 0 };
+      }
+      const numCps = track.checkpoints.length;
+      const lastCpIdx = (this.nextCheckpoint - 1 + numCps) % numCps;
+      const cp = track.checkpoints[lastCpIdx];
+      if (!cp) return { respawned: false, penalty: 0 };
+
+      this.x = cp.x;
+      this.y = cp.y;
+      this.angle = Math.atan2(cp.tangentY, cp.tangentX);
+      const launchSpeed = Math.max(90, CONFIG.MAX_SPEED * 0.35);
+      this.vx = cp.tangentX * launchSpeed;
+      this.vy = cp.tangentY * launchSpeed;
+      this.speed = launchSpeed;
+      this.angularVelocity = 0;
+      this.steerAngle = 0;
+      this.wheelTurnAngle = 0;
+      this.stuckTimer = 0;
+      this.noProgressTimer = 0;
+      this.invulnerableTimer = 1.5;
+      this.isDrifting = false;
+      this.isOffroad = false;
+      this.justRespawned = true;
+
+      return {
+        respawned: true,
+        penalty: CONFIG.RESPAWN_TIME_PENALTY,
+        manual
+      };
     }
 
     render(ctx) {
+      // Efecto parpadeante de invulnerabilidad tras recolocarse (12 Hz)
+      if (this.invulnerableTimer > 0) {
+        if (Math.floor(this.invulnerableTimer * 12) % 2 === 0) {
+          return;
+        }
+      }
+
       ctx.save();
       ctx.translate(this.x, this.y);
       ctx.rotate(this.angle);
@@ -1344,6 +1499,11 @@
       this.corneringSkill = profile.corneringSkill || 1.0;
       this.errorWobble = 0;
       this.errorTimer = Math.random() * 2;
+
+      // Rutina de desatasco para IA (Fase 5)
+      this.aiStuckTimer = 0;
+      this.aiReverseTimer = 0;
+      this.aiUnstuckAttempts = 0;
     }
 
     updateAI(dt, track, playerCar, allCars) {
@@ -1359,6 +1519,45 @@
       const curIdx = trackPos.closestIndex;
       const n = track.samples.length;
       this.trackProgress = trackPos.closestSample.distance;
+
+      // 1.1 Detección y maniobra de desatasco inteligente para IA
+      const barrierDist = (track.width / 2) + CONFIG.BARRIER_MARGIN;
+      const isNearBarrier = (trackPos.distToCenter + 14) >= (barrierDist - 4);
+      const isBlocked = (Math.abs(this.speed) < 25 && this.inputThrottle > 0.2);
+
+      if (isNearBarrier && isBlocked) {
+        this.aiStuckTimer += dt;
+      } else if (Math.abs(this.speed) > 40) {
+        this.aiStuckTimer = Math.max(0, this.aiStuckTimer - dt * 2);
+      }
+
+      // Si lleva atascado más de 0.6s, maniobrar marcha atrás y girar contra el muro
+      if (this.aiStuckTimer > 0.6 && this.aiReverseTimer <= 0) {
+        this.aiReverseTimer = 0.8;
+        this.aiUnstuckAttempts++;
+      }
+
+      if (this.aiReverseTimer > 0) {
+        this.aiReverseTimer -= dt;
+        this.inputThrottle = 0;
+        this.inputBrake = 1.0; // Desencadena reversa
+        // Girar hacia el centro de la pista
+        const normalAngle = Math.atan2(trackPos.closestSample.normalY, trackPos.closestSample.normalX);
+        let steerDir = Math.sin(normalAngle - this.angle);
+        this.inputSteer = Math.sign(steerDir || 1);
+        this.inputHandbrake = false;
+        this.inputNitro = false;
+        return;
+      }
+
+      // Si a pesar de maniobrar sigue atascado más de 1.8s, recolocar automáticamente
+      if (this.aiStuckTimer > 1.8) {
+        this.respawnOnTrack(track, false);
+        this.aiStuckTimer = 0;
+        this.aiReverseTimer = 0;
+        this.aiUnstuckAttempts = 0;
+        return;
+      }
 
       // 2. Anticipación hacia adelante (Lookahead) según velocidad
       const lookaheadDistance = 75 + Math.abs(this.speed) * 0.28;
@@ -1467,6 +1666,8 @@
       for (let j = i + 1; j < n; j++) {
         const A = allCars[i];
         const B = allCars[j];
+
+        if (A.invulnerableTimer > 0 || B.invulnerableTimer > 0) continue;
 
         const dx = B.x - A.x;
         const dy = B.y - A.y;
@@ -1924,6 +2125,7 @@
       this.btnSound = document.getElementById('btn-sound');
       this.btnToggleAutoaccel = document.getElementById('btn-toggle-autoaccel');
       this.btnToggleGyro = document.getElementById('btn-toggle-gyro');
+      this.btnRespawn = document.getElementById('btn-respawn');
 
       // Elementos del selector de pistas (Fase 4)
       this.circuitNameBadgeEl = document.getElementById('circuit-name-badge');
@@ -2020,7 +2222,7 @@
               <span class="track-diff-pill ${t.diffClass}">${t.difficulty}</span>
             </div>
             <div class="track-card-best">
-              <span>★</span>
+              <span class="record-tag">RÉCORD:</span>
               <span>${bestText}</span>
             </div>
           </div>
@@ -2109,6 +2311,20 @@
         });
       }
       this.btnSound.addEventListener('click', () => this.toggleSound());
+
+      if (this.btnRespawn) {
+        this.btnRespawn.addEventListener('click', () => {
+          if (this.state === 'RACING') {
+            const res = this.car.respawnOnTrack(this.track, true);
+            if (res && res.respawned) {
+              this.raceTime += res.penalty;
+              if (this.car.lapStartTime !== undefined) this.car.lapStartTime -= res.penalty;
+              if (this.audio) this.audio.playCrashSound(0.45);
+              if (window.ArcadeCanvas) window.ArcadeCanvas.haptic(60);
+            }
+          }
+        });
+      }
 
       this.btnToggleAutoaccel.addEventListener('click', () => {
         this.autoAcceleration = !this.autoAcceleration;
@@ -2264,6 +2480,17 @@
         case 'ShiftRight':
           this.car.inputNitro = true;
           break;
+        case 'KeyR':
+          if (this.state === 'RACING') {
+            const res = this.car.respawnOnTrack(this.track, true);
+            if (res && res.respawned) {
+              this.raceTime += res.penalty;
+              if (this.car.lapStartTime !== undefined) this.car.lapStartTime -= res.penalty;
+              if (this.audio) this.audio.playCrashSound(0.45);
+              if (window.ArcadeCanvas) window.ArcadeCanvas.haptic(60);
+            }
+          }
+          break;
         case 'KeyP':
         case 'Escape':
           this.togglePause();
@@ -2346,7 +2573,14 @@
 
     toggleSound() {
       const isMuted = this.audio.toggleMute();
-      this.btnSound.querySelector('.icon').textContent = isMuted ? '🔇' : '🔊';
+      const iconSpan = this.btnSound.querySelector('.icon');
+      if (iconSpan) {
+        if (isMuted) {
+          iconSpan.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27 7.73 9H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/></svg>';
+        } else {
+          iconSpan.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>';
+        }
+      }
     }
 
     resizeCanvas() {
@@ -2461,6 +2695,16 @@
           }
         }
 
+        // Recolocación automática tras atasco en barrera
+        if (updateResult && updateResult.respawned) {
+          if (car === this.car) {
+            this.raceTime += updateResult.penalty;
+            if (this.car.lapStartTime !== undefined) this.car.lapStartTime -= updateResult.penalty;
+            if (this.audio) this.audio.playCrashSound(0.5);
+            if (window.ArcadeCanvas) window.ArcadeCanvas.haptic(60);
+          }
+        }
+
         // Lógica de Vueltas y Puntos de Control Anti-trampas por auto
         const curNextIdx = car.nextCheckpoint;
         const targetCp = this.track.checkpoints[curNextIdx];
@@ -2572,8 +2816,8 @@
     showLapBanner(lapNumber, lapTime, isNewBest) {
       if (!this.lapBannerEl) return;
       clearTimeout(this.bannerTimeout);
-      this.lapBannerTitleEl.textContent = lapNumber === CONFIG.LAPS ? '¡VUELTA FINAL!' : `¡VUELTA ${lapNumber}!`;
-      this.lapBannerSubEl.textContent = `${formatTime(lapTime)}${isNewBest ? ' ★ ¡NUEVO RÉCORD!' : ''}`;
+      this.lapBannerTitleEl.textContent = lapNumber === CONFIG.LAPS ? 'Vuelta final' : `Vuelta ${lapNumber}`;
+      this.lapBannerSubEl.textContent = `${formatTime(lapTime)}${isNewBest ? ' (Nuevo récord)' : ''}`;
       this.lapBannerEl.classList.remove('hidden');
       this.bannerTimeout = setTimeout(() => {
         this.lapBannerEl.classList.add('hidden');
@@ -2593,7 +2837,7 @@
 
       if (this.resPosEl) {
         this.resPosEl.textContent = rankLabels[playerRank - 1] || `${playerRank}° LUGAR`;
-        this.resPosEl.style.color = (playerRank === 1) ? '#38bdf8' : (playerRank === 2 ? '#a855f7' : (playerRank === 3 ? '#84cc16' : '#f97316'));
+        this.resPosEl.style.color = (playerRank === 1) ? '#38bdf8' : (playerRank === 2 ? '#a855f7' : (playerRank === 3 ? '#84cc16' : '#ffd400'));
       }
       if (this.resTotalTimeEl) this.resTotalTimeEl.textContent = formatTime(this.car.finishTime || this.raceTime);
       if (this.resBestLapEl) this.resBestLapEl.textContent = this.car.bestLapTime ? formatTime(this.car.bestLapTime) : '--:--.-';
@@ -2634,7 +2878,7 @@
           const isBest = t === this.car.bestLapTime;
           return `
             <div class="lap-breakdown-row ${isBest ? 'is-best' : ''}">
-              <span>Vuelta ${idx + 1}${isBest ? ' ★' : ''}</span>
+              <span>Vuelta ${idx + 1}${isBest ? ' (Mejor)' : ''}</span>
               <span>${formatTime(t)}</span>
             </div>
           `;
@@ -2666,7 +2910,7 @@
       if (this.posDisplayEl) {
         const r = this.car.rank || 1;
         this.posDisplayEl.textContent = `${r}°`;
-        this.posDisplayEl.style.color = (r === 1) ? '#38bdf8' : (r === 2 ? '#a855f7' : (r === 3 ? '#84cc16' : '#f97316'));
+        this.posDisplayEl.style.color = (r === 1) ? '#38bdf8' : (r === 2 ? '#a855f7' : (r === 3 ? '#84cc16' : '#ffd400'));
       }
 
       // Vuelta actual y total (Fase 2)

@@ -83,11 +83,11 @@
     ]
   ];
 
-  // Paleta neón de los ladrillos según su resistencia original
+  // Paleta sobria de los ladrillos según su resistencia
   const BRICK_CONFIG = {
-    1: { color: '#00f0ff', glow: 'rgba(0, 240, 255, 0.4)', points: 10 },
-    2: { color: '#ffd000', glow: 'rgba(255, 208, 0, 0.4)', points: 25 },
-    3: { color: '#ff3366', glow: 'rgba(255, 51, 102, 0.4)', points: 50 }
+    1: { color: '#e07a1f', glow: 'rgba(224, 122, 31, 0.3)', points: 10 },
+    2: { color: '#d97706', glow: 'rgba(217, 119, 6, 0.3)', points: 25 },
+    3: { color: '#9a3412', glow: 'rgba(154, 52, 18, 0.3)', points: 50 }
   };
 
   class RompeMurosGame {
@@ -346,11 +346,13 @@
       if (type === 'WIDE') {
         this.paddle.targetWidth = PADDLE_WIDE_WIDTH;
         this.powerupText.textContent = 'PALETA ANCHA';
-        document.getElementById('powerup-icon').textContent = '↔';
+        const pIcon = document.getElementById('powerup-icon');
+        if (pIcon) pIcon.innerHTML = window.ArcadeIcons ? ArcadeIcons.getSvg('swap', 14) : '';
       } else if (type === 'SLOW') {
         this.paddle.targetWidth = PADDLE_BASE_WIDTH;
         this.powerupText.textContent = 'PELOTA LENTA';
-        document.getElementById('powerup-icon').textContent = '⏱';
+        const pIcon = document.getElementById('powerup-icon');
+        if (pIcon) pIcon.innerHTML = window.ArcadeIcons ? ArcadeIcons.getSvg('speed', 14) : '';
         // Ajustar velocidad de pelotas activas
         const targetSpd = this.getCurrentSpeed();
         this.balls.forEach(b => {
@@ -480,11 +482,14 @@
       this.levelDisplay.textContent = this.currentLevelIndex + 1;
 
       // Iconos de vidas
-      let hearts = '';
+      let heartsHtml = '';
       for (let i = 0; i < 3; i++) {
-        hearts += i < this.lives ? '♥' : '♡';
+        const isFilled = i < this.lives;
+        heartsHtml += window.ArcadeIcons
+          ? ArcadeIcons.getSvg(isFilled ? 'heart' : 'heartOutline', 14)
+          : (isFilled ? '3' : '0');
       }
-      this.livesDisplay.textContent = hearts;
+      this.livesDisplay.innerHTML = heartsHtml;
     }
 
     resizeCanvas() {
@@ -822,23 +827,21 @@
         const p = this.powerupPool[i];
         if (p.active) {
           ctx.save();
-          let pColor = '#ffd000';
-          let pSymbol = '↔';
-          if (p.type === 'SLOW') { pColor = '#00f0ff'; pSymbol = '⏱'; }
-          if (p.type === 'MULTIBALL') { pColor = '#00e676'; pSymbol = '●●'; }
+          let pColor = '#f59e0b';
+          let pLabel = 'W';
+          if (p.type === 'SLOW') { pColor = '#38bdf8'; pLabel = 'S'; }
+          if (p.type === 'MULTIBALL') { pColor = '#10b981'; pLabel = '3x'; }
 
-          ctx.shadowColor = pColor;
-          ctx.shadowBlur = 10;
           ctx.fillStyle = pColor;
           ctx.beginPath();
-          ctx.roundRect(p.x, p.y, p.width, p.height, 8);
+          ctx.roundRect(p.x, p.y, p.width, p.height, 6);
           ctx.fill();
 
-          ctx.fillStyle = '#05070e';
+          ctx.fillStyle = '#1c1311';
           ctx.font = 'bold 10px monospace';
           ctx.textAlign = 'center';
           ctx.textBaseline = 'middle';
-          ctx.fillText(pSymbol, p.x + p.width / 2, p.y + p.height / 2);
+          ctx.fillText(pLabel, p.x + p.width / 2, p.y + p.height / 2);
           ctx.restore();
         }
       }
@@ -889,16 +892,14 @@
 
         // Pelota principal
         ctx.save();
-        ctx.shadowColor = '#00f0ff';
-        ctx.shadowBlur = 14;
-        ctx.fillStyle = '#ffffff';
+        ctx.fillStyle = '#4a2412';
 
         ctx.beginPath();
         ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
         ctx.fill();
 
-        // Núcleo cyan
-        ctx.fillStyle = '#00f0ff';
+        // Núcleo terracota
+        ctx.fillStyle = '#e07a1f';
         ctx.beginPath();
         ctx.arc(ball.x, ball.y, ball.radius * 0.6, 0, Math.PI * 2);
         ctx.fill();

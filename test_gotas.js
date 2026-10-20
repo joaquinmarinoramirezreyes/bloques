@@ -16,7 +16,7 @@ console.log('--- INICIANDO TEST: GOTAS (PUZZLE 90s) ---');
       assert.strictEqual(grid[r][c], 0, 'El tablero nuevo debe estar vacío');
     }
   }
-  console.log('✓ Inicialización del tablero 6x12 correcta');
+  console.log('OK Inicialización del tablero 6x12 correcta');
 }
 
 // 2. Detección de grupos conectados ortogonalmente (BFS)
@@ -52,7 +52,7 @@ console.log('--- INICIANDO TEST: GOTAS (PUZZLE 90s) ---');
   groups = GotasLogic.findConnectedGroups(grid);
   assert.strictEqual(groups.length, 2, 'Deben detectarse 2 grupos simultáneos');
 
-  console.log('✓ Detección de grupos ortogonales de 4+ gotas (BFS) verificada');
+  console.log('OK Detección de grupos ortogonales de 4+ gotas (BFS) verificada');
 }
 
 // 3. Aplicación de gravedad iterativa
@@ -77,7 +77,7 @@ console.log('--- INICIANDO TEST: GOTAS (PUZZLE 90s) ---');
   const fallenAgain = GotasLogic.applyGravity(grid);
   assert.strictEqual(fallenAgain, 0, 'No debe haber movimientos en un tablero ya estabilizado');
 
-  console.log('✓ Aplicación de gravedad y asentamiento hacia el fondo verificada');
+  console.log('OK Aplicación de gravedad y asentamiento hacia el fondo verificada');
 }
 
 // 4. Resolución de cascadas y combos en cadena
@@ -109,7 +109,7 @@ console.log('--- INICIANDO TEST: GOTAS (PUZZLE 90s) ---');
     }
   }
 
-  console.log('✓ Simulación de cascadas múltiples y combos en cadena completada con éxito');
+  console.log('OK Simulación de cascadas múltiples y combos en cadena completada con éxito');
 }
 
 // 5. Gota especial Arcoíris (Rainbow Drop)
@@ -140,7 +140,7 @@ console.log('--- INICIANDO TEST: GOTAS (PUZZLE 90s) ---');
   assert.strictEqual(grid[11][1], 2);
   assert.strictEqual(grid[10][1], 2);
 
-  console.log('✓ Mecánica propia: Gota arcoíris elimina todo el color impactado correctamente');
+  console.log('OK Mecánica propia: Gota arcoíris elimina todo el color impactado correctamente');
 }
 
 // 6. Mecánica de Gotas de Basura (Maratón de Jefes / Duelo IA)
@@ -177,7 +177,7 @@ console.log('--- INICIANDO TEST: GOTAS (PUZZLE 90s) ---');
     }
   }
   assert.strictEqual(totalTrash, 4, 'Deben existir 4 gotas de basura en total (1 anterior + 3 nuevas)');
-  console.log('✓ Mecánica de Maratón/Duelo: Gotas de basura y disolución adyacente verificada');
+  console.log('OK Mecánica de Maratón/Duelo: Gotas de basura y disolución adyacente verificada');
 }
 
 console.log('--- TODOS LOS TESTS DE GOTAS PASARON EXITOSAMENTE (6/6) ---');

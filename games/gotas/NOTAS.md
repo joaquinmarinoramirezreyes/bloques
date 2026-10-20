@@ -1,44 +1,53 @@
 # Bitácora de Mejoras y Calidad - Gotas
 
-## Fecha: 14 de Octubre de 2026
-## Versión: v2.0 (Estándar de Calidad Aplicado)
+## Fecha: 15 de Octubre de 2026
+## Versión: v3.0 (Sistema de Animación Completo y Desacoplamiento de Estado)
 
-### 1. Sensación de Impacto ("Juice")
-- **Gotas Líquidas y Expresiones Reactivas**:
-  - Forma elástica que se estira durante la caída libre (`scaleX: 0.9, scaleY: 1.15` y `0.8/1.25` en caída rápida) y se aplasta con amortiguación elástica al asentarse (`scaleX: 1.25, scaleY: 0.75`).
-  - Rostro con ojos y boca reactiva:
-    - *Expresión de pánico*: Ojos abiertos y temblorosos con gota de sudor cuando las gotas se ubican en las 3 filas superiores ($r \le 2$).
-    - *Expresión eufórica*: Ojos arqueados y sonrisa en cascadas y combos.
-    - *Expresión somnolienta*: En gotas de basura inerte.
-- **Ondas Líquidas y Zoom en Cascadas**:
-  - En combos $\ge 2$, la cámara realiza un zoom sutil proporcional al multiplicador de reacción.
-  - Al disolverse gotas, se emiten ondas de choque radiales translúcidas (*shockwaves*) en el matraz.
-  - Textos flotantes y avisos de daño/combo usando el pool de `ArcadeJuice`.
-- **Fondo Animado**: Caverna alquímica bioluminiscente con 24 burbujas de gas ascendentes continuas.
+### 1. Arquitectura: Estado Lógico vs Estado Visual
+- **Desacoplamiento Estricto**:
+  - Matriz lógica `State.grid[12][6]` resuelve de forma atómica y pura jugadas, gravedad y reacciones.
+  - Matriz visual `GotasVisualManager.visualGrid[12][6]` almacena instancias de `DropVisualSprite` (`x, y`, `scale`, `scaleX`, `scaleY`, `rotation`, `alpha`, `brightness`, `wobblePhase`).
+  - El renderizado dibuja exclusivamente sprites visuales, nunca la matriz lógica de forma directa.
+  - Emisor de eventos atómicos: `GotasLogic.stepCascade(grid, cascadeStep)` emite eventos tipados (`gravity`, `rainbow`, `matches`, `settled`) que `GotasVisual` reproduce mediante el motor `shared/tween.js`.
+  - Verificación de consistencia: Tras estabilizarse cada cascada, `GotasVisualManager.verifySync(grid)` comprueba celda a celda que el estado visual coincide al 100% con el lógico.
 
-### 2. Modos de Juego
-- **Modo Normal**: Partida clásica sin fin con aceleración progresiva y desbloqueo del 5to color a partir del nivel 4.
-- **Modo Maratón de Jefes (5 Jefes)**:
-  1. *Sorbete* (1200 PV, 2 gotas de basura cada 18s).
-  2. *Viscosa* (2600 PV, 3 gotas de basura cada 15s).
-  3. *Maelstrom* (4800 PV, 4 gotas de basura cada 13s).
-  4. *Plasma-Core* (7500 PV, 5 gotas de basura cada 11s).
-  5. *Titanium Blob* (11000 PV, 6 gotas de basura cada 9s).
-  - Cada gota disuelta en combo inflige daño al jefe; la basura inerte se disuelve al detonar grupos adyacentes o con la gota arcoíris.
-- **Modo Contrarreloj (120s)**: Dos minutos de cronómetro regresivo para maximizar puntuación y combos.
-- **Modo Duelo contra IA (5 Rivales)**: Combate bidireccional donde cada reacción en cadena envía basura al rival hasta drenar su energía o colapsar la entrada.
+### 2. Animaciones de Fluidos y Jugabilidad Líquida
+- **Deformación al Mover y Aterrizar**:
+  - Desplazamiento horizontal con interpolación suave (`easeOutQuad` en 80 ms).
+  - Rotación fluida con rebote elástico (`easeOutBack` en 100 ms) alrededor del pivote de la pareja.
+  - Estiramiento vertical en caída (`scaleY: 1.15, scaleX: 0.88`, y hasta `1.25` en caída rápida).
+  - Aterrizaje con *squash & stretch* reactivo (`scaleY: 0.72, scaleX: 1.28` con recuperación `easeOutBounce` a `1.0, 1.0`).
+- **Fusión Visual de Fluidos (Puentes entre Vecinas)**:
+  - Las gotas adyacentes ortogonalmente del mismo color generan automáticamente un cuello/puente líquido con cápsula redondeada y brillo especular, fusionándose como gel vivo.
+  - Al reposar, las gotas y sus cuellos ondulan con una fase senoidal continua (*idle liquid ripple*).
+- **Eliminación y Cascadas en Ola**:
+  - Destello blanco (*hit flash* con `brightness: 1.6`) y leve dilatación anticipatoria.
+  - Encogimiento con giro angular y desvanecimiento (`scale: 0`, `alpha: 0`, `easeInQuad` en 200 ms).
+  - Cascada visual escalonada en grupos grandes con retardos de 30 ms por pieza propagados desde el centro del grupo.
+  - Estallido de partículas líquidas y ondas de choque vectoriales (*shockwaves*).
+- **Gota Especial Arcoíris**:
+  - Detonación con onda expansiva prismática y rayos láser/fluidos disparados hacia todas las gotas del color seleccionado, disolviéndolas en cascada.
+- **Entrada de Basura desde Fuera de Pantalla**:
+  - Las gotas de basura arrojadas por jefes o rivales caen desde $y < 0$ (arriba del pozo) con aceleración de gravedad ($1800 \text{ px/s}^2$), aterrizando con sacudida e impacto físico.
 
-### 3. Progresión, Tutorial y Accesibilidad
-- **Tutorial Interactivo en 3 Pasos**: Explica conexiones básicas ortogonales, cascadas por gravedad y el funcionamiento de la gota arcoíris.
-- **8 Logros Integrados**:
-  1. *Primera Mezcla*
-  2. *Reacción en Cadena*
-  3. *Maestro de Cascadas*
-  4. *Prisma Gelatinoso*
-  5. *Cazador de Jefes*
-  6. *Emperador Líquido*
-  7. *Velocidad Líquida*
-  8. *Duelo Supremo*
-- **Persistencia Versionada**: Clave `gotas:v2` con migración de récord y métricas de mayor cadena histórica.
-- **Ajustes y Accesibilidad**: Control independiente de SFX, BGM generativo, vibración háptica y modo de alto contraste.
-- **Diagnóstico**: Compatible con `?debug=1`, monitor de FPS y frame time ms.
+### 3. Transiciones de Interfaz y Ritmo
+- **Marcador Interpolado**: Puntuación con conteo numérico progresivo en lugar de saltos bruscos.
+- **Banners de Combo**: Entrada elástica con rebote (`easeOutBack`), sacudida de pantalla proporcional y zoom temporal de cámara en combos altos.
+- **Modales Suaves**: Transiciones de opacidad y visibilidad de 200 ms en menús, pausa y fin de partida.
+- **Entrada en Cola (Input Queuing)**: Los movimientos o rotaciones efectuados durante una cascada se encolan y ejecutan inmediatamente al reanudarse el control.
+- **Ajuste "Animaciones Rápidas"**: Casilla en el modal de ajustes que reduce las duraciones a un 45% para speedrunners.
+
+### 4. Rendimiento (60 FPS Estables)
+- **Atlas de Sprites Offscreen**: Pre-renderizado procedural en canvas offscreen para los 5 colores, basura, arcoíris y expresiones faciales (normal, combo feliz, peligro/alerta).
+- **Fondo Estático Cacheado**: El marco, gradiente de caverna y rejilla se dibujan en una sola llamada `ctx.drawImage` cacheada.
+- **Object Pooling Completo**:
+  - Pool de 120 sprites `DropVisualSprite`.
+  - Pool de 150 partículas líquidas.
+  - Pool de 25 ondas de choque.
+  - Cero creación de objetos o arrays por frame en `update()` y `render()`.
+- **Modo Diagnóstico `?debug=1` y Auto-Tuner**: Monitor en vivo con FPS, tiempo de frame, sprites activos, tweens, partículas y estado de sincronización. Si los FPS bajan de 55, activa automáticamente el modo de bajo detalle.
+
+### 5. Verificación Automatizada (Node.js)
+- `scripts/test_gotas_animations.js`:
+  - 1,000 partidas y 3,075 pasos de cascada simulados con 0 desincronizaciones entre el estado lógico y el visual.
+  - Validación de pooling de 120 sprites, gravedad, squash & stretch y entrada de basura desde $y < 0$.

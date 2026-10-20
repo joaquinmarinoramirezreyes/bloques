@@ -19,7 +19,7 @@
     {
       id: 'vida_inicial',
       name: 'Vitalidad Primordial',
-      icon: '❤️',
+      icon: 'heart',
       desc: '+15 de vida máxima base por rango.',
       maxRank: 5,
       baseCost: 20,
@@ -30,7 +30,7 @@
     {
       id: 'fuerza_ancestral',
       name: 'Poder del Vacío',
-      icon: '⚔️',
+      icon: 'swords',
       desc: '+8% de daño general infligido por rango.',
       maxRank: 5,
       baseCost: 25,
@@ -41,7 +41,7 @@
     {
       id: 'pies_del_viento',
       name: 'Paso Espectral',
-      icon: '👟',
+      icon: 'shoe',
       desc: '+10 px/s de velocidad de movimiento por rango.',
       maxRank: 4,
       baseCost: 25,
@@ -52,7 +52,7 @@
     {
       id: 'iman_arcano',
       name: 'Atracción Magnética',
-      icon: '🧲',
+      icon: 'magnet',
       desc: '+25 px de radio de imán para orbes de XP y oro.',
       maxRank: 3,
       baseCost: 20,
@@ -63,7 +63,7 @@
     {
       id: 'fortuna_inicial',
       name: 'Tributo de Oro',
-      icon: '🪙',
+      icon: 'coin',
       desc: 'Inicia cada descenso con +20 de oro por rango.',
       maxRank: 4,
       baseCost: 20,
@@ -74,7 +74,7 @@
     {
       id: 'recarga_abismal',
       name: 'Foco de Voluntad',
-      icon: '⚡',
+      icon: 'zap',
       desc: '-8% de tiempo de recarga en habilidad especial.',
       maxRank: 3,
       baseCost: 35,
@@ -85,7 +85,7 @@
     {
       id: 'cosecha_espectral',
       name: 'Resonancia de Esencia',
-      icon: '✨',
+      icon: 'spark',
       desc: '+15% de esencia ganada al finalizar el descenso.',
       maxRank: 4,
       baseCost: 40,
@@ -100,49 +100,49 @@
     {
       id: 'primer_descenso',
       name: 'Primer Descenso',
-      icon: '🚩',
+      icon: 'flag',
       desc: 'Supera el Piso 1 y desciende al siguiente nivel.',
       condition: (stats) => (stats.maxFloorReached || 1) >= 2
     },
     {
       id: 'cazador_sombras',
       name: 'Cazador de Sombras',
-      icon: '💀',
+      icon: 'skull',
       desc: 'Derrota a un total acumulado de 50 enemigos.',
       condition: (stats) => (stats.totalKills || 0) >= 50
     },
     {
       id: 'terror_cripta',
       name: 'Terror de la Cripta',
-      icon: '👑',
+      icon: 'crown',
       desc: 'Derrota al Señor del Abismo en el Piso 5.',
       condition: (stats) => (stats.bossesKilled || 0) >= 1
     },
     {
       id: 'acumulador_esencia',
       name: 'Acumulador de Esencia',
-      icon: '✨',
+      icon: 'shard',
       desc: 'Reúne al menos 100 puntos de esencia en total.',
       condition: (stats, meta) => ((meta && meta.totalEssenceEarned) || (stats && stats.totalEssenceEarned) || 0) >= 100
     },
     {
       id: 'trinidad_abisal',
       name: 'Trinidad Abisal',
-      icon: '🔮',
+      icon: 'gem',
       desc: 'Desbloquea a todos los personajes (Hechicera y Centinela).',
       condition: (stats, meta) => meta.unlockedCharacters && meta.unlockedCharacters.includes('hechicera') && meta.unlockedCharacters.includes('centinela')
     },
     {
       id: 'peregrino_legendario',
       name: 'Peregrino Legendario',
-      icon: '🌌',
+      icon: 'star',
       desc: 'Alcanza el Piso 10 en las profundidades astrales.',
       condition: (stats) => (stats.maxFloorReached || 1) >= 10
     },
     {
       id: 'cofres_llenos',
       name: 'Cofres Llenos',
-      icon: '💰',
+      icon: 'coin',
       desc: 'Acumula 150 de oro en una sola partida.',
       condition: (stats) => (stats.maxGoldRun || 0) >= 150
     }

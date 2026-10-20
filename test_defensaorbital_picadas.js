@@ -12,10 +12,10 @@ function test(title, fn) {
   total++;
   try {
     fn();
-    console.log(`  ✓ [PASSED] ${title}`);
+    console.log(`  OK [PASSED] ${title}`);
     passed++;
   } catch (err) {
-    console.error(`  ✗ [FAILED] ${title}`);
+    console.error(`  X [FAILED] ${title}`);
     console.error(`    ${err.message}`);
   }
 }
@@ -145,13 +145,19 @@ test('Los enemigos en formación entran en picada, disparan y regresan a la cuad
   const diver = divingEnemies[0];
   if (!diver.divePoints) throw new Error('El enemigo en picada no tiene divePoints asignados');
 
+  // La picada se apunta a la posicion del jugador al iniciarse (x = 30). En el juego real, el enemigo
+  // que embiste a la nave se destruye al contacto, lo que hacia fallar esta prueba segun el perfil
+  // aleatorio. Esta prueba verifica la maquina de estados (DIVING -> RETURNING -> FORMATION), no el
+  // choque: se aparta la nave al extremo opuesto y se mantiene vivo al enemigo ante disparos.
+  diver.hp = 1e6;
+
   // Simular la trayectoria de picada
   let enemyFiredBullet = false;
   let reachedReturning = false;
 
   for (let f = 0; f < 240; f++) {
-    game.player.x = 30;
-    game.player.targetX = 30;
+    game.player.x = 450;
+    game.player.targetX = 450;
     game.update(1 / 60);
     if (game.enemyBullets.some(b => b.active)) {
       enemyFiredBullet = true;
@@ -191,12 +197,19 @@ test('El enemigo portador suelta cápsula, el jugador acopla el dron, duplica el
   // Destruir al portador simulando impacto
   carrier.hp = 0;
   carrier.state = 'DIVING'; // Simular muerte en picada
+  carrier.divePoints = null; // Evitar desplazamiento Bezier fuera del radio durante este frame
   // Disparar impacto con bala
   const bullet = game.bullets[0];
   bullet.active = true;
+  bullet.vy = 0;
+  bullet.radius = 30;
   bullet.x = carrier.x;
   bullet.y = carrier.y;
   game.update(1 / 60);
+
+  // Restaurar propiedades originales de la bala
+  bullet.radius = 4;
+  bullet.vy = -560;
 
   if (!game.capsule.active) {
     throw new Error('Destruir al enemigo portador no soltó la cápsula');

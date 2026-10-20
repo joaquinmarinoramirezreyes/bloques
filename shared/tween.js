@@ -185,11 +185,13 @@
           tw.onUpdate = null;
           tw.onComplete = null;
           if (cb) cb(target);
-        } else {
-          activeCounter++;
         }
       }
 
+      activeCounter = 0;
+      for (let i = 0; i < MAX_TWEENS; i++) {
+        if (tweenPool[i].active) activeCounter++;
+      }
       this.activeCount = activeCounter;
     },
 

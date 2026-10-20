@@ -150,7 +150,7 @@ for (let i = 0; i < MAPAS.length; i++) {
   const res = simulateMap(i, 20);
   results.push(res);
 
-  const status = res.victory ? '🏆 VICTORIA' : (res.gameOver ? '💀 DERROTA' : '⏱️ INCOMPLETO');
+  const status = res.victory ? '[WIN] VICTORIA' : (res.gameOver ? '[DEAD] DERROTA' : '[TIME] INCOMPLETO');
   console.log(`${status} | Oleadas: ${res.wavesCompleted}/${res.maxWaves} | Vidas: ${res.livesRemaining}/${res.initialLives} | Torres: ${res.towersPlaced} | Kills: ${res.kills}`);
 
   if (!res.victory) {
@@ -173,22 +173,22 @@ for (const r of results) {
 
   if (r.wavesCompleted < 10) {
     hasImpossible = true;
-    console.log(`   ⚠️ MAPA POSIBLEMENTE IMPOSIBLE: No logró superar las oleadas intermedias.`);
+    console.log(`   [WARN] MAPA POSIBLEMENTE IMPOSIBLE: No logró superar las oleadas intermedias.`);
   } else if (r.livesRemaining === r.initialLives && r.wavesCompleted === 20) {
-    console.log(`   ✨ MAPA DOMINADO (3 Estrellas Flawless con estrategia óptima).`);
+    console.log(`   [STAR] MAPA DOMINADO (3 Estrellas Flawless con estrategia óptima).`);
   }
 }
 
 console.log('----------------------------------------------------------------------');
 if (!hasImpossible) {
-  console.log('✅ BALANCE VERIFICADO: Ningún mapa es imposible. Todos los sectores son completables con defensa estratégica.');
+  console.log('[OK] BALANCE VERIFICADO: Ningún mapa es imposible. Todos los sectores son completables con defensa estratégica.');
 } else {
-  console.error('❌ ADVERTENCIA DE BALANCE: Se detectaron mapas con dificultad excesiva.');
+  console.error('[FAIL] ADVERTENCIA DE BALANCE: Se detectaron mapas con dificultad excesiva.');
   process.exit(1);
 }
 
 if (allPassed) {
-  console.log('✅ SIMULACIÓN EXITOSA: La campaña de 6 mapas está equilibrada y operativa.\n');
+  console.log('[OK] SIMULACIÓN EXITOSA: La campaña de 6 mapas está equilibrada y operativa.\n');
 } else {
-  console.log('⚠️ Algunos mapas requirieron micro-gestión manual o murieron antes de W20.\n');
+  console.log('[WARN] Algunos mapas requirieron micro-gestión manual o murieron antes de W20.\n');
 }

@@ -12,7 +12,7 @@
       name: "Bloques",
       folder: "games/bloques",
       description: "El puzzle arcade de piezas que caen. Encaja líneas completas, gestiona la rotación y bate el récord.",
-      color: "#00f0ff",
+      color: "#c0392b",
       badge: "PUZZLE",
       icon: "bloques",
       eras: ["80"]
@@ -82,7 +82,7 @@
       name: "Frontón",
       folder: "games/fronton",
       description: "Duelo de paletas y pelota cuántica con perspectiva 3D, física de aceleración, 3 dificultades de IA y modo 2P en un solo móvil.",
-      color: "#00f0ff",
+      color: "#f2c94c",
       badge: "RETRO 80",
       icon: "fronton",
       eras: ["80"]
@@ -347,7 +347,10 @@
     grid.innerHTML = '';
 
     if (filtered.length === 0) {
-      grid.innerHTML = '<div class="empty-state">No hay juegos disponibles en esta época aún.</div>';
+      const sinAcceso = allGamesData.length === 0 && window.location.protocol !== 'file:';
+      grid.innerHTML = sinAcceso
+        ? '<div class="empty-state">Escanea el código QR de tu taza para desbloquear la Sala Arcade.</div>'
+        : '<div class="empty-state">No hay juegos disponibles en esta época aún.</div>';
       return;
     }
 
@@ -356,8 +359,8 @@
       const highScore = window.ArcadeStorage ? window.ArcadeStorage.getHighScore(game.id) : 0;
       const card = document.createElement('article');
       card.className = 'game-card';
-      card.style.setProperty('--card-accent', game.color || '#00f0ff');
-      card.style.setProperty('--card-glow', `${game.color || '#00f0ff'}33`);
+      card.style.setProperty('--card-accent', game.color || '#9aa4b2');
+      card.style.setProperty('--card-glow', `${game.color || '#9aa4b2'}33`);
 
       card.innerHTML = `
         <div class="card-top">
@@ -468,13 +471,16 @@
   async function loadGames() {
     initEraTabs();
 
+    const isFile = window.location.protocol === 'file:';
+
     try {
-      const response = await fetch('./games.json');
+      // Ruta absoluta: el middleware devuelve solo los juegos de las epocas desbloqueadas por QR
+      const response = await fetch(isFile ? './games.json' : '/games.json', { credentials: 'same-origin', cache: 'no-store' });
       if (!response.ok) throw new Error('Respuesta de red no válida');
       allGamesData = await response.json();
     } catch (_) {
-      // Fallback automático si se carga desde file:// o hay restricción CORS local
-      allGamesData = FALLBACK_GAMES;
+      // El catalogo embebido solo se usa en file:// o pruebas locales; en produccion no se filtra nada
+      allGamesData = isFile ? FALLBACK_GAMES : [];
     }
 
     applyEra(detectEra());

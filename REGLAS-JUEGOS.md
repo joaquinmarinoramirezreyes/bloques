@@ -71,9 +71,10 @@ Este documento contiene las reglas comunes obligatorias para todos los juegos de
 ---
 
 ## 8. Identidad Visual y Arte Vectorial
-- **Arte Dibujado por Código**: Todos los gráficos (naves, enemigos, circuitos, pistas, personajes, efectos) deben renderizarse proceduralmente en Canvas 2D mediante trazados vectoriales, gradientes y sombras neón.
+- **Arte Dibujado por Código**: Todos los gráficos (naves, enemigos, circuitos, pistas, personajes, efectos) deben renderizarse proceduralmente en Canvas 2D mediante trazados vectoriales, gradientes y sombras limpias con intención.
 - **Originalidad Absoluta**: Prohibido copiar marcas registradas, nombres de franquicias comerciales, logotipos o sprites de juegos existentes.
 - **Aesthetic**: Diseños geométricos, paletas temáticas coherentes y efectos visuales arcade (estelas, ondas de choque, partículas de impacto, parallax estelar o de criptas).
+- **Prohibición Estricta de Emojis y Símbolos Unicode**: Queda terminantemente prohibido el uso de emojis (rangos Unicode Emoji / Pictogramas) y símbolos Unicode decorativos (ej. ⚔, ⏱, ↔, ●, ★, ♥, ✦, 🪙, ⚡, 🛡, 🏆, 💎, etc.) como iconos, botones, viñetas o marcadores en HTML, CSS, JavaScript, Canvas o JSON. Todo elemento iconográfico debe resolverse mediante trazados vectoriales SVG a través del módulo centralizado `shared/icons.js` (`ArcadeIcons`) o dibujarse proceduralmente en Canvas con trazados vectoriales y Path2D. Debe verificarse con `node scripts/sin-emojis.js`.
 
 ---
 

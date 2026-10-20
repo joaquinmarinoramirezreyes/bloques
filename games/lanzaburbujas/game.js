@@ -64,14 +64,14 @@
     ],
 
     ACHIEVEMENTS: [
-      { id: 'FIRST_POP', icon: '🫧', title: 'Primer Estallido', desc: 'Revienta tu primer racimo de burbujas' },
-      { id: 'BANK_SHOT', icon: '📐', title: 'Tiro con Rebote', desc: 'Revienta un grupo rebotando en la pared' },
-      { id: 'BUBBLE_RAIN', icon: '🌧️', title: 'Lluvia Marina', desc: 'Desprende 5 o más burbujas huérfanas de un tiro' },
-      { id: 'SNIPER', icon: '⭐', title: 'Francotirador Acuático', desc: 'Consigue 3 estrellas en cualquier nivel' },
-      { id: 'KRAKEN_SLAYER', icon: '🦑', title: 'Maestro de la Laguna', desc: 'Derrota al Kraken en el Nivel 15' },
-      { id: 'ABYSS_CONQUEROR', icon: '🔱', title: 'Conquistador Abisal', desc: 'Supera los 60 niveles de campaña' },
-      { id: 'BOOSTER_MASTER', icon: '💣', title: 'Artillero Experto', desc: 'Utiliza los 3 tipos de potenciadores' },
-      { id: 'COMBO_STREAK', icon: '🔥', title: 'Racha Imparable', desc: 'Consigue un combo de 5 o más aciertos consecutivos' }
+      { id: 'FIRST_POP', icon: 'bubble', title: 'Primer Estallido', desc: 'Revienta tu primer racimo de burbujas' },
+      { id: 'BANK_SHOT', icon: 'swap', title: 'Tiro con Rebote', desc: 'Revienta un grupo rebotando en la pared' },
+      { id: 'BUBBLE_RAIN', icon: 'zap', title: 'Lluvia Marina', desc: 'Desprende 5 o más burbujas huérfanas de un tiro' },
+      { id: 'SNIPER', icon: 'target', title: 'Francotirador Acuático', desc: 'Consigue 3 estrellas en cualquier nivel' },
+      { id: 'KRAKEN_SLAYER', icon: 'trophy', title: 'Maestro de la Laguna', desc: 'Derrota al Kraken en el Nivel 15' },
+      { id: 'ABYSS_CONQUEROR', icon: 'star', title: 'Conquistador Abisal', desc: 'Supera los 60 niveles de campaña' },
+      { id: 'BOOSTER_MASTER', icon: 'bomb', title: 'Artillero Experto', desc: 'Utiliza los 3 tipos de potenciadores' },
+      { id: 'COMBO_STREAK', icon: 'flame', title: 'Racha Imparable', desc: 'Consigue un combo de 5 o más aciertos consecutivos' }
     ],
 
     // 60 NIVELES DEFINIDOS COMO DATOS
@@ -1684,8 +1684,8 @@
       playAudio('game_over');
     }
 
-    dom.resultIcon.textContent = isVictory ? '🫧' : '💥';
-    dom.resultTitle.textContent = isVictory ? '¡NIVEL SUPERADO!' : 'FIN DE PARTIDA';
+    dom.resultIcon.innerHTML = isVictory ? (window.ArcadeIcons ? ArcadeIcons.getSvg('trophy', 32) : '') : (window.ArcadeIcons ? ArcadeIcons.getSvg('x', 32) : '');
+    dom.resultTitle.textContent = isVictory ? 'NIVEL SUPERADO' : 'FIN DE PARTIDA';
     dom.resultSubtitle.textContent = message;
     dom.resultScoreVal.textContent = State.score.toLocaleString();
 
@@ -1696,7 +1696,7 @@
     for (let s = 1; s <= 3; s++) {
       const starSpan = document.createElement('span');
       starSpan.className = s <= starsEarned ? 'star-slot filled' : 'star-slot empty';
-      starSpan.textContent = '★';
+      starSpan.innerHTML = window.ArcadeIcons ? ArcadeIcons.getSvg('star', 18) : '';
       dom.starsRow.appendChild(starSpan);
     }
 
@@ -1745,7 +1745,7 @@
 
     const ach = CONFIG.ACHIEVEMENTS.find(a => a.id === id);
     if (ach) {
-      spawnFloatingText(State.boardW / 2, 80, `🏆 ¡LOGRO: ${ach.title}!`, '#ffcc00');
+      spawnFloatingText(State.boardW / 2, 80, `LOGRO: ${ach.title}`, '#ffcc00');
     }
   }
 
@@ -2601,7 +2601,13 @@
       const starsSpan = document.createElement('span');
       starsSpan.className = 'level-stars';
       const rec = getLevelRecord(idx);
-      starsSpan.textContent = rec.stars > 0 ? '★'.repeat(rec.stars) : (isUnlocked ? '---' : '🔒');
+      if (rec.stars > 0) {
+        starsSpan.innerHTML = window.ArcadeIcons ? ArcadeIcons.getSvg('star', 12).repeat(rec.stars) : '';
+      } else if (isUnlocked) {
+        starsSpan.textContent = '---';
+      } else {
+        starsSpan.innerHTML = window.ArcadeIcons ? ArcadeIcons.getSvg('lock', 12) : '';
+      }
       badge.appendChild(starsSpan);
 
       if (isUnlocked) {
@@ -2732,7 +2738,7 @@
         const isUnlocked = !!State.achievements[ach.id];
         item.className = `ach-item ${isUnlocked ? 'unlocked' : ''}`;
         item.innerHTML = `
-          <span class="ach-icon">${ach.icon}</span>
+          <span class="ach-icon">${window.ArcadeIcons ? ArcadeIcons.getSvg(ach.icon, 20) : ''}</span>
           <div style="display:flex; flex-direction:column;">
             <span class="ach-title">${ach.title}</span>
             <span class="ach-desc">${ach.desc}</span>

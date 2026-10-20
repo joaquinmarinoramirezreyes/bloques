@@ -45,32 +45,32 @@
     STORAGE_KEY_LEGACY: 'lumen:v1',
 
     WORLDS: [
-      { id: 1, name: 'Bosque Neón', color: '#00ff88', glow: 'rgba(0, 255, 136, 0.4)', wallBg: '#021a0d', desc: 'Niveles 1 al 6 • Regla: Niebla densa y ramas vivas' },
-      { id: 2, name: 'Cripta Eléctrica', color: '#00f0ff', glow: 'rgba(0, 240, 255, 0.4)', wallBg: '#011724', desc: 'Niveles 7 al 12 • Regla: Puertas de energía y arcos' },
+      { id: 1, name: 'Bosque Esmeralda', color: '#10b981', glow: 'rgba(16, 185, 129, 0.4)', wallBg: '#0f2416', desc: 'Niveles 1 al 6 • Regla: Niebla densa y ramas vivas' },
+      { id: 2, name: 'Cripta Ancestral', color: '#ffd27a', glow: 'rgba(255, 210, 122, 0.4)', wallBg: '#2a1a10', desc: 'Niveles 7 al 12 • Regla: Puertas de energía y arcos' },
       { id: 3, name: 'Mina Ámbar', color: '#ffaa00', glow: 'rgba(255, 170, 0, 0.4)', wallBg: '#1f1300', desc: 'Niveles 13 al 18 • Regla: Velo dorado y túneles estrechos' },
       { id: 4, name: 'Ciudad Cobalto', color: '#88aaff', glow: 'rgba(136, 170, 255, 0.4)', wallBg: '#080d24', desc: 'Niveles 19 al 24 • Regla: Ráfagas de pulso y velocidad' },
-      { id: 5, name: 'Abismo Magenta', color: '#ff007f', glow: 'rgba(255, 0, 127, 0.4)', wallBg: '#1f0010', desc: 'Niveles 25 al 30 • Regla: Oscuridad total y sombras feroces' }
+      { id: 5, name: 'Abismo Sombrío', color: '#e07a1f', glow: 'rgba(224, 122, 31, 0.4)', wallBg: '#1f0d05', desc: 'Niveles 25 al 30 • Regla: Oscuridad total y sombras feroces' }
     ],
 
     // 4 Sombras icónicas con estética vectorial
     SHADOW_TYPES: [
       { id: 0, name: 'Carmesí', role: 'Cazador', color: '#ff2255', corner: { r: 1, c: 13 } },
-      { id: 1, name: 'Rosa', role: 'Emboscador', color: '#ff66cc', corner: { r: 1, c: 1 } },
-      { id: 2, name: 'Turquesa', role: 'Flanqueador', color: '#00f0ff', corner: { r: 17, c: 13 } },
+      { id: 1, name: 'Rosa', role: 'Emboscador', color: '#e07a1f', corner: { r: 1, c: 1 } },
+      { id: 2, name: 'Ocre', role: 'Flanqueador', color: '#ffd27a', corner: { r: 17, c: 13 } },
       { id: 3, name: 'Ámbar', role: 'Tímido', color: '#ff9900', corner: { r: 17, c: 1 } }
     ],
 
     ACHIEVEMENTS: [
-      { id: 'FIRST_DOT', icon: '🟡', title: 'Primer Bocado', desc: 'Devora tu primer orbe de luz' },
-      { id: 'POWER_UP', icon: '🏮', title: 'Super Luz', desc: 'Consume un Super Orbe y asusta a las sombras' },
-      { id: 'EAT_SHADOW', icon: '👻', title: 'Cazador de Sombras', desc: 'Devora una sombra vulnerable' },
-      { id: 'COMBO_4', icon: '⚡', title: 'Banquete Cuádruple', desc: 'Devora las 4 sombras en un solo Super Orbe' },
-      { id: 'FRUIT_COLLECT', icon: '💎', title: 'Tesoro Arcano', desc: 'Recoge una reliquia de bonus en el centro' },
-      { id: 'TUNNEL_ESCAPE', icon: '🌀', title: 'Escape Cuántico', desc: 'Cruza un túnel lateral para evadir el peligro' },
-      { id: 'PERFECT_CLEAR', icon: '🌟', title: 'Comedor Impecable', desc: 'Limpia un nivel sin perder vidas' },
-      { id: 'WORLD_1', icon: '🌿', title: 'Amo del Bosque', desc: 'Supera el Mundo 1 completo' },
-      { id: 'SCORE_10K', icon: '🏆', title: 'Maestro del Laberinto', desc: 'Supera los 10,000 puntos en una partida' },
-      { id: 'PAC_LEGEND', icon: '👑', title: 'Leyenda de Luz', desc: 'Supera 10 niveles consecutivos' }
+      { id: 'FIRST_DOT', icon: 'coin', title: 'Primer Bocado', desc: 'Devora tu primer orbe de luz' },
+      { id: 'POWER_UP', icon: 'spark', title: 'Super Luz', desc: 'Consume un Super Orbe y asusta a las sombras' },
+      { id: 'EAT_SHADOW', icon: 'alien', title: 'Cazador de Sombras', desc: 'Devora una sombra vulnerable' },
+      { id: 'COMBO_4', icon: 'zap', title: 'Banquete Cuádruple', desc: 'Devora las 4 sombras en un solo Super Orbe' },
+      { id: 'FRUIT_COLLECT', icon: 'star', title: 'Tesoro Arcano', desc: 'Recoge una reliquia de bonus en el centro' },
+      { id: 'TUNNEL_ESCAPE', icon: 'speed', title: 'Escape Cuántico', desc: 'Cruza un túnel lateral para evadir el peligro' },
+      { id: 'PERFECT_CLEAR', icon: 'shield', title: 'Comedor Impecable', desc: 'Limpia un nivel sin perder vidas' },
+      { id: 'WORLD_1', icon: 'flag', title: 'Amo del Bosque', desc: 'Supera el Mundo 1 completo' },
+      { id: 'SCORE_10K', icon: 'trophy', title: 'Maestro del Laberinto', desc: 'Supera los 10,000 puntos en una partida' },
+      { id: 'PAC_LEGEND', icon: 'medal', title: 'Leyenda de Luz', desc: 'Supera 10 niveles consecutivos' }
     ],
 
     // 6 Plantillas maestras de laberintos (15x19) - 100% Conectadas y Verificadas
@@ -869,7 +869,7 @@
 
           State.hitstopTimer = 0.08; // Pausa de impacto breve
           SynthAudio.eatGhost();
-          showFloatingText(s.x, s.y, `+${pts}`, '#00f0ff');
+          showFloatingText(s.x, s.y, `+${pts}`, '#ffd27a');
           spawnParticles(s.x, s.y, s.color, 20);
           unlockAchievement('EAT_SHADOW');
 
@@ -891,7 +891,7 @@
     State.fruitSpawned = true;
     State.fruitTimer = CONFIG.FRUIT_DURATION;
     State.grid[11][7] = 4; // Fila 11, debajo de la casa central
-    showFloatingText(7 * CONFIG.TILE_SIZE + 11, 11 * CONFIG.TILE_SIZE + 11, '💎 BONUS', '#ffd700');
+    showFloatingText(7 * CONFIG.TILE_SIZE + 11, 11 * CONFIG.TILE_SIZE + 11, 'BONUS', '#ffd700');
   }
 
   function triggerPlayerDeath() {
@@ -1433,9 +1433,11 @@
 
     const livesEl = document.getElementById('lives-val');
     if (livesEl) {
-      let icons = '';
-      for (let i = 0; i < State.lives; i++) icons += '🟡';
-      livesEl.textContent = icons || '💀';
+      if (window.ArcadeIcons) {
+        livesEl.innerHTML = Array(Math.max(0, State.lives)).fill(window.ArcadeIcons.get('spark', { size: 14, color: '#f59e0b' })).join(' ') || '0';
+      } else {
+        livesEl.textContent = String(State.lives);
+      }
     }
 
     const lvlEl = document.getElementById('level-display');
@@ -1454,7 +1456,7 @@
 
     const ach = CONFIG.ACHIEVEMENTS.find(a => a.id === id);
     if (ach) {
-      showFloatingText(CONFIG.VIRTUAL_W / 2, 40, `🏆 ¡${ach.title}!`, '#ffea00');
+      showFloatingText(CONFIG.VIRTUAL_W / 2, 40, ach.title, '#f59e0b');
     }
   }
 
@@ -1642,7 +1644,7 @@
       btn.className = `level-badge unlocked ${isCurrent ? 'current' : ''}`;
       btn.innerHTML = `
         <span class="level-num">${lvlNum}</span>
-        <span class="level-stars">${isCurrent ? '▶' : '★'}</span>
+        <span class="level-stars">${isCurrent ? 'ACTUAL' : 'LISTO'}</span>
       `;
       btn.title = `Jugar Nivel ${lvlNum} (${worldObj.name})`;
 
@@ -1665,12 +1667,15 @@
       const unlocked = State.achievements.has(ach.id);
       const card = document.createElement('div');
       card.className = 'ach-card' + (unlocked ? ' unlocked' : '');
-      card.style.cssText = 'padding:8px 12px;margin:6px 0;background:#111827;border:1px solid #374151;border-radius:6px;display:flex;align-items:center;gap:10px;';
+      card.style.cssText = 'padding:8px 12px;margin:6px 0;background:#0f1826;border:1px solid #1e293b;border-radius:6px;display:flex;align-items:center;gap:10px;';
+      const iconHtml = window.ArcadeIcons
+        ? (unlocked ? window.ArcadeIcons.get(ach.icon || 'trophy', { size: 20, color: '#f59e0b' }) : window.ArcadeIcons.get('lock', { size: 20, color: '#64748b' }))
+        : (unlocked ? '[OK]' : '[--]');
       card.innerHTML = `
-        <span style="font-size:20px;">${unlocked ? '🏆' : '🔒'}</span>
+        <span style="display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;">${iconHtml}</span>
         <div>
-          <strong style="color:${unlocked ? '#ffd700' : '#9ca3af'};">${ach.title}</strong>
-          <div style="font-size:12px;color:#9ca3af;">${ach.desc}</div>
+          <strong style="color:${unlocked ? '#f59e0b' : '#94a3b8'};">${ach.title}</strong>
+          <div style="font-size:12px;color:#94a3b8;">${ach.desc}</div>
         </div>
       `;
       list.appendChild(card);
@@ -1849,7 +1854,7 @@
         <div style="color:#ff4466;padding:24px;text-align:center;font-family:sans-serif;">
           <h3>Error al cargar el nivel</h3>
           <p>${msg || 'Toca para reintentar.'}</p>
-          <button onclick="location.reload()" style="background:#00f0ff;color:#000;border:none;padding:10px 18px;border-radius:6px;font-weight:bold;cursor:pointer;">
+          <button onclick="location.reload()" style="background:#ffd27a;color:#2a1a10;border:none;padding:10px 18px;border-radius:6px;font-weight:bold;cursor:pointer;">
             Reintentar
           </button>
         </div>
@@ -1873,11 +1878,17 @@
     }
   }
 
-  window.addEventListener('DOMContentLoaded', init);
-  window.addEventListener('error', (e) => {
-    console.error('Lumen runtime exception:', e.error || e.message);
-  });
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { CONFIG, State, LumenLogic };
+  }
 
-  window.State = State;
-  window.LumenLogic = LumenLogic;
+  if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', init);
+    window.addEventListener('error', (e) => {
+      console.error('Lumen runtime exception:', e.error || e.message);
+    });
+
+    window.State = State;
+    window.LumenLogic = LumenLogic;
+  }
 })();

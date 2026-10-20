@@ -3,12 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#070913">
+  <meta name="theme-color" content="#0f3d2e">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="description" content="Frontón - Arena futurista con líneas de luz, power-ups, torneo de 5 rivales, supervivencia y cámara lenta.">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%23070913'/%3E%3Crect x='8' y='4' width='16' height='4' rx='2' fill='%2300f0ff'/%3E%3Crect x='8' y='24' width='16' height='4' rx='2' fill='%23ff007f'/%3E%3Ccircle cx='16' cy='14' r='3.5' fill='%23ffd000'/%3E%3C/svg%3E">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="description" content="Frontón - Arena clásica deportiva de frontón, rebotes dinámicos y física ágil.">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230f3d2e'/%3E%3Crect x='8' y='4' width='16' height='4' rx='2' fill='%23f2c94c'/%3E%3Crect x='8' y='24' width='16' height='4' rx='2' fill='%23f2c94c'/%3E%3Ccircle cx='16' cy='14' r='3.5' fill='%23f4f1e8'/%3E%3C/svg%3E">
   <title>Frontón - Arena Futurista 80s</title>
   <link rel="stylesheet" href="../../shared/theme.css">
   <link rel="stylesheet" href="style.css">
@@ -28,10 +28,14 @@
       </div>
       <div class="hud-actions">
         <button id="btn-achievements-header" class="icon-button" aria-label="Logros" title="Logros (8)">
-          🏆
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M19 5h-2V3H7v2H5c-1.1 0-2 .9-2 2v1c0 2.55 1.92 4.63 4.39 4.94A5.01 5.01 0 0 0 11 15.9V19H7v2h10v-2h-4v-3.1a5.01 5.01 0 0 0 3.61-2.96C19.08 12.63 21 10.55 21 8V7c0-1.1-.9-2-2-2zM5 8V7h2v3.82C5.84 10.4 5 9.3 5 8zm14 0c0 1.3-.84 2.4-2 2.82V7h2v1z"/>
+          </svg>
         </button>
         <button id="btn-options-header" class="icon-button" aria-label="Opciones" title="Opciones">
-          ⚙️
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58c.18-.14.23-.41.12-.61l-1.92-3.32c-.12-.22-.37-.29-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.94l-.36-2.54c-.04-.24-.24-.41-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.24-1.13.57-1.62.94l-2.39-.96c-.22-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58c-.18.14-.23.41-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.94l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.24 1.13-.56 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z"/>
+          </svg>
         </button>
         <button id="btn-sound-toggle" class="icon-button" aria-label="Silenciar / Activar sonido" title="Sonido">
           <svg id="icon-sound-on" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
@@ -72,19 +76,19 @@
 
         <!-- Banner de Repetición en Cámara Lenta (Slow-Mo Replay) -->
         <div id="replay-banner" class="replay-banner hidden">
-          <span class="replay-dot">●</span> REPETICIÓN CÁMARA LENTA
+          REPETICIÓN CÁMARA LENTA
         </div>
 
         <!-- Banner de Power-up Activo -->
         <div id="powerup-toast" class="powerup-toast hidden">
-          <span id="powerup-icon">⚡</span>
-          <span id="powerup-name">PALETA GRANDE</span>
+          <span id="powerup-icon"></span>
+          <span id="powerup-name">Paleta grande</span>
         </div>
 
         <!-- Tarjeta de Configuración de Partida (Modo, Torneo, Supervivencia) -->
         <div id="start-card" class="modal-card">
-          <h2 class="card-title">ARENA FRONTÓN</h2>
-          <p class="card-subtitle">Física de aceleración cuántica y torneos cibernéticos</p>
+          <h2 class="card-title">Frontón</h2>
+          <p class="card-subtitle">Pista deportiva con aceleración y torneos</p>
 
           <div class="mode-tab-buttons">
             <button type="button" class="btn-tab active" data-game-mode="QUICK">RÁPIDA</button>
@@ -129,10 +133,10 @@
           </div>
 
           <div class="action-footer">
-            <button type="button" id="btn-start-match" class="btn-serve">▶ INICIAR PARTIDO</button>
+            <button type="button" id="btn-start-match" class="btn-serve">INICIAR PARTIDO</button>
             <div class="card-extra-actions">
-              <button type="button" id="btn-daily-missions" class="btn-subaction">📅 MISIONES DIARIAS</button>
-              <button type="button" id="btn-achievements-view" class="btn-subaction">🏆 LOGROS</button>
+              <button type="button" id="btn-daily-missions" class="btn-subaction">Misiones Diarias</button>
+              <button type="button" id="btn-achievements-view" class="btn-subaction">Logros</button>
             </div>
           </div>
           <div class="control-legend" id="control-legend">Arrastra el dedo o usa flechas para mover la paleta</div>
@@ -140,8 +144,8 @@
 
         <!-- Banner de Punto / Saque -->
         <div id="point-banner" class="point-banner hidden">
-          <span id="point-text" class="banner-title">¡PUNTO!</span>
-          <span id="point-sub" class="banner-sub">SAQUE EN BREVE</span>
+          <span id="point-text" class="banner-title">Punto</span>
+          <span id="point-sub" class="banner-sub">Saque en breve</span>
         </div>
 
         <!-- Modal de Opciones y Accesibilidad -->
@@ -171,7 +175,7 @@
         <!-- Modal de Logros (8 Logros) -->
         <div id="modal-achievements" class="game-overlay hidden">
           <div class="overlay-card wide-card">
-            <h2>LOGROS DE ARENA</h2>
+            <h2>Logros de pista</h2>
             <p>Desbloquea los 8 galardones de Frontón</p>
             <div class="achievements-list" id="achievements-list"></div>
             <button id="btn-close-achievements" class="btn-primary">CERRAR</button>
@@ -181,7 +185,7 @@
         <!-- Modal de Misiones Diarias -->
         <div id="modal-missions" class="game-overlay hidden">
           <div class="overlay-card">
-            <h2>DESAFÍOS DIARIOS</h2>
+            <h2>Desafíos diarios</h2>
             <p>Se reinician cada 24 horas</p>
             <div class="missions-list" id="missions-list"></div>
             <button id="btn-close-missions" class="btn-primary">ENTENDIDO</button>
@@ -191,7 +195,7 @@
         <!-- Pantalla de Pausa -->
         <div id="overlay-pause" class="game-overlay hidden">
           <div class="overlay-card">
-            <h2>EN PAUSA</h2>
+            <h2>En pausa</h2>
             <p>Duelo suspendido</p>
             <div class="overlay-actions">
               <button id="btn-resume" class="btn-primary">Continuar</button>
@@ -205,7 +209,7 @@
         <!-- Pantalla de Victoria / Fin de Partido -->
         <div id="overlay-gameover" class="game-overlay hidden">
           <div class="overlay-card">
-            <h2 id="winner-title" class="winner-title">¡VICTORIA!</h2>
+            <h2 id="winner-title" class="winner-title">Victoria</h2>
             <p id="winner-sub" class="winner-sub">Jugador 1 se lleva el partido</p>
             <div class="final-score-display">
               <span id="final-p2-score">0</span>
@@ -214,7 +218,7 @@
             </div>
             <div class="record-meta">
               <span>Mayor Rally: <strong id="best-rally">0</strong> golpes</span>
-              <div id="new-record-tag" class="new-record-tag hidden">★ ¡NUEVO RÉCORD! ★</div>
+              <div id="new-record-tag" class="new-record-tag hidden">Nuevo récord</div>
             </div>
             <div class="overlay-actions">
               <button id="btn-match-restart" class="btn-primary">Siguiente / Revancha</button>
@@ -231,6 +235,7 @@
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
   <script src="../../shared/juice.js"></script>
+  <script src="../../shared/icons.js"></script>
   <script src="game.js"></script>
 </body>
 </html>

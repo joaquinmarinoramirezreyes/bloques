@@ -2,12 +2,23 @@
    SERPIENTE - ESTILOS ARCADE & RESPONSIVE
    ========================================================================== */
 
+:root {
+  --bg-space: #1a1200;
+  --bg-panel: #281c00;
+  --bg-card: #382800;
+  --accent-primary: #ffd866;
+  --accent-hover: #ffc933;
+  --text-main: #ffb000;
+  --text-dim: #cca028;
+  --border-subtle: #4d3700;
+}
+
 html, body {
   width: 100%;
   height: 100%;
   height: 100dvh;
-  background-color: var(--bg-space, #070913);
-  color: var(--text-main, #f8fafc);
+  background-color: var(--bg-space) !important;
+  color: var(--text-main);
   font-family: var(--font-family);
   color-scheme: dark;
 }
@@ -33,12 +44,12 @@ html, body {
    1. ENCABEZADO
    -------------------------------------------------------------------------- */
 .hud-header {
-  height: var(--header-height);
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
@@ -50,33 +61,33 @@ html, body {
 
 .back-button {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-subtle);
   color: var(--text-main);
   text-decoration: none;
 }
 
 .back-button:hover, .back-button:active {
-  border-color: var(--neon-green);
-  color: var(--neon-green);
+  border-color: var(--accent-emerald);
+  color: var(--accent-emerald);
 }
 
 .badge-green {
-  background: linear-gradient(135deg, var(--neon-green), #00b0ff);
-  color: #05060c;
+  background: var(--accent-primary);
+  color: #1a1200;
 }
 
 .brand-green {
-  background: linear-gradient(90deg, #ffffff 40%, var(--neon-green) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-main);
 }
 
 .brand-badge {
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.15em;
-  padding: 2px 6px;
+  padding: 3px 6px;
   border-radius: 4px;
+  background: var(--accent-primary);
+  color: #1a1200;
 }
 
 .brand-title {
@@ -92,10 +103,12 @@ html, body {
 
 .icon-button {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-subtle);
   color: var(--text-main);
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -107,7 +120,7 @@ html, body {
 .icon-button:active {
   transform: scale(0.92);
   background: rgba(255, 255, 255, 0.18);
-  border-color: var(--neon-green);
+  border-color: var(--accent-emerald);
 }
 
 .hidden {
@@ -179,8 +192,6 @@ html, body {
   border: 1px solid var(--bg-card-border);
   border-radius: 8px;
   padding: 6px;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
 }
 
 .panel-label {
@@ -350,9 +361,7 @@ html, body {
 .game-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(6, 8, 16, 0.88);
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  background: rgba(10, 20, 13, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -369,8 +378,8 @@ html, body {
 .overlay-card {
   width: 100%;
   max-width: 270px;
-  background: rgba(18, 22, 42, 0.95);
-  border: 1px solid rgba(0, 230, 118, 0.4);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 20px 16px;
   text-align: center;
@@ -444,6 +453,7 @@ html, body {
 
 .btn-primary, .btn-secondary {
   width: 100%;
+  min-height: 44px;
   padding: 10px 14px;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -453,30 +463,32 @@ html, body {
   transition: all 0.15s ease;
   border: none;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, var(--neon-green), #00b0ff);
-  color: #050814;
-  box-shadow: 0 4px 14px rgba(0, 230, 118, 0.3);
+  background: var(--accent-primary);
+  color: #1a1200;
+  box-shadow: 0 2px 8px rgba(255, 216, 102, 0.2);
 }
 
 .btn-primary:active {
   transform: scale(0.96);
-  filter: brightness(1.15);
+  background: var(--accent-hover);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-card);
   color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-subtle);
 }
 
 .btn-secondary:active {
   transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--bg-panel);
 }
 
 /* --------------------------------------------------------------------------
@@ -493,7 +505,7 @@ html, body {
 
 @media (max-height: 680px) {
   :root {
-    --header-height: 38px;
+    --header-height: 48px;
     --controls-height: 140px;
   }
   

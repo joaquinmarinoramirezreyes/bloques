@@ -3,16 +3,16 @@
    ========================================================================== */
 
 :root {
-  --race-orange: #f97316;
-  --race-amber: #f59e0b;
-  --race-glow: rgba(249, 115, 22, 0.45);
-  --race-nitro: #06b6d4;
-  --race-nitro-glow: rgba(6, 182, 212, 0.5);
-  --race-bg: #09090b;
-  --card-bg: rgba(18, 18, 24, 0.92);
-  --border-color: rgba(249, 115, 22, 0.25);
-  --text-primary: #f8fafc;
-  --text-muted: #94a3b8;
+  --race-orange: #ffd400;
+  --race-amber: #ffd400;
+  --race-glow: rgba(255, 212, 0, 0.45);
+  --race-nitro: #ffe040;
+  --race-nitro-glow: rgba(255, 224, 64, 0.5);
+  --race-bg: #2b2d31;
+  --card-bg: rgba(43, 45, 49, 0.96);
+  --border-color: rgba(255, 212, 0, 0.35);
+  --text-primary: #f2f2f2;
+  --text-muted: #c0c4cc;
 }
 
 * {
@@ -28,8 +28,8 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: var(--race-bg);
-  color: var(--text-primary);
+  background-color: #2b2d31 !important;
+  color: #f2f2f2 !important;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   touch-action: none;
 }
@@ -43,7 +43,7 @@ html, body {
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
   padding-right: env(safe-area-inset-right);
-  background: radial-gradient(circle at 50% 20%, #1c130d 0%, #09090b 80%);
+  background: #2b2d31 !important;
 }
 
 /* ==========================================================================
@@ -56,25 +56,27 @@ html, body {
   height: 54px;
   padding: 0 16px;
   border-bottom: 1px solid var(--border-color);
-  background: rgba(12, 12, 16, 0.85);
-  backdrop-filter: blur(8px);
+  background: #0f0d0b;
   z-index: 40;
 }
 
 .nav-btn {
-  display: flex;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 6px;
   color: var(--text-muted);
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 700;
   letter-spacing: 0.05em;
-  padding: 6px 10px;
+  padding: 8px 12px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
   transition: all 0.2s ease;
+  min-height: 44px;
+  min-width: 44px;
 }
 
 .nav-btn:active {
@@ -93,10 +95,7 @@ html, body {
   font-size: 1.15rem;
   font-weight: 900;
   letter-spacing: 0.1em;
-  background: linear-gradient(135deg, #fff 0%, #f97316 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  text-shadow: 0 0 16px var(--race-glow);
+  color: #fff;
 }
 
 .game-badge {
@@ -116,8 +115,10 @@ html, body {
 }
 
 .icon-btn {
-  width: 36px;
-  height: 36px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 8px;
   border: 1px solid rgba(255, 255, 255, 0.12);
   background: rgba(255, 255, 255, 0.06);
@@ -183,11 +184,10 @@ html, body {
 }
 
 .lap-box, .time-box, .best-box, .pos-box {
-  background: rgba(12, 12, 18, 0.75);
+  background: rgba(12, 12, 18, 0.88);
   border: 1px solid rgba(249, 115, 22, 0.3);
   padding: 6px 10px;
   border-radius: 8px;
-  backdrop-filter: blur(6px);
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -212,6 +212,42 @@ html, body {
 .pos-highlight {
   color: var(--race-orange);
   text-shadow: 0 0 10px var(--race-glow);
+}
+
+/* Botón Volver a la pista (Fase 5) */
+.hud-respawn-btn {
+  pointer-events: auto;
+  position: absolute;
+  top: 70px;
+  right: 16px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 8px 14px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(249, 115, 22, 0.5);
+  border-radius: 8px;
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  z-index: 25;
+}
+
+.hud-respawn-btn:hover {
+  background: rgba(249, 115, 22, 0.25);
+  border-color: var(--race-orange);
+}
+
+.hud-respawn-btn:active {
+  transform: scale(0.95);
+  background: rgba(249, 115, 22, 0.4);
 }
 
 /* Cuenta atrás */
@@ -312,11 +348,10 @@ html, body {
 }
 
 .speedo-container {
-  background: rgba(12, 12, 18, 0.8);
+  background: rgba(12, 12, 18, 0.9);
   border: 1px solid rgba(249, 115, 22, 0.35);
   padding: 8px 14px;
   border-radius: 10px;
-  backdrop-filter: blur(8px);
   width: 140px;
 }
 
@@ -358,11 +393,10 @@ html, body {
 }
 
 .nitro-container {
-  background: rgba(12, 12, 18, 0.8);
+  background: rgba(12, 12, 18, 0.9);
   border: 1px solid rgba(6, 182, 212, 0.35);
   padding: 8px 14px;
   border-radius: 10px;
-  backdrop-filter: blur(8px);
   width: 120px;
   display: flex;
   flex-direction: column;
@@ -465,8 +499,7 @@ html, body {
   height: 64px;
   border-radius: 14px;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(18, 18, 24, 0.85);
-  backdrop-filter: blur(8px);
+  background: rgba(18, 18, 24, 0.94);
   cursor: pointer;
   transition: transform 0.1s ease, background 0.1s ease, border-color 0.1s ease;
 }
@@ -515,9 +548,7 @@ html, body {
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(8, 8, 12, 0.86);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(8, 8, 12, 0.94);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -769,7 +800,7 @@ html, body {
   align-items: center;
 }
 
-.arcade-btn-primary {
+.arcade-btn-primary, .btn-primary {
   width: 100%;
   max-width: 360px;
   margin: 0 auto;
@@ -777,8 +808,8 @@ html, body {
   font-size: 0.95rem;
   font-weight: 900;
   letter-spacing: 0.08em;
-  color: #000;
-  background: linear-gradient(135deg, #fb923c, #f97316);
+  color: #2b2d31 !important;
+  background: #ffd400 !important;
   border: none;
   border-radius: 10px;
   cursor: pointer;

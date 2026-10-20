@@ -306,3 +306,105 @@ Barra inferior de habilidades `#skills-dock` con atajos rápidos de teclado y en
   - Métodos de depuración (`addDebugGold`, `addDebugLives`, `nukeAllEnemies`, `skipWaveDebug`).
   - Reinicio de progreso permanente (`resetProgress` y `reset`).
   - Estándares móviles táctiles y de safe-area.
+
+---
+
+## 8. Rediseño UX Móvil y Corrección de Bugs 5 y 6
+
+### 8.1 Diagnóstico de Problemas Móviles
+Mediante pruebas automatizadas con Puppeteer headless (`scripts/test_bastion_layout.js`) en resoluciones 360x640, 390x844, 412x915, 768x1024 y horizontal (844x390), se diagnosticaron y confirmaron los siguientes fallos:
+1. **Solapamiento Crítico de Controles:**
+   - Los botones de zoom flotantes (`#touch-zoom-controls`) tenían posición absoluta anclada a la esquina inferior derecha (`bottom: 16px; right: 16px`), colisionando directamente con `#btn-skill-surge`, `#btn-build-sniper` y `#btn-start-wave`.
+2. **Desbordamientos del Viewport:**
+   - En pantallas estrechas (360px), el encabezado y el HUD superior sobrepasaban el ancho visible, cortando los botones de sonido y pausa.
+3. **Hueco Vertical y Casillas Pequeñas:**
+   - La disposición anterior dejaba un vacío innecesario entre el HUD y el mapa, reduciendo la superficie táctil del mapa.
+4. **Objetivos Táctiles por debajo de la norma:**
+   - Varios botones interactivos medían menos de $44 \times 44$ px (por ejemplo `nav-btn` con 31 px, `icon-btn` con 38 px y `cancel-target-btn` con 26 px).
+5. **Bug 5 (Juego congelado tras oleada 20):**
+   - Al terminar la oleada 20, se activaba `this.victory = true;`, congelando `update(dt)` en la guarda `if (this.gameOver || this.victory || this.isPaused) return;`. No existía transición ni opción clara para reanudar el juego a partir de la oleada 21 en modo sin fin.
+6. **Bug 6 (Temblor de pantalla atascado):**
+   - El temporizador `shakeTimer` solo se reducía dentro de `update(dt)` cuando el juego no estaba en Game Over, pausa o victoria. Cualquier temblor disparado cerca del final o durante pausas quedaba con `shakeTimer > 0` indefinidamente. Adicionalmente, `buildWaveQueue()` ejecutaba `screenShake()` durante consultas de radar táctico, disparando sacudidas fantasma.
+
+---
+
+### 8.2 Arquitectura del Rediseño Móvil: Layout de Espacio Reservado
+Se reestructuró la interfaz en una columna semántica con 3 zonas independientes mediante flexbox, `100dvh` y soporte de `env(safe-area-inset-*)`:
+
+1. **Zona Superior (`.game-top-zone`):**
+   - Elemento `<header>` con `flex-shrink: 0`, respetando `env(safe-area-inset-top)`.
+   - Contiene la barra de navegación compacta y el HUD en el flujo natural del documento, eliminando el hueco vertical sobre el mapa.
+   - En pantallas $\le 480$ px, el botón de regreso oculta el texto "ARCADE" para mostrar solo la flecha táctil $\ge 44 \times 44$ px, y el título ajusta su tamaño para evitar cualquier desbordamiento.
+   - HUD superior ultra-compacto con los 6 indicadores (Vidas, Oro, Esquirlas, Oleada, Radar Táctico y Velocidad) adaptados para caber al 100% en pantallas desde 360 px sin desbordar.
+   - El botón de radar táctil `#hud-wave-intel` abre el modal dedicado `#intel-modal` con desglose detallado de invasores.
+
+2. **Zona Central del Mapa (`.board-wrapper`):**
+   - Ocupa todo el alto sobrante (`flex: 1; min-height: 0;`).
+   - El canvas se escala dinámicamente mediante `ArcadeCanvas.fit` maximizando la superficie visual táctil.
+   - Controles de zoom flotantes `#touch-zoom-controls` reubicados en la esquina superior derecha del mapa (`top: 10px; right: 10px`), con desvanecimiento automático tras 3.5 segundos de inactividad (`.touch-zoom-controls.faded`).
+   - Soporte táctil completo: pellizco para zoom de 2 dedos, arrastre de cámara con límites (`clampCamera()`), y doble toque rápido para restablecer la vista inicial 1.0x.
+   - **Colocación Ergonómica en 2 Pasos:** Al seleccionar una torre y tocar una celda, se muestra una previsualización holográfica pulsante con radio de alcance sin gastar oro, junto a la píldora flotante `#placement-confirm-pill` para confirmar o cancelar la construcción. Si el usuario prefiere colocar de inmediato, puede activar la opción "Toque único" en el modal de pausa.
+   - Desplazamiento automático de cámara hacia arriba si el usuario selecciona una torre situada en el tercio inferior del mapa al abrir el panel de inspección.
+
+3. **Zona Inferior de Acción (`.action-dock`):**
+   - Elemento `<footer>` con `flex-shrink: 0`, fondo opaco con desenfoque (`backdrop-filter`) y padding inferior que respeta `env(safe-area-inset-bottom)`.
+   - Jerarquía clara:
+     1. Habilidades del comandante (`.skills-dock`): 3 botones circulares de $48 \times 48$ px con iconos nítidos y máscaras de cooldown.
+     2. Selector de torres (`.towers-selector-wrapper`): carrusel horizontal suave con indicadores de gradiente (`.scroll-indicator-fade`) a los lados para señalar la existencia de más torres fuera de vista.
+     3. Botón principal `#btn-start-wave`: prominente, ancho completo y altura de 48 px.
+     4. Panel de inspección (`.tower-inspector-sheet`): hoja deslizable inferior (*bottom sheet*) con tirador táctil y botones de acción con dimensiones $\ge 44 \times 44$ px.
+
+---
+
+### 8.3 Corrección del Bug 5: Continuación de Partida a Modo Sin Fin
+- **Causa Raíz:** `this.victory = true;` detenía el bucle `update(dt)`. El botón `#btn-start-wave` quedaba bloqueado y el modal de victoria no ofrecía una vía para reanudar el asedio en la oleada 21.
+- **Solución Implementada:**
+  - Se incorporó el método `continueToEndless()` en `BastionGame`:
+    ```javascript
+    continueToEndless() {
+      this.victory = false;
+      this.isEndless = true;
+      this.maxWaves = Infinity;
+      this.waveActive = false;
+      this.resetShake();
+      const score = (this.stats.kills || 0) * 10 + (this.gold || 0) * 2 + (this.lives || 0) * 50;
+      this.saveEndlessRecord(this.currentWave, score);
+      return true;
+    }
+    ```
+  - En el modal de victoria (`#victory-modal`), se reorganizaron las acciones en 3 opciones claras:
+    1. `btn-victory-endless`: **♾️ CONTINUAR EN MODO SIN FIN** (inicia la oleada 21+ conservando intactas todas las torres emplazadas, mejoras y oro acumulado).
+    2. `btn-victory-next`: **🗺️ SIGUIENTE MAPA** (avanza al siguiente sector desbloqueado).
+    3. `btn-victory-maps`: **📋 MENÚ DE MAPAS** (abre la selección de escenarios).
+
+---
+
+### 8.4 Corrección del Bug 6: Temblor de Pantalla Centralizado y Sin Atascos
+- **Causa Raíz:** Sacudidas invocadas con duraciones arbitrarias sin acotado, temporizador no decrementado durante pausas/victoria/derrota, y llamadas colaterales dentro de `buildWaveQueue()`.
+- **Solución Implementada:**
+  - Centralización de eventos permitidos mediante `CONFIG.SHAKE_EVENTS` (`core_damage`, `boss_death`, `orbital_strike`).
+  - Acotado estricto de amplitud ($\le 4.5$ px) y duración ($\le 0.25$ s) mediante `CONFIG.MAX_SHAKE_AMPLITUDE` y `CONFIG.MAX_SHAKE_DURATION`.
+  - Eliminación de todas las llamadas espurias de sacudida en `buildWaveQueue()` y eventos menores.
+  - En `update(dt)`, forzado de reset inmediato a 0 cuando el juego esté pausado, en victoria o en derrota:
+    ```javascript
+    if (this.gameOver || this.victory || this.isPaused) {
+      if (this.shakeTimer > 0) this.resetShake();
+      return;
+    }
+    ```
+  - Decaimiento cuadrático suave en `render()`: `this.shakeIntensity * (prog * prog)`, con corte brusco a 0 cuando el tiempo restante es inferior a 0.03 s o la intensidad cae por debajo de 0.05 px.
+  - Listeners de `blur` y `visibilitychange` para resetear el temblor si el usuario cambia de pestaña.
+  - Opción de alternancia en los ajustes del modal de pausa (`#setting-screen-shake`), con respeto automático a la preferencia del sistema `prefers-reduced-motion`.
+
+---
+
+### 8.5 Verificación y Resultados de Pruebas
+1. **Pruebas Automatizadas de Lógica (`scripts/test_bastion_bugs.js`):**
+   - ✅ Bug 5: Oleada 21 arranca correctamente con generación de enemigos, conservando torres y economía.
+   - ✅ Bug 6: Clamping de sacudida verificado, decaimiento a 0 exacto comprobado y reseteo inmediato en GameOver, Pausa y Victoria.
+2. **Pruebas Automatizadas de Layout (`scripts/test_bastion_layout.js`):**
+   - ✅ Solapamientos detectados: **0** en las 5 resoluciones probadas (360x640, 390x844, 412x915, 768x1024, 844x390 landscape).
+   - ✅ Scroll horizontal en el body: **0** (sin desbordamientos involuntarios).
+   - ✅ Botones con tamaño táctil inferior a $44 \times 44$ px: **0 de 20**.
+3. **Suite General de Humo (`scripts/smoke.js`):**
+   - ✅ **16/16 juegos pasaron exitosamente** sin errores en consola, con canvas renderizado y bucle rAF activo.

@@ -50,7 +50,7 @@ for (let i = 0; i < 100; i++) {
     `Cantidad incorrecta de minas: esperadas ${cfg.mines}, obtenidas ${totalPlaced}`
   );
 }
-console.log('✓ Primer toque 100% seguro y conteo exacto de minas verificado en 100 tableros');
+console.log('OK Primer toque 100% seguro y conteo exacto de minas verificado en 100 tableros');
 
 // 3. Conteo de vecinos exacto (Tablero sintético controlado)
 {
@@ -69,7 +69,7 @@ console.log('✓ Primer toque 100% seguro y conteo exacto de minas verificado en
   // La celda (4, 4) está lejos y debe tener 0
   assert.strictEqual(grid[4][4].neighborMines, 0, 'La celda (4,4) debe tener 0 minas vecinas');
 }
-console.log('✓ Cálculo de vecinos adyacentes validado con precisión');
+console.log('OK Cálculo de vecinos adyacentes validado con precisión');
 
 // 4. Flood Fill Iterativo sin recursión (Despeje en cadena)
 {
@@ -90,7 +90,7 @@ console.log('✓ Cálculo de vecinos adyacentes validado con precisión');
   assert.strictEqual(grid[1][0].revealed, true, 'El borde adyacente a la mina debe quedar revelado');
   assert.strictEqual(grid[1][1].revealed, true, 'La diagonal adyacente debe quedar revelada');
 }
-console.log('✓ Flood fill iterativo verificado: expansión en cadena limpia sin desbordamiento de pila');
+console.log('OK Flood fill iterativo verificado: expansión en cadena limpia sin desbordamiento de pila');
 
 // 5. Verificación de Condición de Victoria
 {
@@ -112,7 +112,7 @@ console.log('✓ Flood fill iterativo verificado: expansión en cadena limpia si
   grid[2][2].revealed = true;
   assert.strictEqual(MineSweeperLogic.checkWinCondition(grid, 3, 3, 1), true, 'Debe ganar al revelar todas las celdas seguras');
 }
-console.log('✓ Condición de victoria verificada correctamente');
+console.log('OK Condición de victoria verificada correctamente');
 
 // 6. Solucionador Lógico Determinista y Detección Guess-Free
 {
@@ -127,7 +127,7 @@ console.log('✓ Condición de victoria verificada correctamente');
   assert.notStrictEqual(hint, null, 'Debe encontrar una pista segura');
   assert.strictEqual(grid[hint.r][hint.c].isMine, false, 'La casilla de pista nunca debe ser una mina');
 }
-console.log('✓ Solucionador lógico determinista (Guess-Free) y pistas seguras verificadas');
+console.log('OK Solucionador lógico determinista (Guess-Free) y pistas seguras verificadas');
 
 console.log('--- TODOS LOS TESTS DE CAMPO MINADO PASARON EXITOSAMENTE (6/6) ---');
 

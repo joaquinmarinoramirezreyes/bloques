@@ -3,7 +3,7 @@
  * Tower Defense en Canvas 2D con acabado Pseudo-3D avanzado,
  * 6 mapas con rutas ramificadas, 6 tipos de enemigos + Jefes con auras,
  * 6 torres con 3 niveles y 2 ramas de especialización final,
- * árbol de metaprogreso permanente entre partidas (Templo del Nexo con Esquirlas 🟣),
+ * árbol de metaprogreso permanente entre partidas (Templo del Nexo con Esquirlas),
  * sistema roguelike de reliquias arcanas, selector de dificultad y mutadores,
  * sacudida de pantalla, destellos, números de daño flotantes por tipo,
  * proyectiles de mortero con parábola balística 3D y sombras de caída,
@@ -22,6 +22,16 @@
   const { MEJORAS_METAPROGRESO, MetaManager } = isNode
     ? require('./data/mejoras')
     : { MEJORAS_METAPROGRESO: window.BASTION_MEJORAS || {}, MetaManager: null };
+
+  const CONFIG = Object.freeze({
+    MAX_SHAKE_AMPLITUDE: 4.5,
+    MAX_SHAKE_DURATION: 0.25,
+    SHAKE_EVENTS: Object.freeze({
+      core_damage: { intensity: 4.0, duration: 0.22 },
+      boss_death: { intensity: 4.5, duration: 0.25 },
+      orbital_strike: { intensity: 4.5, duration: 0.25 }
+    })
+  });
 
   class BastionGame {
     constructor(canvas, options = {}) {
@@ -103,6 +113,7 @@
       // Efectos visuales de pantalla (Juice)
       this.shakeTimer = 0;
       this.shakeIntensity = 0;
+      this.shakeDurationTotal = 0;
       this.flashTimer = 0;
       this.flashColor = '#f43f5e';
 
@@ -110,6 +121,7 @@
       this.selectedBuildType = null;
       this.selectedPlacedTower = null;
       this.hoverCell = { c: -1, r: -1 };
+      this.pendingBuildCell = null;
 
       // Identificadores únicos y tiempos
       this._nextId = 1;
@@ -206,14 +218,14 @@
       this.stats.goldEarned += amount;
       this.playSound('gold_surge');
       const cp = this.getCorePos();
-      this.addDamageNumber(cp.x, cp.y - 30, `+${amount} 🪙 [DEBUG]`, '#38bdf8', true);
+      this.addDamageNumber(cp.x, cp.y - 30, `+${amount} Oro [DEBUG]`, '#38bdf8', true);
     }
 
     addDebugLives(amount = 50) {
       this.lives += amount;
       this.maxLives += amount;
       const cp = this.getCorePos();
-      this.addDamageNumber(cp.x, cp.y - 20, `+${amount} ❤️ [DEBUG]`, '#10b981', true);
+      this.addDamageNumber(cp.x, cp.y - 20, `+${amount} Vidas [DEBUG]`, '#10b981', true);
     }
 
     nukeAllEnemies() {
@@ -227,7 +239,7 @@
       this.screenShake(6.0, 0.3);
       this.screenFlash('rgba(239, 68, 68, 0.4)', 0.3);
       const cp = this.getCorePos();
-      this.addDamageNumber(cp.x, cp.y - 35, `💥 NUKE (${count}) [DEBUG]`, '#ef4444', true);
+      this.addDamageNumber(cp.x, cp.y - 35, `NUKE (${count}) [DEBUG]`, '#ef4444', true);
     }
 
     skipWaveDebug() {
@@ -257,10 +269,71 @@
       }
     }
 
-    // Efecto de sacudida de pantalla
-    screenShake(intensity = 4.5, duration = 0.25) {
-      this.shakeIntensity = intensity;
-      this.shakeTimer = duration;
+    // Comprueba si las sacudidas de pantalla están permitidas por accesibilidad o ajustes
+    shakeEnabled() {
+      if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        return false;
+      }
+      try {
+        if (typeof window !== 'undefined' && window.ArcadeStorage && typeof window.ArcadeStorage.getItem === 'function') {
+          const setting = window.ArcadeStorage.getItem('bastion:screen_shake');
+          if (setting === '0' || setting === 'false') return false;
+        } else if (typeof localStorage !== 'undefined') {
+          const setting = localStorage.getItem('bastion:screen_shake');
+          if (setting === '0' || setting === 'false') return false;
+        }
+      } catch (e) {}
+      return true;
+    }
+
+    // Efecto centralizado de sacudida de pantalla restringido a CONFIG.SHAKE_EVENTS
+    shake(eventKey) {
+      if (!this.shakeEnabled()) {
+        this.resetShake();
+        return;
+      }
+      const eventDef = CONFIG.SHAKE_EVENTS[eventKey];
+      if (!eventDef) return;
+      this.shakeIntensity = Math.min(CONFIG.MAX_SHAKE_AMPLITUDE, eventDef.intensity);
+      this.shakeTimer = Math.min(CONFIG.MAX_SHAKE_DURATION, eventDef.duration);
+      this.shakeDurationTotal = this.shakeTimer;
+    }
+
+    // Efecto de sacudida de pantalla con clamping riguroso y decaimiento
+    screenShake(intensityOrKey = 4.5, duration = 0.25) {
+      if (!this.shakeEnabled()) {
+        this.resetShake();
+        return;
+      }
+      if (typeof intensityOrKey === 'string' && CONFIG.SHAKE_EVENTS[intensityOrKey]) {
+        return this.shake(intensityOrKey);
+      }
+      let clampedIntensity = typeof intensityOrKey === 'number' ? intensityOrKey : 4.5;
+      let clampedDuration = typeof duration === 'number' ? duration : 0.25;
+      if (clampedIntensity > 6.0) clampedIntensity = CONFIG.MAX_SHAKE_AMPLITUDE;
+      if (clampedDuration > 0.4) clampedDuration = CONFIG.MAX_SHAKE_DURATION;
+      this.shakeIntensity = clampedIntensity;
+      this.shakeTimer = clampedDuration;
+      this.shakeDurationTotal = clampedDuration;
+    }
+
+    // Resetea inmediatamente el temblor de pantalla a 0
+    resetShake() {
+      this.shakeTimer = 0;
+      this.shakeIntensity = 0;
+      this.shakeDurationTotal = 0;
+    }
+
+    // Continuación de partida a Modo Sin Fin tras superar la oleada 20
+    continueToEndless() {
+      this.victory = false;
+      this.isEndless = true;
+      this.maxWaves = Infinity;
+      this.waveActive = false;
+      this.resetShake();
+      const score = (this.stats.kills || 0) * 10 + (this.gold || 0) * 2 + (this.lives || 0) * 50;
+      this.saveEndlessRecord(this.currentWave, score);
+      return true;
     }
 
     // Efecto de destello en pantalla
@@ -697,7 +770,7 @@
             ctx.fillRect(px + 2, py + cs - 5, cs - 4, 3);
             ctx.fillRect(px + cs - 5, py + 2, 3, cs - 4);
 
-            // Glifo de viento/altura (▲) en el centro
+            // Glifo de viento y altura en el centro
             ctx.fillStyle = '#38bdf8';
             ctx.beginPath();
             ctx.moveTo(px + cs / 2, py + 8);
@@ -787,11 +860,11 @@
             ctx.lineTo(px + cs - 6, py + 6);
             ctx.stroke();
 
-            // Sello discreto "40🪙"
+            // Sello discreto "40"
             ctx.fillStyle = '#f59e0b';
             ctx.font = 'bold 8px system-ui';
             ctx.textAlign = 'center';
-            ctx.fillText('40🪙', px + cs / 2, py + cs - 5);
+            ctx.fillText('40', px + cs / 2, py + cs - 5);
           } else {
             // Terreno construible (0): Pedestal metálico defensivo con relieve 3D
             ctx.fillStyle = theme.buildable || '#1e293b';
@@ -842,7 +915,7 @@
       }
       const pos = { x: (c + 0.5) * this.cellSize, y: (r + 0.5) * this.cellSize };
       this.spawnSparks(pos.x, pos.y, 20, '#94a3b8');
-      this.addDamageNumber(pos.x, pos.y - 12, '-40 🪙 ¡DESPEJADO!', '#f59e0b', true);
+      this.addDamageNumber(pos.x, pos.y - 12, '-40 Despejado', '#f59e0b', true);
       this.playSound('debris_clear');
       return { success: true };
     }
@@ -1163,8 +1236,6 @@
         addGroup('reptante', 8, 0.8);
         addGroup('jefe_coloso', 1, 3.0, 1.0);
         addGroup('regenerador', 4, 1.4);
-        this.playSound('boss_alert');
-        this.screenShake(6.0, 0.4);
       } else if (w < 20) {
         addGroup('reptante', 10 + (w - 10) * 2, 0.7);
         addGroup('veloz', 8 + (w - 10), 0.5);
@@ -1179,8 +1250,6 @@
         addGroup('blindado', 8, 1.2);
         addGroup('etero', 10, 0.7);
         addGroup('divisor', 8, 1.0);
-        this.playSound('boss_alert');
-        this.screenShake(8.0, 0.5);
       } else {
         // OLEADA > 20: MODO SIN FIN CON ESCALADO Y JEFES CADA 5 OLEADAS
         const extra = w - 20;
@@ -1193,8 +1262,6 @@
           addGroup('jefe_coloso', bossCount, 3.5, hpScale * 1.3);
           addGroup('blindado', 8 + extra, 0.9, hpScale);
           addGroup('regenerador', 6 + Math.floor(extra / 2), 1.0, hpScale);
-          this.playSound('boss_alert');
-          this.screenShake(8.0, 0.5);
         } else {
           addGroup('reptante', 14 + extra * 2, 0.5, hpScale);
           addGroup('veloz', 10 + extra, 0.4, hpScale);
@@ -1225,7 +1292,7 @@
           this.screenFlash('rgba(244, 63, 94, 0.45)', 0.45);
           this.playSound('boss_alert');
           const cp = this.getCorePos();
-          this.addDamageNumber(cp.x, cp.y - 45, `⚠️ ¡NUEVO PUNTO DE REAPARICIÓN! (${curPortals} PORTALES)`, '#f43f5e', true);
+          this.addDamageNumber(cp.x, cp.y - 45, `Nuevo portal activo (${curPortals} portales)`, '#f43f5e', true);
         }
       }
 
@@ -1238,7 +1305,7 @@
       const bonus = 20 + Math.floor(this.currentWave * 4);
       this.gold += bonus;
       const corePos = this.getCorePos();
-      this.addDamageNumber(corePos.x, corePos.y - 35, `+${bonus} 🪙 ¡ASALTO ADELANTADO!`, '#fbbf24', true);
+      this.addDamageNumber(corePos.x, corePos.y - 35, `+${bonus} Oro (adelanto)`, '#fbbf24', true);
       this.playSound('wave_early');
       this.screenShake(3.0, 0.2);
 
@@ -1324,9 +1391,9 @@
         });
 
         this.spawnSparks(targetX, targetY, 35, '#fb923c');
-        this.screenShake(8.0, 0.4);
+        this.shake('orbital_strike');
         this.screenFlash('rgba(249, 115, 22, 0.45)', 0.35);
-        this.addDamageNumber(targetX, targetY - 20, '☄️ ¡BOMBARDEO!', '#f97316', true);
+        this.addDamageNumber(targetX, targetY - 20, 'Bombardeo orbital', '#f97316', true);
         this.playSound('orbital_strike');
         return { success: true };
       }
@@ -1340,9 +1407,8 @@
           }
         }
         const corePos = this.getCorePos();
-        this.screenShake(4.0, 0.25);
-        this.screenFlash('rgba(56, 189, 248, 0.45)', 0.5);
-        this.addDamageNumber(corePos.x, corePos.y - 25, '❄️ ¡ESTASIS TEMPORAL!', '#38bdf8', true);
+        this.screenFlash('rgba(56, 189, 248, 0.45)', 0.35);
+        this.addDamageNumber(corePos.x, corePos.y - 25, 'Estasis temporal', '#38bdf8', true);
         this.playSound('time_freeze');
         return { success: true };
       }
@@ -1353,7 +1419,7 @@
         this.overchargeTimer = 8.0;
         const corePos = this.getCorePos();
         this.screenFlash('rgba(245, 158, 11, 0.35)', 0.3);
-        this.addDamageNumber(corePos.x, corePos.y - 25, '+120 🪙 ¡SOBRECARGA!', '#fbbf24', true);
+        this.addDamageNumber(corePos.x, corePos.y - 25, '+120 Oro (sobrecarga)', '#fbbf24', true);
         this.playSound('gold_surge');
         return { success: true };
       }
@@ -1696,7 +1762,6 @@
           if (p.trail.length > 6) p.trail.pop();
 
           if (t >= 1.0) {
-            this.screenShake(4.0, 0.25);
             this.playSound('explosion');
             this.onProjectileHit(p, target);
             p.alive = false;
@@ -1854,8 +1919,8 @@
         if (enemy.isBoss) {
           const bossShards = Math.round(5 * this.diffShardMult);
           this.addShards(bossShards);
-          this.screenShake(7.0, 0.35);
-          this.addDamageNumber(enemy.x, enemy.y - 24, `+${bossShards} 🟣`, '#d8b4fe', true);
+          this.shake('boss_death');
+          this.addDamageNumber(enemy.x, enemy.y - 24, `+${bossShards} esquirlas`, '#d8b4fe', true);
         }
 
         // Si es criatura divisora, fragmentar en crías
@@ -2115,13 +2180,14 @@
 
       this.lives -= enemy ? enemy.damage : 1;
       this.screenFlash('rgba(239, 68, 68, 0.45)', 0.3);
-      this.screenShake(6.0, 0.3);
+      this.shake('core_damage');
       this.playSound('core_damaged');
       this.addDamageNumber(corePos.x, corePos.y - 18, `-${enemy ? enemy.damage : 1}`, '#ef4444', true);
 
       if (this.lives <= 0) {
         this.lives = 0;
         this.gameOver = true;
+        this.resetShake();
         if (this.isEndless) {
           const score = (this.stats.kills || 0) * 10 + (this.gold || 0) * 2 + (this.currentWave || 0) * 100;
           this.saveEndlessRecord(this.currentWave, score);
@@ -2131,15 +2197,20 @@
 
     // Bucle de simulación por frame
     update(dt) {
-      if (this.gameOver || this.victory || this.isPaused) return;
+      if (this.gameOver || this.victory || this.isPaused) {
+        this.resetShake();
+        return;
+      }
 
       const effectiveDt = dt * this.gameSpeed;
       this.gameTime += effectiveDt;
 
-      // Actualizar sacudida y destello de pantalla
+      // Actualizar sacudida y destello de pantalla con decaimiento garantizado a 0
       if (this.shakeTimer > 0) {
         this.shakeTimer -= dt;
-        if (this.shakeTimer <= 0) this.shakeIntensity = 0;
+        if (this.shakeTimer <= 0.03 || this.shakeIntensity < 0.05) {
+          this.resetShake();
+        }
       }
       if (this.flashTimer > 0) {
         this.flashTimer -= dt;
@@ -2198,7 +2269,7 @@
           if (goldmineIncome > 0) {
             this.gold += goldmineIncome;
             const corePos = this.getCorePos();
-            this.addDamageNumber(corePos.x, corePos.y - 45, `+${goldmineIncome} 🪙 Veta Aúrica`, '#fbbf24');
+            this.addDamageNumber(corePos.x, corePos.y - 45, `+${goldmineIncome} Oro (veta)`, '#fbbf24');
           }
 
           // Interés de banco por reliquia
@@ -2207,7 +2278,7 @@
             if (interest > 0) {
               this.gold += interest;
               const corePos = this.getCorePos();
-              this.addDamageNumber(corePos.x, corePos.y - 30, `+${interest} 🪙 Interés`, '#f59e0b');
+              this.addDamageNumber(corePos.x, corePos.y - 30, `+${interest} Oro (interés)`, '#f59e0b');
             }
           }
 
@@ -2250,12 +2321,20 @@
 
       ctx.save();
 
-      // Aplicar sacudida de pantalla si está activa
-      if (this.shakeTimer > 0 && this.shakeIntensity > 0) {
-        const prog = this.shakeTimer / 0.25;
-        const sx = (Math.random() - 0.5) * 2 * this.shakeIntensity * prog;
-        const sy = (Math.random() - 0.5) * 2 * this.shakeIntensity * prog;
-        ctx.translate(sx, sy);
+      // Aplicar sacudida de pantalla con decaimiento cuadrático estricto y reset a 0
+      if (this.shakeTimer > 0 && this.shakeIntensity > 0 && !this.isPaused && !this.gameOver && !this.victory) {
+        const total = this.shakeDurationTotal || 0.25;
+        const prog = Math.max(0, Math.min(1, this.shakeTimer / total));
+        const currentIntensity = this.shakeIntensity * (prog * prog);
+        if (currentIntensity >= 0.05) {
+          const sx = (Math.random() - 0.5) * 2 * currentIntensity;
+          const sy = (Math.random() - 0.5) * 2 * currentIntensity;
+          ctx.translate(sx, sy);
+        } else {
+          this.resetShake();
+        }
+      } else if (this.isPaused || this.gameOver || this.victory) {
+        this.resetShake();
       }
 
       // Aplicar transformación de Cámara centrada (Zoom y Paneo móvil)
@@ -2330,19 +2409,24 @@
         ctx.stroke();
       }
 
-      // 5. Previsualización de radio al colocar o seleccionar torre
-      if (this.selectedBuildType && this.hoverCell.c >= 0 && this.hoverCell.r >= 0) {
-        const hc = this.hoverCell;
+      // 5. Previsualización de radio al colocar o seleccionar torre (ratón o toque táctil en 2 pasos)
+      const targetPreviewCell = (this.pendingBuildCell && this.pendingBuildCell.c >= 0)
+        ? this.pendingBuildCell
+        : (this.hoverCell && this.hoverCell.c >= 0 && this.hoverCell.r >= 0 ? this.hoverCell : null);
+
+      if (this.selectedBuildType && targetPreviewCell) {
+        const hc = targetPreviewCell;
         const discount = this.meta ? this.meta.getTowerCostDiscount() : 0;
         const cost = Math.round((TORRES[this.selectedBuildType]?.cost || 0) * (1.0 - discount));
         const valid = this.canBuildAt(hc.c, hc.r) && this.gold >= cost;
         const px = hc.c * cs;
         const py = hc.r * cs;
 
-        ctx.fillStyle = valid ? 'rgba(56, 189, 248, 0.25)' : 'rgba(239, 68, 68, 0.25)';
+        const pulse = this.pendingBuildCell ? (0.7 + 0.3 * Math.sin(this.gameTime * 7)) : 1;
+        ctx.fillStyle = valid ? `rgba(56, 189, 248, ${0.25 * pulse})` : 'rgba(239, 68, 68, 0.25)';
         ctx.fillRect(px, py, cs, cs);
         ctx.strokeStyle = valid ? '#38bdf8' : '#ef4444';
-        ctx.lineWidth = 2;
+        ctx.lineWidth = this.pendingBuildCell ? 2.5 : 2;
         ctx.strokeRect(px + 1, py + 1, cs - 2, cs - 2);
 
         const towerDef = TORRES[this.selectedBuildType];
@@ -2351,7 +2435,7 @@
           ctx.arc((hc.c + 0.5) * cs, (hc.r + 0.5) * cs, towerDef.range * cs, 0, Math.PI * 2);
           ctx.fillStyle = valid ? 'rgba(56, 189, 248, 0.08)' : 'rgba(239, 68, 68, 0.08)';
           ctx.fill();
-          ctx.strokeStyle = valid ? 'rgba(56, 189, 248, 0.5)' : 'rgba(239, 68, 68, 0.5)';
+          ctx.strokeStyle = valid ? 'rgba(56, 189, 248, 0.6)' : 'rgba(239, 68, 68, 0.6)';
           ctx.lineWidth = 1.5;
           ctx.setLineDash([4, 4]);
           ctx.stroke();
@@ -2403,7 +2487,7 @@
         ctx.fillStyle = '#ffedd5';
         ctx.font = 'bold 11px system-ui, sans-serif';
         ctx.textAlign = 'center';
-        ctx.fillText('💥 IMPACTO ORBITAL', targetX, targetY - radius - 6);
+        ctx.fillText('ZONA DE IMPACTO', targetX, targetY - radius - 6);
       }
 
       // 6. Núcleo Arcano con oscilación y Doble Anillo Giroscópico Orbital 3D
@@ -2582,10 +2666,14 @@
         }
 
         if (t.stunnedTimer > 0) {
-          ctx.fillStyle = '#f43f5e';
-          ctx.font = 'bold 12px system-ui';
-          ctx.textAlign = 'center';
-          ctx.fillText('⚡', t.x, t.y - cs * 0.45);
+          if (typeof ArcadeIcons !== 'undefined' && ArcadeIcons.drawToCanvas) {
+            ArcadeIcons.drawToCanvas(ctx, 'zap', t.x, t.y - cs * 0.45, 14, '#f43f5e', true);
+          } else {
+            ctx.fillStyle = '#f43f5e';
+            ctx.beginPath();
+            ctx.arc(t.x, t.y - cs * 0.45, 4, 0, Math.PI * 2);
+            ctx.fill();
+          }
         }
       }
 
@@ -2751,6 +2839,8 @@
     }
   }
 
+  BastionGame.CONFIG = CONFIG;
+
   // ============================================================================
   // CONTROLADOR EN NAVEGADOR
   // ============================================================================
@@ -2857,7 +2947,7 @@
           const discount = activeGame.meta ? activeGame.meta.getTowerCostDiscount() : 0;
           const cost = Math.round((nextLevelData?.upgradeCost || 100) * (1.0 - discount));
           btnUpgradeTower.classList.remove('hidden');
-          btnUpgradeTower.textContent = `⭐ Mejorar Lvl ${st.level + 1} (${cost} 🪙)`;
+          btnUpgradeTower.textContent = `Mejorar nivel ${st.level + 1} (${cost} oro)`;
           btnUpgradeTower.disabled = activeGame.gold < cost;
           if (btnBranchA) btnBranchA.classList.add('hidden');
           if (btnBranchB) btnBranchB.classList.add('hidden');
@@ -2869,19 +2959,19 @@
           if (btnBranchA && branchA) {
             btnBranchA.classList.remove('hidden');
             const costA = Math.round((branchA.branchCost || 200) * (1.0 - discount));
-            btnBranchA.textContent = `🔱 ${branchA.name} (${costA} 🪙)`;
+            btnBranchA.textContent = `${branchA.name} (${costA} oro)`;
             btnBranchA.disabled = activeGame.gold < costA;
           }
           if (btnBranchB && branchB) {
             btnBranchB.classList.remove('hidden');
             const costB = Math.round((branchB.branchCost || 200) * (1.0 - discount));
-            btnBranchB.textContent = `💥 ${branchB.name} (${costB} 🪙)`;
+            btnBranchB.textContent = `${branchB.name} (${costB} oro)`;
             btnBranchB.disabled = activeGame.gold < costB;
           }
         } else {
           // Ya en nivel 4
           btnUpgradeTower.classList.remove('hidden');
-          btnUpgradeTower.textContent = `🏆 MAESTRÍA MÁXIMA`;
+          btnUpgradeTower.textContent = 'Nivel máximo alcanzado';
           btnUpgradeTower.disabled = true;
           if (btnBranchA) btnBranchA.classList.add('hidden');
           if (btnBranchB) btnBranchB.classList.add('hidden');
@@ -2891,7 +2981,7 @@
       if (btnSellTower) {
         const refundRate = activeGame.meta ? activeGame.meta.getSellRefundRate() : 0.70;
         const refund = Math.floor(st.investedGold * refundRate);
-        btnSellTower.textContent = `Vender (${refund} 🪙)`;
+        btnSellTower.textContent = `Vender (${refund} oro)`;
       }
     }
 
@@ -2906,17 +2996,17 @@
       if (btnStartWave) {
         if (!activeGame.waveActive) {
           btnStartWave.disabled = activeGame.gameOver || activeGame.victory;
-          btnStartWave.textContent = '⚔️ INICIAR ASALTO';
+          btnStartWave.textContent = 'INICIAR ASALTO';
           btnStartWave.classList.remove('early-call');
         } else {
           const canEarly = (activeGame.isEndless || activeGame.currentWave < activeGame.maxWaves) && !activeGame.gameOver && !activeGame.victory;
           btnStartWave.disabled = !canEarly;
           if (canEarly) {
             const bonus = 20 + Math.floor(activeGame.currentWave * 4);
-            btnStartWave.textContent = `⏩ ADELANTAR (+${bonus} 🪙)`;
+            btnStartWave.textContent = `ADELANTAR (+${bonus} oro)`;
             btnStartWave.classList.add('early-call');
           } else {
-            btnStartWave.textContent = '⚔️ ASALTO FINAL';
+            btnStartWave.textContent = 'ASALTO FINAL';
             btnStartWave.classList.remove('early-call');
           }
         }
@@ -2924,29 +3014,39 @@
 
       // Radar Táctico: resumen compositivo de próxima oleada (Fase 4)
       const hudWaveIntel = document.getElementById('hud-wave-intel');
+      const intelSummary = document.getElementById('intel-summary');
       if (hudWaveIntel) {
         const nextW = activeGame.waveActive ? activeGame.currentWave + 1 : (activeGame.currentWave === 0 ? 1 : activeGame.currentWave);
         const intel = activeGame.getNextWaveIntel(nextW);
         if (intel) {
-          const typeIcons = {
-            reptante: '👾',
-            veloz: '⚡',
-            blindado: '🛡️',
-            etero: '🦅',
-            regenerador: '💚',
-            divisor: '🦠',
-            jefe_coloso: '💀'
+          const typeNames = {
+            reptante: 'Reptante',
+            veloz: 'Veloz',
+            blindado: 'Blindado',
+            etero: 'Etéreo',
+            regenerador: 'Regenerador',
+            divisor: 'Divisor',
+            jefe_coloso: 'Jefe'
           };
           const countsStr = Object.entries(intel.counts)
-            .map(([t, cnt]) => `${typeIcons[t] || '👾'}${cnt}`)
-            .join(' ');
-          if (intel.hasBoss) {
-            hudWaveIntel.innerHTML = `<span class="boss-intel-badge">⚠️ W${intel.waveNum}: ${countsStr}</span>`;
+            .map(([t, cnt]) => `${typeNames[t] || t}: ${cnt}`)
+            .join(', ');
+          const label = intel.hasBoss ? `Jefe W${intel.waveNum}` : `W${intel.waveNum}`;
+          if (intelSummary) {
+            intelSummary.textContent = label;
           } else {
-            hudWaveIntel.textContent = `Próx (W${intel.waveNum}): ${countsStr}`;
+            const iconSvg = typeof ArcadeIcons !== 'undefined' ? ArcadeIcons.get('radar') : '';
+            hudWaveIntel.innerHTML = `<span class="stat-icon">${iconSvg}</span><span class="stat-val" id="intel-summary">${label}</span>`;
           }
+          hudWaveIntel.title = `Radar táctico - Oleada ${intel.waveNum}: ${countsStr} (Toca para ver detalles)`;
         } else {
-          hudWaveIntel.textContent = '🏁 ¡ÚLTIMA OLEADA!';
+          if (intelSummary) {
+            intelSummary.textContent = 'Fin';
+          } else {
+            const iconSvg = typeof ArcadeIcons !== 'undefined' ? ArcadeIcons.get('radar') : '';
+            hudWaveIntel.innerHTML = `<span class="stat-icon">${iconSvg}</span><span class="stat-val" id="intel-summary">Fin</span>`;
+          }
+          hudWaveIntel.title = 'Todas las oleadas completadas';
         }
       }
 
@@ -3031,15 +3131,16 @@
           pipsHtml += `<div class="meta-pip ${p < curLvl ? 'filled' : ''}"></div>`;
         }
 
+        const iconSvg = typeof ArcadeIcons !== 'undefined' ? ArcadeIcons.get(def.icon) : '';
         card.innerHTML = `
           <div class="meta-card-header">
-            <span class="meta-card-title">${def.icon} ${def.name}</span>
+            <span class="meta-card-title">${iconSvg} ${def.name}</span>
             <span class="meta-card-rank">Rango ${curLvl}/${def.maxLevel}</span>
           </div>
           <div class="meta-card-desc">${def.desc}</div>
           <div class="meta-pips-row">${pipsHtml}</div>
           <button class="meta-buy-btn" data-key="${key}" ${(!canBuy || isMax) ? 'disabled' : ''}>
-            ${isMax ? 'RANGO MÁXIMO' : `Mejorar (${nextCost} 🟣)`}
+            ${isMax ? 'RANGO MÁXIMO' : `Mejorar (${nextCost} esquirlas)`}
           </button>
         `;
 
@@ -3076,8 +3177,9 @@
         const def = RELIQUIAS[rId];
         const card = document.createElement('div');
         card.className = 'relic-pick-card';
+        const relicIconSvg = typeof ArcadeIcons !== 'undefined' ? ArcadeIcons.get(def.icon) : '';
         card.innerHTML = `
-          <div class="relic-pick-icon">${def.icon}</div>
+          <div class="relic-pick-icon">${relicIconSvg}</div>
           <strong class="relic-pick-title">${def.name}</strong>
           <span class="relic-pick-rarity">${def.rarity}</span>
           <p class="relic-pick-desc">${def.desc}</p>
@@ -3103,8 +3205,16 @@
         const starsEl = document.getElementById('vic-stars');
         if (starsEl) {
           const l = activeGame.lives;
-          const stars = l >= activeGame.initialLives ? '★★★' : (l >= Math.ceil(activeGame.initialLives * 0.5) ? '★★☆' : '★☆☆');
-          starsEl.textContent = stars;
+          const count = l >= activeGame.initialLives ? 3 : (l >= Math.ceil(activeGame.initialLives * 0.5) ? 2 : 1);
+          let starHtml = '';
+          if (typeof ArcadeIcons !== 'undefined' && ArcadeIcons.get) {
+            for (let i = 0; i < 3; i++) {
+              starHtml += i < count ? ArcadeIcons.get('star') : ArcadeIcons.get('starOutline');
+            }
+          } else {
+            starHtml = `${count} de 3 estrellas`;
+          }
+          starsEl.innerHTML = starHtml;
         }
 
         // Estadísticas detalladas
@@ -3118,7 +3228,7 @@
         if (goldEl) goldEl.textContent = activeGame.stats.goldEarned;
 
         const shardsEl = document.getElementById('vic-stat-shards');
-        if (shardsEl) shardsEl.textContent = `+${activeGame.stats.shardsEarned} 🟣`;
+        if (shardsEl) shardsEl.textContent = `+${activeGame.stats.shardsEarned} esquirlas`;
 
         // MVP Tower
         const mvpEl = document.getElementById('vic-stat-mvp');
@@ -3147,7 +3257,7 @@
         const killsEl = document.getElementById('res-kills');
         if (killsEl) killsEl.textContent = activeGame.stats.kills;
         const shardsEl = document.getElementById('res-shards');
-        if (shardsEl) shardsEl.textContent = `+${activeGame.stats.shardsEarned} 🟣`;
+        if (shardsEl) shardsEl.textContent = `+${activeGame.stats.shardsEarned} esquirlas`;
       }
     }
 
@@ -3191,15 +3301,24 @@
         }
 
         if (!isUnlocked) {
-          starsEl.innerHTML = '<span class="map-lock-badge">🔒 BLOQUEADO</span>';
+          const lockSvg = typeof ArcadeIcons !== 'undefined' ? ArcadeIcons.get('lock') : '';
+          starsEl.innerHTML = `<span class="map-lock-badge">${lockSvg} Bloqueado</span>`;
         } else {
           if (curMode === 'endless') {
-            starsEl.innerHTML = '<span style="color:#a855f7; font-weight:bold;">♾️ ASALTO SIN FIN</span>';
+            const infSvg = typeof ArcadeIcons !== 'undefined' ? ArcadeIcons.get('infinity') : '';
+            starsEl.innerHTML = `<span style="color:#38bdf8; font-weight:bold; display:inline-flex; align-items:center; gap:4px;">${infSvg} Modo Sin Fin</span>`;
           } else {
             const stars = campaign.getStars(idx);
-            const starStr = stars === 3 ? '★★★' : (stars === 2 ? '★★☆' : (stars === 1 ? '★☆☆' : '☆☆☆'));
+            let starHtml = '';
+            if (typeof ArcadeIcons !== 'undefined' && ArcadeIcons.get) {
+              for (let i = 0; i < 3; i++) {
+                starHtml += i < stars ? ArcadeIcons.get('star') : ArcadeIcons.get('starOutline');
+              }
+            } else {
+              starHtml = `${stars} de 3 estrellas`;
+            }
             const bestScore = campaign.getBestScore(idx);
-            starsEl.innerHTML = `<span style="color:#f59e0b;">${starStr}</span> ${bestScore > 0 ? `<small style="color:#94a3b8; font-size:10px; margin-left:6px;">Récord: ${bestScore}</small>` : ''}`;
+            starsEl.innerHTML = `<span style="color:#f59e0b; display:inline-flex; align-items:center; gap:2px;">${starHtml}</span> ${bestScore > 0 ? `<small style="color:#94a3b8; font-size:10px; margin-left:6px;">Récord: ${bestScore}</small>` : ''}`;
           }
         }
       });
@@ -3235,14 +3354,97 @@
       updateMapsModalUI();
     };
 
+    function showPlacementPill(towerType) {
+      const pill = document.getElementById('placement-confirm-pill');
+      const nameEl = document.getElementById('placement-tower-name');
+      const def = TORRES[towerType];
+      if (pill && def) {
+        if (nameEl) nameEl.textContent = `${def.name} (${def.cost} oro)`;
+        pill.classList.remove('hidden');
+      }
+    }
+
+    function hidePlacementPill() {
+      const pill = document.getElementById('placement-confirm-pill');
+      if (pill) pill.classList.add('hidden');
+    }
+
+    let zoomHideTimer = null;
+    function resetZoomAutoHide() {
+      const zoomCtrl = document.getElementById('touch-zoom-controls');
+      if (!zoomCtrl) return;
+      zoomCtrl.style.opacity = '1';
+      zoomCtrl.style.pointerEvents = 'auto';
+      if (zoomHideTimer) clearTimeout(zoomHideTimer);
+      zoomHideTimer = setTimeout(() => {
+        if (activeGame && activeGame.cameraZoom <= 1.0) {
+          zoomCtrl.style.opacity = '0.35';
+        }
+      }, 3500);
+    }
+
+    function renderIntelModal() {
+      const titleEl = document.getElementById('intel-modal-title');
+      const subtitleEl = document.getElementById('intel-modal-subtitle');
+      const listEl = document.getElementById('intel-enemies-list');
+      if (!listEl || !activeGame) return;
+
+      const nextW = activeGame.waveActive ? activeGame.currentWave + 1 : (activeGame.currentWave === 0 ? 1 : activeGame.currentWave);
+      const intel = activeGame.getNextWaveIntel(nextW);
+
+      if (titleEl) titleEl.textContent = `RADAR TÁCTICO: OLEADA ${nextW}`;
+
+      if (!intel) {
+        if (subtitleEl) subtitleEl.textContent = 'No hay más oleadas registradas en el sector.';
+        listEl.innerHTML = '<p style="color:#94a3b8; text-align:center; padding:12px;">Todas las oleadas del sector han concluido.</p>';
+        return;
+      }
+
+      if (subtitleEl) {
+        subtitleEl.textContent = intel.hasBoss
+          ? 'Alerta: aproximación de unidad comandante'
+          : `Composición prevista para el asalto ${nextW}:`;
+      }
+
+      const enemyDefs = typeof ENEMIGOS !== 'undefined' ? ENEMIGOS : {};
+      const typeIcons = {
+        reptante: 'radar',
+        veloz: 'speed',
+        blindado: 'shield',
+        etero: 'spark',
+        regenerador: 'heart',
+        divisor: 'recycle',
+        jefe_coloso: 'skull'
+      };
+
+      listEl.innerHTML = Object.entries(intel.counts).map(([typeId, count]) => {
+        const def = enemyDefs[typeId] || {};
+        const iconKey = typeIcons[typeId] || 'target';
+        const iconSvg = typeof ArcadeIcons !== 'undefined' ? ArcadeIcons.get(iconKey) : '';
+        const name = def.name || typeId;
+        const desc = def.desc || (def.isBoss ? 'Jefe colosal con resistencia pesada' : 'Invasor del cataclismo');
+        return `
+          <div class="intel-enemy-row ${def.isBoss ? 'is-boss' : ''}">
+            <div class="intel-enemy-icon">${iconSvg}</div>
+            <div class="intel-enemy-meta">
+              <strong class="intel-enemy-name">${name} <span class="intel-enemy-qty">x${count}</span></strong>
+              <small class="intel-enemy-desc">${desc}</small>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
     function selectBuildType(typeId) {
       if (activeGame) {
         activeGame.selectedBuildType = typeId;
+        activeGame.pendingBuildCell = null;
         activeGame.selectedPlacedTower = null;
       }
+      hidePlacementPill();
       updateInspector();
       document.querySelectorAll('.tower-build-btn').forEach(b => {
-        b.classList.toggle('active', b.dataset.type === typeId);
+        b.classList.toggle('active', (b.dataset.tower || b.dataset.type) === typeId);
       });
       if (btnCancelBuild) btnCancelBuild.classList.remove('hidden');
     }
@@ -3250,7 +3452,9 @@
     function cancelBuild() {
       if (activeGame) {
         activeGame.selectedBuildType = null;
+        activeGame.pendingBuildCell = null;
       }
+      hidePlacementPill();
       document.querySelectorAll('.tower-build-btn').forEach(b => b.classList.remove('active'));
       if (btnCancelBuild) btnCancelBuild.classList.add('hidden');
     }
@@ -3258,6 +3462,9 @@
     function togglePause() {
       if (!activeGame) return;
       activeGame.isPaused = !activeGame.isPaused;
+      if (activeGame.isPaused) {
+        activeGame.resetShake();
+      }
       if (pauseModal) {
         pauseModal.classList.toggle('hidden', !activeGame.isPaused);
       }
@@ -3355,7 +3562,10 @@
       if (btnStartWave) {
         btnStartWave.addEventListener('click', () => {
           if (!activeGame) return;
-          if (!activeGame.waveActive) {
+          if (activeGame.victory) {
+            activeGame.continueToEndless();
+            activeGame.startWave();
+          } else if (!activeGame.waveActive) {
             activeGame.startWave();
           } else {
             activeGame.callNextWaveEarly();
@@ -3367,8 +3577,10 @@
       if (btnSpeed) {
         btnSpeed.addEventListener('click', () => {
           if (!activeGame) return;
-          activeGame.gameSpeed = activeGame.gameSpeed === 1 ? 2 : 1;
-          if (speedLabel) speedLabel.textContent = `⚡ ${activeGame.gameSpeed}x`;
+          if (activeGame.gameSpeed === 1) activeGame.gameSpeed = 2;
+          else if (activeGame.gameSpeed === 2) activeGame.gameSpeed = 3;
+          else activeGame.gameSpeed = 1;
+          if (speedLabel) speedLabel.textContent = `${activeGame.gameSpeed}x`;
         });
       }
 
@@ -3412,7 +3624,7 @@
         });
       }
 
-      // Controles de Cámara y Zoom Táctil Móvil (Fase 5)
+      // Controles de Cámara y Zoom Táctil Móvil (Fase 5) con auto-hide
       const btnZoomIn = document.getElementById('btn-zoom-in');
       const btnZoomReset = document.getElementById('btn-zoom-reset');
       const btnZoomOut = document.getElementById('btn-zoom-out');
@@ -3422,6 +3634,7 @@
           if (!activeGame) return;
           activeGame.cameraZoom = Math.min(2.5, activeGame.cameraZoom + 0.25);
           activeGame.clampCamera();
+          resetZoomAutoHide();
         });
       }
       if (btnZoomReset) {
@@ -3430,6 +3643,7 @@
           activeGame.cameraZoom = 1.0;
           activeGame.cameraPanX = 0;
           activeGame.cameraPanY = 0;
+          resetZoomAutoHide();
         });
       }
       if (btnZoomOut) {
@@ -3437,6 +3651,7 @@
           if (!activeGame) return;
           activeGame.cameraZoom = Math.max(1.0, activeGame.cameraZoom - 0.25);
           activeGame.clampCamera();
+          resetZoomAutoHide();
         });
       }
 
@@ -3451,17 +3666,22 @@
           activeGame.cameraPanY = 0;
         }
         activeGame.clampCamera();
+        resetZoomAutoHide();
       }, { passive: false });
 
-      // Gestos táctiles nativos en móvil: Arrastre con 1 dedo y Pellizco (Pinch to Zoom) con 2 dedos
+      // Gestos táctiles nativos en móvil: Arrastre con 1 dedo, Pellizco con 2 dedos y Doble Toque para resetear
       let isTouchDragging = false;
       let touchStartX = 0;
       let touchStartY = 0;
       let initialPinchDistance = 0;
       let initialZoom = 1.0;
       let hasMovedSignificant = false;
+      let lastTapTime = 0;
+      let lastTapX = 0;
+      let lastTapY = 0;
 
       canvas.addEventListener('touchstart', (e) => {
+        resetZoomAutoHide();
         if (e.touches.length === 2) {
           const dx = e.touches[0].clientX - e.touches[1].clientX;
           const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -3479,6 +3699,7 @@
 
       canvas.addEventListener('touchmove', (e) => {
         if (!activeGame) return;
+        resetZoomAutoHide();
         if (e.touches.length === 2 && initialPinchDistance > 0) {
           const dx = e.touches[0].clientX - e.touches[1].clientX;
           const dy = e.touches[0].clientY - e.touches[1].clientY;
@@ -3509,6 +3730,26 @@
         }
         if (e.touches.length === 0) {
           isTouchDragging = false;
+          // Doble toque rápido para restablecer la vista completa del mapa
+          const now = Date.now();
+          const dtTap = now - lastTapTime;
+          const touch = e.changedTouches && e.changedTouches[0];
+          if (touch) {
+            const dist = Math.hypot(touch.clientX - lastTapX, touch.clientY - lastTapY);
+            if (dtTap > 40 && dtTap < 320 && dist < 25) {
+              if (activeGame && (activeGame.cameraZoom > 1.0 || activeGame.cameraPanX !== 0 || activeGame.cameraPanY !== 0)) {
+                activeGame.cameraZoom = 1.0;
+                activeGame.cameraPanX = 0;
+                activeGame.cameraPanY = 0;
+                resetZoomAutoHide();
+              }
+              lastTapTime = 0;
+              return;
+            }
+            lastTapTime = now;
+            lastTapX = touch.clientX;
+            lastTapY = touch.clientY;
+          }
         }
       }, { passive: true });
 
@@ -3538,12 +3779,39 @@
           return;
         }
 
-        // 2. Colocar torre seleccionada
+        // 2. Colocar torre seleccionada (soporta modo 2 pasos táctil y toque único)
         if (activeGame.selectedBuildType) {
-          const res = activeGame.placeTower(activeGame.selectedBuildType, c, r);
-          if (res.success) {
-            cancelBuild();
-            activeGame.selectedPlacedTower = res.tower;
+          const isOneTap = (typeof window !== 'undefined' && window.oneTapBuild) ||
+            (typeof window !== 'undefined' && window.ArcadeStorage && window.ArcadeStorage.getItem('bastion:onetap') === 'true');
+
+          if (isOneTap) {
+            const res = activeGame.placeTower(activeGame.selectedBuildType, c, r);
+            if (res.success) {
+              cancelBuild();
+              activeGame.selectedPlacedTower = res.tower;
+            }
+            updateHUD();
+            updateInspector();
+            return;
+          }
+
+          // Modo 2 pasos ergonómico (Mobile-First)
+          if (activeGame.pendingBuildCell && activeGame.pendingBuildCell.c === c && activeGame.pendingBuildCell.r === r) {
+            const res = activeGame.placeTower(activeGame.selectedBuildType, c, r);
+            if (res.success) {
+              cancelBuild();
+              activeGame.selectedPlacedTower = res.tower;
+            }
+            activeGame.pendingBuildCell = null;
+            hidePlacementPill();
+          } else {
+            if (activeGame.canBuildAt(c, r)) {
+              activeGame.pendingBuildCell = { c, r };
+              showPlacementPill(activeGame.selectedBuildType);
+            } else {
+              activeGame.pendingBuildCell = null;
+              hidePlacementPill();
+            }
           }
           updateHUD();
           updateInspector();
@@ -3556,7 +3824,7 @@
             activeGame.clearDebris(c, r);
             updateHUD();
           } else {
-            activeGame.addDamageNumber(x, y - 10, '¡FALTAN 40 🪙!', '#ef4444');
+            activeGame.addDamageNumber(x, y - 10, 'Requiere 40 de oro', '#ef4444');
             activeGame.playSound('boss_alert');
           }
           return;
@@ -3565,7 +3833,19 @@
         // 4. Seleccionar torre colocada
         const clickedTower = activeGame.gridTowers[r]?.[c];
         activeGame.selectedPlacedTower = clickedTower || null;
+        activeGame.pendingBuildCell = null;
+        hidePlacementPill();
         updateInspector();
+
+        if (clickedTower && activeGame) {
+          // Si la torre está en la parte inferior, ajustar paneo para no ser tapada por el inspector
+          const screenY = (clickedTower.y + activeGame.cameraPanY) * activeGame.cameraZoom;
+          const halfH = activeGame.height / 2;
+          if (screenY > halfH * 0.4) {
+            activeGame.cameraPanY = Math.max(-halfH * 0.5, activeGame.cameraPanY - 35);
+            activeGame.clampCamera();
+          }
+        }
       });
 
       canvas.addEventListener('pointermove', (e) => {
@@ -3577,6 +3857,48 @@
       canvas.addEventListener('pointerleave', () => {
         if (activeGame) activeGame.hoverCell = { c: -1, r: -1 };
       });
+
+      // Botones de confirmación y cancelación de colocación táctil en 2 pasos
+      const btnConfirmCellBuild = document.getElementById('btn-confirm-cell-build');
+      const btnCancelCellBuild = document.getElementById('btn-cancel-cell-build');
+      if (btnConfirmCellBuild) {
+        btnConfirmCellBuild.addEventListener('click', () => {
+          if (!activeGame || !activeGame.selectedBuildType || !activeGame.pendingBuildCell) return;
+          const { c, r } = activeGame.pendingBuildCell;
+          const res = activeGame.placeTower(activeGame.selectedBuildType, c, r);
+          if (res.success) {
+            cancelBuild();
+            activeGame.selectedPlacedTower = res.tower;
+          }
+          activeGame.pendingBuildCell = null;
+          hidePlacementPill();
+          updateHUD();
+          updateInspector();
+        });
+      }
+      if (btnCancelCellBuild) {
+        btnCancelCellBuild.addEventListener('click', () => {
+          if (activeGame) activeGame.pendingBuildCell = null;
+          hidePlacementPill();
+        });
+      }
+
+      // Radar Táctico / Intel de Siguiente Oleada
+      const btnWaveIntel = document.getElementById('hud-wave-intel');
+      const intelModal = document.getElementById('intel-modal');
+      const btnCloseIntel = document.getElementById('btn-close-intel');
+      if (btnWaveIntel) {
+        btnWaveIntel.addEventListener('click', () => {
+          if (!activeGame) return;
+          renderIntelModal();
+          if (intelModal) intelModal.classList.remove('hidden');
+        });
+      }
+      if (btnCloseIntel && intelModal) {
+        btnCloseIntel.addEventListener('click', () => {
+          intelModal.classList.add('hidden');
+        });
+      }
 
       // Acciones del inspector
       if (btnTogglePriority) {
@@ -3685,6 +4007,49 @@
         });
       }
 
+      // Botones de Victoria: Modo Sin Fin (Oleada 21+), Siguiente Mapa, Menú de Mapas
+      const btnVicEndless = document.getElementById('btn-victory-endless');
+      if (btnVicEndless) {
+        btnVicEndless.addEventListener('click', () => {
+          if (!activeGame) return;
+          if (victoryModal) victoryModal.classList.add('hidden');
+          isVictoryModalShown = false;
+          activeGame.continueToEndless();
+          updateHUD();
+          updateInspector();
+        });
+      }
+
+      const btnVicNext = document.getElementById('btn-victory-next');
+      if (btnVicNext) {
+        btnVicNext.addEventListener('click', () => {
+          if (!activeGame) return;
+          if (victoryModal) victoryModal.classList.add('hidden');
+          isVictoryModalShown = false;
+          const nextMap = (activeGame.mapIndex + 1) % MAPAS.length;
+          activeGame.loadMap(nextMap);
+          activeGame.gold = activeGame.initialGold;
+          activeGame.lives = activeGame.initialLives;
+          activeGame.score = 0;
+          activeGame.currentWave = 0;
+          activeGame.waveActive = false;
+          activeGame.gameOver = false;
+          activeGame.victory = false;
+          updateHUD();
+          updateInspector();
+        });
+      }
+
+      const btnVicMaps = document.getElementById('btn-victory-maps');
+      if (btnVicMaps) {
+        btnVicMaps.addEventListener('click', () => {
+          if (victoryModal) victoryModal.classList.add('hidden');
+          isVictoryModalShown = false;
+          updateMapsModalUI();
+          if (mapsModal) mapsModal.classList.remove('hidden');
+        });
+      }
+
       const btnVicRestart = document.getElementById('btn-victory-restart');
       if (btnVicRestart) {
         btnVicRestart.addEventListener('click', () => {
@@ -3704,12 +4069,56 @@
         });
       }
 
+      // Ajustes en Pausa: Temblor de pantalla y Modo de colocación rápida
+      const chkShake = document.getElementById('setting-screen-shake');
+      if (chkShake) {
+        chkShake.checked = activeGame ? activeGame.shakeEnabled() : true;
+        chkShake.addEventListener('change', () => {
+          const val = chkShake.checked ? '1' : '0';
+          if (typeof window !== 'undefined' && window.ArcadeStorage && typeof window.ArcadeStorage.setItem === 'function') {
+            window.ArcadeStorage.setItem('bastion:screen_shake', val);
+          } else if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('bastion:screen_shake', val);
+          }
+          if (!chkShake.checked && activeGame) {
+            activeGame.resetShake();
+          }
+        });
+      }
+
+      const chkOneTap = document.getElementById('setting-onetap-build');
+      if (chkOneTap) {
+        const stored = (typeof window !== 'undefined' && window.ArcadeStorage && typeof window.ArcadeStorage.getItem === 'function')
+          ? (window.ArcadeStorage.getItem('bastion:onetap') === 'true')
+          : (typeof localStorage !== 'undefined' && localStorage.getItem('bastion:onetap') === 'true');
+        chkOneTap.checked = stored;
+        window.oneTapBuild = stored;
+        chkOneTap.addEventListener('change', () => {
+          window.oneTapBuild = chkOneTap.checked;
+          if (typeof window !== 'undefined' && window.ArcadeStorage && typeof window.ArcadeStorage.setItem === 'function') {
+            window.ArcadeStorage.setItem('bastion:onetap', chkOneTap.checked ? 'true' : 'false');
+          } else if (typeof localStorage !== 'undefined') {
+            localStorage.setItem('bastion:onetap', chkOneTap.checked ? 'true' : 'false');
+          }
+        });
+      }
+
+      // Reseteo de sacudida seguro ante pérdida de foco o cambio de pestaña
+      window.addEventListener('blur', () => {
+        if (activeGame) activeGame.resetShake();
+      });
+      document.addEventListener('visibilitychange', () => {
+        if (document.hidden && activeGame) activeGame.resetShake();
+      });
+
       if (btnSound) {
         btnSound.addEventListener('click', () => {
           if (!activeGame) return;
           activeGame.isMuted = !activeGame.isMuted;
-          const icon = btnSound.querySelector('.icon');
-          if (icon) icon.textContent = activeGame.isMuted ? '🔇' : '🔊';
+          const slot = document.getElementById('sound-icon-slot') || btnSound.querySelector('.icon');
+          if (slot && typeof ArcadeIcons !== 'undefined') {
+            slot.innerHTML = ArcadeIcons.get(activeGame.isMuted ? 'soundOff' : 'soundOn');
+          }
         });
       }
 
@@ -3786,7 +4195,7 @@
         btnDbgSpeed5.addEventListener('click', () => {
           if (!activeGame) return;
           activeGame.gameSpeed = activeGame.gameSpeed === 5 ? 1 : 5;
-          if (speedLabel) speedLabel.textContent = `⚡ ${activeGame.gameSpeed}x`;
+          if (speedLabel) speedLabel.textContent = `${activeGame.gameSpeed}x`;
         });
       }
 
@@ -3853,7 +4262,7 @@
             updateHUD();
           } else if (e.key === '5') {
             activeGame.gameSpeed = activeGame.gameSpeed === 5 ? 1 : 5;
-            if (speedLabel) speedLabel.textContent = `⚡ ${activeGame.gameSpeed}x`;
+            if (speedLabel) speedLabel.textContent = `${activeGame.gameSpeed}x`;
           }
         }
       });

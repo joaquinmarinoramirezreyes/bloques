@@ -45,4 +45,4 @@ assert.ok(leftClamped >= CONFIG.PADDLE_W / 2 + 12, 'No debe salir del borde izqu
 const rightClamped = FrontonPhysics.clampPaddleX(CONFIG.VIRTUAL_W + 100, CONFIG.PADDLE_W, CONFIG.VIRTUAL_W);
 assert.ok(rightClamped <= CONFIG.VIRTUAL_W - CONFIG.PADDLE_W / 2 - 12, 'No debe salir del borde derecho');
 
-console.log('✓ Todos los tests de Frontón pasaron exitosamente (7/7)');
+console.log('OK Todos los tests de Frontón pasaron exitosamente (7/7)');

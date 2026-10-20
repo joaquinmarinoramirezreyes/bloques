@@ -19,11 +19,11 @@ let totalTests = 0;
 function assert(condition, message) {
   totalTests++;
   if (!condition) {
-    console.error(`❌ FALLÓ: ${message}`);
+    console.error(`[FAIL] FALLÓ: ${message}`);
     process.exitCode = 1;
   } else {
     passedTests++;
-    console.log(`✅ PASÓ: ${message}`);
+    console.log(`[OK] PASÓ: ${message}`);
   }
 }
 

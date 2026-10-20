@@ -25,10 +25,10 @@ function test(description, fn) {
   totalTests++;
   try {
     fn();
-    console.log(`✅ PASÓ: ${description}`);
+    console.log(`[OK] PASÓ: ${description}`);
     passedTests++;
   } catch (err) {
-    console.error(`❌ FALLÓ: ${description}`);
+    console.error(`[FAIL] FALLÓ: ${description}`);
     console.error(err);
   }
 }

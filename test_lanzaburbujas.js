@@ -20,7 +20,7 @@ for (let w = 1; w <= 4; w++) {
   const bossLvl = worldLvls[worldLvls.length - 1];
   assert.strictEqual(bossLvl.isBoss, true, `El nivel final del Mundo ${w} (${bossLvl.name}) debe ser un Jefe`);
 }
-console.log(`✓ Configuración verificada: 60 niveles agrupados en 4 mundos temáticos con 4 jefes`);
+console.log(`OK Configuración verificada: 60 niveles agrupados en 4 mundos temáticos con 4 jefes`);
 
 // 2. Vecinos en rejilla hexagonal (filas pares vs impares desplazadas)
 {
@@ -50,7 +50,7 @@ console.log(`✓ Configuración verificada: 60 niveles agrupados en 4 mundos tem
   const topNeighbors = LanzaburbujasLogic.getHexNeighbors(0, 0, 13, 8, 7);
   assert.strictEqual(topNeighbors.length, 2, 'La esquina superior izquierda solo tiene 2 vecinos');
 
-  console.log('✓ Geometría y vecinos en rejilla hexagonal (pares e impares) verificados con éxito');
+  console.log('OK Geometría y vecinos en rejilla hexagonal (pares e impares) verificados con éxito');
 }
 
 // 3. Detección de grupos conectados (3+ del mismo color y comodín arcoíris)
@@ -79,7 +79,7 @@ console.log(`✓ Configuración verificada: 60 niveles agrupados en 4 mundos tem
   cluster = LanzaburbujasLogic.findConnectedCluster(grid, 0, 0);
   assert.strictEqual(cluster.length, 4, 'Burbuja arcoíris debe sumarse como comodín al cluster');
 
-  console.log('✓ Detección BFS de grupos conectados por color y arcoíris verificada');
+  console.log('OK Detección BFS de grupos conectados por color y arcoíris verificada');
 }
 
 // 4. Detección de burbujas flotantes (huérfanas) desconectadas del techo
@@ -108,7 +108,7 @@ console.log(`✓ Configuración verificada: 60 niveles agrupados en 4 mundos tem
   assert.strictEqual(floatingKeys.has('5,2'), true);
   assert.strictEqual(floatingKeys.has('0,3'), false, 'Las burbujas del techo nunca son flotantes');
 
-  console.log('✓ Algoritmo de detección de burbujas flotantes (huérfanas) verificado al 100%');
+  console.log('OK Algoritmo de detección de burbujas flotantes (huérfanas) verificado al 100%');
 }
 
 // 5. Precisión matemática: Trayectoria de la guía coincide exactamente con la física del proyectil
@@ -158,7 +158,7 @@ console.log(`✓ Configuración verificada: 60 niveles agrupados en 4 mundos tem
     );
   }
 
-  console.log('✓ Precisión matemática validada: La guía de rebote coincide al 100% con la física del proyectil');
+  console.log('OK Precisión matemática validada: La guía de rebote coincide al 100% con la física del proyectil');
 }
 
 // 6. Munición dinámica limitada a colores activos
@@ -179,7 +179,7 @@ console.log(`✓ Configuración verificada: 60 niveles agrupados en 4 mundos tem
   assert.strictEqual(activeColors.includes(3), true);
   assert.strictEqual(activeColors.includes(2), false);
 
-  console.log('✓ Filtro dinámico de colores de munición validado');
+  console.log('OK Filtro dinámico de colores de munición validado');
 }
 
 // 7. Verificación de solvencia y balance de los 60 niveles
@@ -189,7 +189,7 @@ console.log(`✓ Configuración verificada: 60 niveles agrupados en 4 mundos tem
     const solvable = LanzaburbujasLogic.isLevelSolvable(lvl);
     assert.strictEqual(solvable, true, `El nivel ${lvl.id} (${lvl.name}) debe ser resoluble matemáticamente`);
   }
-  console.log('✓ Los 60 niveles de campaña verificados: 100% resolubles matemáticamente y estructurados');
+  console.log('OK Los 60 niveles de campaña verificados: 100% resolubles matemáticamente y estructurados');
 }
 
 console.log('--- TODOS LOS TESTS DE LANZABURBUJAS PASARON EXITOSAMENTE (7/7) ---');

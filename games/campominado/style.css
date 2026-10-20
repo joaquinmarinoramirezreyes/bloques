@@ -1,15 +1,15 @@
 /* games/campominado/style.css - Estilo Laboratorio / Sonar 90s con casillas 3D */
 :root {
-  --bg-deep: #0b0f19;
-  --panel-bg: rgba(18, 24, 38, 0.95);
-  --cell-bevel-light: #526079;
-  --cell-bevel-dark: #121824;
-  --cell-face: #2c384e;
-  --cell-revealed: #161e2e;
-  --sonar-cyan: #06b6d4;
-  --sonar-green: #10b981;
-  --caution-amber: #f59e0b;
-  --danger-red: #ef4444;
+  --bg-deep: #1b4b8a;
+  --panel-bg: rgba(22, 60, 112, 0.96);
+  --cell-bevel-light: #4175b8;
+  --cell-bevel-dark: #123360;
+  --cell-face: #23589c;
+  --cell-revealed: #163d73;
+  --sonar-cyan: #9fd3ff;
+  --sonar-green: #9fd3ff;
+  --caution-amber: #ffd166;
+  --danger-red: #ff6b6b;
   --font-digital: 'Courier New', Courier, monospace, system-ui;
 }
 
@@ -30,8 +30,8 @@ body.arcade-lock {
   height: 100dvh;
   min-height: -webkit-fill-available;
   overflow: hidden;
-  background-color: var(--bg-deep);
-  color: #f0f4fc;
+  background-color: #1b4b8a !important;
+  color: #f2f6ff !important;
   font-family: var(--font-digital);
   touch-action: none;
 }
@@ -81,12 +81,16 @@ body.high-contrast {
   gap: 8px;
 }
 
-.icon-button {
+.icon-button,
+.back-button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 44px;
   height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
   border-radius: 6px;
   background: #1e293b;
   border: 1px solid #334155;
@@ -96,7 +100,8 @@ body.high-contrast {
   font-size: 1.1rem;
 }
 
-.icon-button:active {
+.icon-button:active,
+.back-button:active {
   background: #0f172a;
 }
 
@@ -381,8 +386,7 @@ body.high-contrast {
 .game-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(4, 7, 13, 0.88);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.94);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -393,12 +397,13 @@ body.high-contrast {
 .overlay-card {
   width: 100%;
   max-width: 360px;
-  background: #111827;
-  border: 2px solid #334155;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.8);
+  background: #123360;
+  border: 2px solid #9fd3ff;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.6);
   border-radius: 10px;
   padding: 16px;
   text-align: center;
+  color: #f2f6ff;
 }
 
 .wide-card {
@@ -408,8 +413,8 @@ body.high-contrast {
 .btn-primary {
   width: 100%;
   padding: 10px;
-  background: linear-gradient(180deg, var(--sonar-green) 0%, #047857 100%);
-  color: #000;
+  background: #9fd3ff !important;
+  color: #1b4b8a !important;
   border: none;
   border-radius: 6px;
   font-family: inherit;

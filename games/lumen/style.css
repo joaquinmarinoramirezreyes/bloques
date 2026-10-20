@@ -1,22 +1,18 @@
 /*
  * games/lumen/style.css
- * Estética de los 80s: Neón oscuro, resplandor fosfórico, scanlines leves y tipografía arcade.
+ * Identidad visual: Obsidiana Profunda y Ámbar Farol
  */
 
 :root {
-  --bg-dark: #050811;
-  --neon-cyan: #00f0ff;
-  --neon-gold: #ffaa00;
-  --neon-amber: #ff6600;
-  --neon-magenta: #ff007f;
-  --neon-emerald: #00ff88;
-  --neon-border: rgba(0, 240, 255, 0.4);
-  --neon-glow: rgba(0, 240, 255, 0.25);
+  --bg-dark: #2a1a10;
+  --bg-card: #3d2719;
+  --accent-gold: #ffd27a;
+  --accent-amber: #f59e0b;
+  --text-primary: #f6e7c8;
+  --text-muted: #cbb997;
+  --border-subtle: #5e3d27;
 
-  --text-primary: #e6ffff;
-  --text-muted: #648899;
-
-  --font-family: "Courier New", Courier, monospace, -apple-system, sans-serif;
+  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
 }
 
 * {
@@ -32,11 +28,11 @@ html, body {
   width: 100%;
   height: 100%;
   overflow: hidden;
-  background-color: var(--bg-dark);
-  background: radial-gradient(circle at 50% 20%, #0c1424 0%, #050811 80%, #010206 100%);
+  background-color: var(--bg-dark) !important;
   font-family: var(--font-family);
   color: var(--text-primary);
   touch-action: none;
+  color-scheme: dark;
 }
 
 #game-container {
@@ -49,33 +45,19 @@ html, body {
   margin: 0 auto;
   position: relative;
   overflow: hidden;
-  box-shadow: 0 0 40px rgba(0, 240, 255, 0.15);
-}
-
-/* Efecto de líneas de escaneo 80s sutil */
-#game-container::after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
-  background-size: 100% 4px;
-  z-index: 20;
-  pointer-events: none;
-  opacity: 0.5;
+  background: var(--bg-dark);
 }
 
 /* =========================================
-   HEADER SUPERIOR RETRO 80s
+   HEADER SUPERIOR
    ========================================= */
 #game-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: env(safe-area-inset-top, 8px) 10px 4px 10px;
-  background: rgba(5, 12, 22, 0.9);
-  border-bottom: 1px solid var(--neon-border);
-  box-shadow: 0 2px 10px rgba(0, 240, 255, 0.15);
+  background: #0b1320;
+  border-bottom: 1px solid var(--border-subtle);
   z-index: 30;
   min-height: 48px;
 }
@@ -97,13 +79,11 @@ html, body {
 .hud-val {
   font-size: 16px;
   font-weight: 800;
-  color: #fff;
-  text-shadow: 0 0 6px var(--neon-cyan);
+  color: var(--text-primary);
 }
 
 .hud-val.highlight {
-  color: var(--neon-gold);
-  text-shadow: 0 0 8px rgba(255, 170, 0, 0.8);
+  color: var(--accent-gold);
 }
 
 .lives-icons {
@@ -118,17 +98,16 @@ html, body {
 }
 
 /* =========================================
-   BOTONES NEÓN
+   BOTONES
    ========================================= */
 .neon-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 240, 255, 0.08);
-  border: 1px solid var(--neon-border);
-  color: var(--neon-cyan);
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  color: var(--text-primary);
   cursor: pointer;
-  box-shadow: 0 0 6px var(--neon-glow);
   transition: all 0.12s ease;
   min-height: 44px;
   min-width: 44px;
@@ -137,25 +116,28 @@ html, body {
 }
 
 .neon-btn:active {
-  transform: scale(0.95);
-  background: rgba(0, 240, 255, 0.25);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  background: #1e293b;
+  transform: scale(0.97);
 }
 
 .btn-icon {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
-  min-height: 40px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
+  flex-shrink: 0;
   font-size: 15px;
 }
 
 .glow-btn {
-  background: linear-gradient(180deg, rgba(0, 240, 255, 0.3) 0%, rgba(0, 100, 180, 0.5) 100%);
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 14px rgba(0, 240, 255, 0.5);
+  background: var(--accent-gold);
+  border-color: var(--accent-gold);
   font-weight: 800;
-  color: #fff;
+  color: #070b12;
+}
+
+.glow-btn:active {
+  background: #d97706;
 }
 
 .btn-large {
@@ -274,7 +256,7 @@ html, body {
 }
 
 .boss-name {
-  color: #ff007f;
+  color: var(--accent-gold);
   letter-spacing: 0.5px;
 }
 
@@ -294,10 +276,9 @@ html, body {
 
 .boss-hp-fill {
   height: 100%;
-  background: linear-gradient(90deg, #ff007f, #ff6600);
+  background: var(--accent-gold);
   border-radius: 3px;
   transition: width 0.25s ease;
-  box-shadow: 0 0 8px rgba(255, 0, 127, 0.8);
 }
 
 .boss-attack-warn {
@@ -351,8 +332,8 @@ html, body {
   top: 6px;
   left: 6px;
   background: rgba(0, 0, 0, 0.75);
-  border: 1px solid #00f0ff;
-  color: #00f0ff;
+  border: 1px solid var(--accent-gold);
+  color: var(--accent-gold);
   font-size: 10px;
   font-family: monospace;
   padding: 4px 6px;
@@ -479,9 +460,7 @@ html, body {
 .neon-modal {
   position: absolute;
   inset: 0;
-  background: rgba(1, 4, 10, 0.88);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: rgba(7, 11, 18, 0.94);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -498,12 +477,11 @@ html, body {
 .neon-panel {
   width: 100%;
   max-width: 380px;
-  background: linear-gradient(160deg, rgba(8, 20, 36, 0.95) 0%, rgba(2, 6, 14, 0.98) 100%);
-  border: 1px solid var(--neon-cyan);
-  border-radius: 18px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
   padding: 18px 14px;
   text-align: center;
-  box-shadow: 0 0 30px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.1);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -511,20 +489,14 @@ html, body {
 
 .lantern-glow-icon {
   font-size: 38px;
-  animation: float-lantern 2.5s ease-in-out infinite alternate;
-}
-
-@keyframes float-lantern {
-  from { transform: translateY(0px) scale(1); text-shadow: 0 0 10px rgba(255, 170, 0, 0.5); }
-  to { transform: translateY(-5px) scale(1.05); text-shadow: 0 0 20px rgba(255, 170, 0, 0.9); }
+  color: var(--accent-gold);
 }
 
 .neon-title {
-  font-size: 20px;
-  font-weight: 900;
-  letter-spacing: 2px;
-  color: #fff;
-  text-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-cyan);
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: var(--text-primary);
 }
 
 .neon-subtitle {
@@ -542,8 +514,8 @@ html, body {
 }
 
 .world-tab {
-  background: rgba(0, 240, 255, 0.08);
-  border: 1px solid var(--neon-border);
+  background: var(--bg-dark);
+  border: 1px solid var(--border-subtle);
   border-radius: 6px;
   padding: 6px 2px;
   font-size: 9px;
@@ -551,19 +523,22 @@ html, body {
   color: var(--text-muted);
   cursor: pointer;
   font-family: inherit;
+  min-height: 44px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .world-tab.active {
-  background: var(--neon-cyan);
-  color: #000;
-  border-color: #fff;
-  font-weight: 900;
-  box-shadow: 0 0 8px rgba(0, 240, 255, 0.6);
+  background: var(--accent-gold);
+  color: #070b12;
+  border-color: var(--accent-gold);
+  font-weight: 800;
 }
 
 .world-banner {
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid var(--neon-border);
+  background: var(--bg-dark);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   padding: 6px 8px;
   display: flex;
@@ -574,14 +549,14 @@ html, body {
 
 .world-badge {
   font-size: 10px;
-  font-weight: 900;
-  color: var(--neon-gold);
+  font-weight: 800;
+  color: var(--accent-gold);
   letter-spacing: 0.5px;
 }
 
 .world-desc {
   font-size: 9px;
-  color: #a8c5db;
+  color: var(--text-muted);
 }
 
 /* Selector de Niveles */
@@ -603,13 +578,14 @@ html, body {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: rgba(0, 240, 255, 0.06);
-  border: 1px solid var(--neon-border);
+  background: var(--bg-dark);
+  border: 1px solid var(--border-subtle);
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.12s;
   min-height: 44px;
-  color: #fff;
+  min-width: 44px;
+  color: var(--text-primary);
 }
 
 .level-badge:active {
@@ -617,13 +593,12 @@ html, body {
 }
 
 .level-badge.unlocked {
-  background: rgba(0, 240, 255, 0.15);
-  border-color: var(--neon-cyan);
+  background: #142135;
+  border-color: var(--accent-cyan);
 }
 
 .level-badge.current {
-  border-color: var(--neon-gold);
-  box-shadow: 0 0 10px rgba(255, 170, 0, 0.7);
+  border-color: var(--accent-gold);
 }
 
 .level-badge.locked {
@@ -638,7 +613,7 @@ html, body {
 
 .level-stars {
   font-size: 8px;
-  color: var(--neon-gold);
+  color: var(--accent-gold);
 }
 
 .modal-footer-actions {
@@ -649,7 +624,7 @@ html, body {
 
 .modal-footer-actions button {
   flex: 1;
-  min-height: 42px;
+  min-height: 44px;
   font-size: 11px;
 }
 

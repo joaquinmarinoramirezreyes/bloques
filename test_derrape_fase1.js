@@ -174,9 +174,9 @@ function testVehicleDynamics() {
 
 console.log("--- Ejecutando pruebas unitarias de Derrape (Fase 1) ---");
 testSplineInterpolation();
-console.log("✓ Interpolación de spline Catmull-Rom validada con precisión exacta.");
+console.log("OK Interpolación de spline Catmull-Rom validada con precisión exacta.");
 const trackInfo = testTrackContinuity();
-console.log(`✓ Continuidad de pista en bucle cerrado: ${trackInfo.totalSamples} muestras, longitud total = ${trackInfo.totalLength.toFixed(1)} px.`);
+console.log(`OK Continuidad de pista en bucle cerrado: ${trackInfo.totalSamples} muestras, longitud total = ${trackInfo.totalLength.toFixed(1)} px.`);
 testVehicleDynamics();
-console.log("✓ Físicas del auto: aceleración, tracción longitudinal y disipación de agarre en derrape validadas.");
-console.log("✓ TODAS LAS PRUEBAS DE FASE 1 COMPLETADAS CON ÉXITO.");
+console.log("OK Físicas del auto: aceleración, tracción longitudinal y disipación de agarre en derrape validadas.");
+console.log("OK TODAS LAS PRUEBAS DE FASE 1 COMPLETADAS CON ÉXITO.");

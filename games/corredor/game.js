@@ -32,17 +32,17 @@
     // 4 BIOMAS EVOLUTIVOS (Cada ~750m)
     BIOMES: [
       {
-        id: 'neon',
+        id: 'sunset',
         start: 0,
         name: 'SECTOR 1',
-        desc: 'DISTRITO NEÓN',
-        themeColor: '#00f0ff',
-        skyTop: '#040714',
-        skyBottom: '#0e1832',
-        trackColor: '#1c2848',
-        accent: '#00f0ff',
-        obstacleHue: '#ff0055',
-        sunColor: '#00f0ff'
+        desc: 'DISTRITO SOLAR',
+        themeColor: '#e4572e',
+        skyTop: '#3a1f0f',
+        skyBottom: '#6e3518',
+        trackColor: '#4a2814',
+        accent: '#e4572e',
+        obstacleHue: '#e4572e',
+        sunColor: '#f4c27a'
       },
       {
         id: 'canyon',
@@ -87,23 +87,23 @@
 
     // CATÁLOGO DE TIENDA Y PERSONALIZACIÓN
     SKINS: {
-      neo: { id: 'neo', name: 'Neo (Cian)', price: 0, avatar: '🏃', color: '#00f0ff', secondary: '#ffffff', desc: 'Corredor cibernético clásico' },
-      volt: { id: 'volt', name: 'Volt (Amarillo)', price: 150, avatar: '⚡', color: '#ffd000', secondary: '#ff8800', desc: 'Androide de alta tensión' },
-      specter: { id: 'specter', name: 'Specter (Carmesí)', price: 300, avatar: '🔥', color: '#ff0055', secondary: '#880022', desc: 'Agente sigiloso de plasma rojo' },
-      valkyrie: { id: 'valkyrie', name: 'Valkyrie (Esmeralda)', price: 500, avatar: '🛡️', color: '#00e676', secondary: '#00b0ff', desc: 'Prototipo cuántico de élite' }
+      neo: { id: 'neo', name: 'Sol (Naranja)', price: 0, avatar: 'runner', color: '#e4572e', secondary: '#f4c27a', desc: 'Corredor solar veloz' },
+      volt: { id: 'volt', name: 'Volt (Amarillo)', price: 150, avatar: 'zap', color: '#ffd000', secondary: '#ff8800', desc: 'Androide de alta tensión' },
+      specter: { id: 'specter', name: 'Specter (Carmesí)', price: 300, avatar: 'fire', color: '#ff0055', secondary: '#880022', desc: 'Agente sigiloso de plasma rojo' },
+      valkyrie: { id: 'valkyrie', name: 'Valkyrie (Esmeralda)', price: 500, avatar: 'shield', color: '#00e676', secondary: '#00b0ff', desc: 'Prototipo de élite' }
     },
 
     AURAS: {
-      classic: { id: 'classic', name: 'Estela Clásica', price: 0, color: '#00f0ff', desc: 'Pulsos de energía cian' },
-      plasma: { id: 'plasma', name: 'Estela de Plasma', price: 100, color: '#ff007f', desc: 'Fuego de escape magenta' },
-      quantum: { id: 'quantum', name: 'Aura Cuántica', price: 250, color: '#b388ff', desc: 'Anillo cuántico orbital' },
-      propulsion: { id: 'propulsion', name: 'Manto Propulsor', price: 400, color: '#ffcc00', desc: 'Chorros de partículas doradas' }
+      classic: { id: 'classic', name: 'Estela Solar', price: 0, color: '#e4572e', desc: 'Pulsos de energía solar' },
+      plasma: { id: 'plasma', name: 'Estela de Fuego', price: 100, color: '#c43a12', desc: 'Escape de combustible' },
+      quantum: { id: 'quantum', name: 'Escudo Protector', price: 250, color: '#b388ff', desc: 'Anillo defensivo' },
+      propulsion: { id: 'propulsion', name: 'Impulso Doble', price: 400, color: '#ffcc00', desc: 'Chorros de partículas doradas' }
     },
 
     UPGRADES: {
-      magnet: { id: 'magnet', name: 'Imán Potenciado', icon: '🧲', basePrice: 80, maxLevel: 3, desc: '+30% de radio y duración' },
-      shield: { id: 'shield', name: 'Escudo Robusto', icon: '🛡️', basePrice: 120, maxLevel: 3, desc: 'Recarga lenta cada 45s sin impacto' },
-      coinMultiplier: { id: 'coinMultiplier', name: 'Multiplicador Monedas', icon: '🪙', basePrice: 150, maxLevel: 3, desc: '+1 moneda por cada recogida' }
+      magnet: { id: 'magnet', name: 'Imán Potenciado', icon: 'magnet', basePrice: 80, maxLevel: 3, desc: '+30% de radio y duración' },
+      shield: { id: 'shield', name: 'Escudo Robusto', icon: 'shield', basePrice: 120, maxLevel: 3, desc: 'Recarga lenta cada 45s sin impacto' },
+      coinMultiplier: { id: 'coinMultiplier', name: 'Multiplicador Monedas', icon: 'coin', basePrice: 150, maxLevel: 3, desc: '+1 moneda por cada recogida' }
     }
   };
 
@@ -226,7 +226,7 @@
           vx: 0, vy: 0,
           life: 0, maxLife: 1,
           size: 3,
-          color: '#00f0ff'
+          color: '#e4572e'
         };
       }
     }
@@ -643,7 +643,7 @@
       State.coins += bonusCoins;
       State.saveData.wallet += bonusCoins;
       addCombo();
-      window.ArcadeJuice?.spawnFloat(`¡MISIÓN CUMPLIDA! +${bonusCoins}🪙`, State.player.x + 14, State.player.y - 20, '#ffcc00', 14);
+      window.ArcadeJuice?.spawnFloat(`MISIÓN CUMPLIDA +${bonusCoins}`, State.player.x + 14, State.player.y - 20, '#ffcc00', 14);
       window.ArcadeJuice?.vibrate([30, 40, 50]);
       setTimeout(pickNewInRunMission, 1600);
     }
@@ -671,13 +671,13 @@
     window.ArcadeJuice?.shake(4, 0.3);
 
     if (chosen === 'LOW_GRAVITY') {
-      dom.eventIcon.textContent = '🪐';
+      if (dom.eventIcon) dom.eventIcon.innerHTML = window.ArcadeIcons ? window.ArcadeIcons.get('planet', { size: 18 }) : '';
       dom.eventTitle.textContent = 'ZONA DE BAJA GRAVEDAD';
-      dom.eventDesc.textContent = '¡Física orbital: saltos elevados y flotantes!';
+      dom.eventDesc.textContent = 'Física orbital: saltos elevados y flotantes';
     } else if (chosen === 'SPARK_STORM') {
-      dom.eventIcon.textContent = '⚡';
+      if (dom.eventIcon) dom.eventIcon.innerHTML = window.ArcadeIcons ? window.ArcadeIcons.get('zap', { size: 18 }) : '';
       dom.eventTitle.textContent = 'TORMENTA DE CHISPAS';
-      dom.eventDesc.textContent = '¡Lluvia de energía estelar que bonifica créditos!';
+      dom.eventDesc.textContent = 'Lluvia de energía estelar que bonifica créditos';
       // Generar lluvia de chispas en pantalla
       for (let k = 0; k < 25; k++) {
         State.sparkStormList.push({
@@ -688,9 +688,9 @@
         });
       }
     } else if (chosen === 'HYPER_SPEED') {
-      dom.eventIcon.textContent = '🚀';
+      if (dom.eventIcon) dom.eventIcon.innerHTML = window.ArcadeIcons ? window.ArcadeIcons.get('rocket', { size: 18 }) : '';
       dom.eventTitle.textContent = 'TRAMO HIPERVELOCIDAD';
-      dom.eventDesc.textContent = '¡Velocidad extrema y puntos multiplicados!';
+      dom.eventDesc.textContent = 'Velocidad extrema y puntos multiplicados';
       State.player.turboTimer = 6.0;
     }
 
@@ -873,7 +873,7 @@
     window.ArcadeJuice?.shake(12, 0.4);
     window.ArcadeJuice?.hitstop(60);
     window.ArcadeJuice?.vibrate([70, 90, 140]);
-    particles.burst(State.player.x + 14, State.player.y + 20, 40, '#00f0ff');
+    particles.burst(State.player.x + 14, State.player.y + 20, 40, '#e4572e');
 
     const finalMeters = Math.floor(State.distance);
     let isNewRecord = false;
@@ -897,18 +897,18 @@
     }
 
     dom.finalDistVal.textContent = `${finalMeters} m`;
-    dom.finalCoinsVal.textContent = `🪙 ${State.coins}`;
+    dom.finalCoinsVal.textContent = `${State.coins}`;
     dom.finalComboVal.textContent = `x${State.maxComboThisRun}`;
     dom.bestDistVal.textContent = `${State.saveData.bestDistance} m`;
-    dom.finalBankVal.textContent = `🪙 ${State.saveData.wallet}`;
+    dom.finalBankVal.textContent = `${State.saveData.wallet}`;
 
     if (isNewRecord) {
-      dom.goTitle.textContent = '¡NUEVO RÉCORD!';
+      dom.goTitle.textContent = 'NUEVO RÉCORD';
       dom.goTitle.style.color = '#ffcc00';
-      dom.goSub.textContent = `¡Superaste tu marca personal con ${finalMeters} metros!`;
+      dom.goSub.textContent = `Superaste tu marca personal con ${finalMeters} metros.`;
     } else {
-      dom.goTitle.textContent = '¡FIN DE CARRERA!';
-      dom.goTitle.style.color = '#00f0ff';
+      dom.goTitle.textContent = 'FIN DE CARRERA';
+      dom.goTitle.style.color = '#e4572e';
       dom.goSub.textContent = reason;
     }
 
@@ -927,7 +927,7 @@
     playAudio('combo');
     window.ArcadeJuice?.vibrate(10);
     particles.burst(State.player.x + 14, State.player.y, 8, '#ffcc00');
-    window.ArcadeJuice?.spawnFloat(`COMBO x${State.combo}!`, State.player.x + 14, State.player.y - 14, '#ffcc00', 12);
+    window.ArcadeJuice?.spawnFloat(`COMBO x${State.combo}`, State.player.x + 14, State.player.y - 14, '#ffcc00', 12);
 
     if (State.combo >= 5) {
       window.ArcadeJuice?.unlockAchievement('corredor', 'ach_combo5', 'Racha Épica', 'Alcanza el Combo x5 máximo');
@@ -936,7 +936,7 @@
 
   function updateHUD() {
     dom.hudDistance.innerHTML = `${Math.floor(State.distance)} <small>m</small>`;
-    dom.hudCoins.textContent = `🪙 ${State.coins}`;
+    dom.hudCoins.textContent = `${State.coins}`;
 
     // Combo
     if (State.combo > 1) {
@@ -1122,8 +1122,8 @@
     // Power-up: Turbo
     if (p.turboTimer > 0) {
       p.turboTimer -= rawDt;
-      particles.spawn(p.x - 6, p.y + p.h / 2, -280, (Math.random() - 0.5) * 80, 0.22, 4, '#ff007f');
-      particles.spawn(p.x - 6, p.y + p.h / 2, -220, (Math.random() - 0.5) * 60, 0.22, 3, '#00f0ff');
+      particles.spawn(p.x - 6, p.y + p.h / 2, -280, (Math.random() - 0.5) * 80, 0.22, 4, '#e4572e');
+      particles.spawn(p.x - 6, p.y + p.h / 2, -220, (Math.random() - 0.5) * 60, 0.22, 3, '#f4c27a');
     }
 
     // Power-up: Slow-Mo
@@ -1145,7 +1145,7 @@
         p.hasShield = true;
         p.shieldRechargeTimer = 0;
         playAudio('powerup');
-        window.ArcadeJuice?.spawnFloat('¡ESCUDO RECARGADO!', p.x + 14, p.y - 10, '#00f0ff', 12);
+        window.ArcadeJuice?.spawnFloat('¡ESCUDO RECARGADO!', p.x + 14, p.y - 10, '#f4c27a', 12);
       }
     }
 
@@ -1173,7 +1173,7 @@
       p.dustTimer += dt;
       if (p.dustTimer > 0.08) {
         p.dustTimer = 0;
-        const auraColor = CONFIG.AURAS[State.saveData.equippedAura]?.color || '#00f0ff';
+        const auraColor = CONFIG.AURAS[State.saveData.equippedAura]?.color || '#e4572e';
         particles.spawn(p.x + 4, CONFIG.GROUND_Y - 2, -120 - Math.random() * 50, (Math.random() - 0.5) * 20, 0.2, 2.5, auraColor);
       }
     }
@@ -1285,7 +1285,7 @@
             playAudio('smash');
             window.ArcadeJuice?.vibrate(20);
             window.ArcadeJuice?.shake(6, 0.2);
-            particles.burst(obs.x + obs.w / 2, obs.y + obs.h / 2, 22, '#ff007f');
+            particles.burst(obs.x + obs.w / 2, obs.y + obs.h / 2, 22, '#e4572e');
             obs.x = -150;
           } else if (p.hasShield) {
             p.hasShield = false;
@@ -1293,7 +1293,7 @@
             playAudio('shield-break');
             window.ArcadeJuice?.vibrate([40, 60]);
             window.ArcadeJuice?.shake(7, 0.25);
-            particles.burst(p.x + 14, p.y + p.h / 2, 20, '#00f0ff');
+            particles.burst(p.x + 14, p.y + p.h / 2, 20, '#f4c27a');
             obs.x = -150;
           } else {
             triggerGameOver('Impacto de obstáculo');
@@ -1363,7 +1363,7 @@
         State.saveData.wallet += 2;
         playAudio('coin');
         particles.burst(spk.x, spk.y, 8, '#ffd700');
-        window.ArcadeJuice?.spawnFloat('+2🪙', spk.x, spk.y, '#ffd700', 11);
+        window.ArcadeJuice?.spawnFloat('+2', spk.x, spk.y, '#ffd700', 11);
         State.sparkStormList.splice(i, 1);
         continue;
       }
@@ -1385,8 +1385,8 @@
         if (pw.type === 'TURBO') {
           p.turboTimer = 5.0;
           playAudio('turbo');
-          particles.burst(pw.x, pw.y, 24, '#ff007f');
-          window.ArcadeJuice?.spawnFloat('¡HIPER TURBO!', pw.x, pw.y - 12, '#ff007f', 13);
+          particles.burst(pw.x, pw.y, 24, '#e4572e');
+          window.ArcadeJuice?.spawnFloat('¡HIPER TURBO!', pw.x, pw.y - 12, '#e4572e', 13);
         } else if (pw.type === 'SLOWMO') {
           p.slowmoTimer = 4.5;
           playAudio('slowmo');
@@ -1395,8 +1395,8 @@
         } else if (pw.type === 'SHIELD') {
           p.hasShield = true;
           playAudio('powerup');
-          particles.burst(pw.x, pw.y, 18, '#00f0ff');
-          window.ArcadeJuice?.spawnFloat('¡ESCUDO!', pw.x, pw.y - 12, '#00f0ff', 13);
+          particles.burst(pw.x, pw.y, 18, '#f4c27a');
+          window.ArcadeJuice?.spawnFloat('¡ESCUDO!', pw.x, pw.y - 12, '#f4c27a', 13);
         } else if (pw.type === 'MAGNET') {
           p.magnetTimer = 8.0 * magnetBonusMultiplier;
           playAudio('powerup');
@@ -1766,13 +1766,15 @@
       ctx.fillStyle = haloColor;
       ctx.beginPath();
       ctx.arc(0, 0, 18, 0, Math.PI * 2);
-      ctx.fill();
-
-      ctx.font = '18px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      const icons = { TURBO: '🚀', SLOWMO: '⏳', SHIELD: '🛡️', MAGNET: '🧲' };
-      ctx.fillText(icons[pw.type] || '⚡', 0, 0);
+      if (window.ArcadeIcons && window.ArcadeIcons.drawToCanvas) {
+        const iconKeyMap = { TURBO: 'rocket', SLOWMO: 'hourglass', SHIELD: 'shield', MAGNET: 'magnet' };
+        window.ArcadeIcons.drawToCanvas(ctx, iconKeyMap[pw.type] || 'zap', 0, 0, 18, '#ffffff', true);
+      } else {
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath();
+        ctx.arc(0, 0, 5, 0, Math.PI * 2);
+        ctx.fill();
+      }
 
       ctx.restore();
     }
@@ -1922,7 +1924,7 @@
       ctx.translate(px + pw / 2, py + ph / 2);
 
       const rocketGrad = ctx.createLinearGradient(-15, -12, 20, 12);
-      rocketGrad.addColorStop(0, '#ff007f');
+      rocketGrad.addColorStop(0, '#e4572e');
       rocketGrad.addColorStop(0.5, skin.color);
       rocketGrad.addColorStop(1, '#ffffff');
 
@@ -2165,12 +2167,14 @@
   // ==========================================
   function updateShopWalletDisplay() {
     dom.shopWalletVal.textContent = State.saveData.wallet;
-    dom.startCoinsVal.textContent = `🪙 ${State.saveData.wallet}`;
+    dom.startCoinsVal.textContent = State.saveData.wallet;
     dom.startRecordVal.textContent = State.saveData.bestDistance;
 
     const equippedSkin = CONFIG.SKINS[State.saveData.equippedSkin] || CONFIG.SKINS.neo;
     const equippedAura = CONFIG.AURAS[State.saveData.equippedAura] || CONFIG.AURAS.classic;
-    dom.startSkinAvatar.textContent = equippedSkin.avatar;
+    if (dom.startSkinAvatar) {
+      dom.startSkinAvatar.innerHTML = window.ArcadeIcons ? window.ArcadeIcons.get(equippedSkin.avatar, { size: 22 }) : '';
+    }
     dom.startSkinName.textContent = equippedSkin.name;
     dom.startAuraName.textContent = equippedAura.name;
   }
@@ -2183,19 +2187,20 @@
     Object.values(CONFIG.SKINS).forEach(skin => {
       const isUnlocked = State.saveData.unlockedSkins.includes(skin.id);
       const isEquipped = State.saveData.equippedSkin === skin.id;
+      const skinIconSvg = window.ArcadeIcons ? window.ArcadeIcons.get(skin.avatar, { size: 24 }) : '';
 
       const card = document.createElement('div');
       card.className = 'shop-card';
       card.innerHTML = `
         <div class="shop-card-left">
-          <span class="shop-card-icon">${skin.avatar}</span>
+          <span class="shop-card-icon">${skinIconSvg}</span>
           <div>
             <div class="shop-card-title">${skin.name}</div>
             <div class="shop-card-desc">${skin.desc}</div>
           </div>
         </div>
         <button class="shop-btn ${isEquipped ? 'btn-equipped' : isUnlocked ? 'btn-equip' : 'btn-buy'}">
-          ${isEquipped ? 'EQUIPADO' : isUnlocked ? 'EQUIPAR' : `🪙 ${skin.price}`}
+          ${isEquipped ? 'EQUIPADO' : isUnlocked ? 'EQUIPAR' : `${skin.price} CR`}
         </button>
       `;
 
@@ -2225,19 +2230,20 @@
     Object.values(CONFIG.AURAS).forEach(aura => {
       const isUnlocked = State.saveData.unlockedAuras.includes(aura.id);
       const isEquipped = State.saveData.equippedAura === aura.id;
+      const sparkSvg = window.ArcadeIcons ? window.ArcadeIcons.get('spark', { size: 24 }) : '';
 
       const card = document.createElement('div');
       card.className = 'shop-card';
       card.innerHTML = `
         <div class="shop-card-left">
-          <span class="shop-card-icon">✨</span>
+          <span class="shop-card-icon">${sparkSvg}</span>
           <div>
             <div class="shop-card-title" style="color: ${aura.color};">${aura.name}</div>
             <div class="shop-card-desc">${aura.desc}</div>
           </div>
         </div>
         <button class="shop-btn ${isEquipped ? 'btn-equipped' : isUnlocked ? 'btn-equip' : 'btn-buy'}">
-          ${isEquipped ? 'EQUIPADO' : isUnlocked ? 'EQUIPAR' : `🪙 ${aura.price}`}
+          ${isEquipped ? 'EQUIPADO' : isUnlocked ? 'EQUIPAR' : `${aura.price} CR`}
         </button>
       `;
 
@@ -2268,19 +2274,20 @@
       const currentLevel = State.saveData.upgrades[upg.id] || 0;
       const isMax = currentLevel >= upg.maxLevel;
       const cost = Math.floor(upg.basePrice * (1 + currentLevel * 0.75));
+      const upgIconSvg = window.ArcadeIcons ? window.ArcadeIcons.get(upg.icon, { size: 24 }) : '';
 
       const card = document.createElement('div');
       card.className = 'shop-card';
       card.innerHTML = `
         <div class="shop-card-left">
-          <span class="shop-card-icon">${upg.icon}</span>
+          <span class="shop-card-icon">${upgIconSvg}</span>
           <div>
             <div class="shop-card-title">${upg.name} (Niv. ${currentLevel}/${upg.maxLevel})</div>
             <div class="shop-card-desc">${upg.desc}</div>
           </div>
         </div>
         <button class="shop-btn ${isMax ? 'btn-equipped' : 'btn-buy'}">
-          ${isMax ? 'MÁXIMO' : `🪙 ${cost}`}
+          ${isMax ? 'MÁXIMO' : `${cost} CR`}
         </button>
       `;
 
@@ -2303,23 +2310,27 @@
 
   function renderAchievementsModal() {
     const achievements = [
-      { id: 'ach_takeoff', title: 'Primer Despegue', desc: 'Corre tus primeros 250 m en la pista', icon: '🏃' },
-      { id: 'ach_acrobat', title: 'Acróbata Urbano', desc: 'Ejecuta 10 dobles saltos con voltereta', icon: '🌀' },
-      { id: 'ach_drone', title: 'Bajo el Radar', desc: 'Esquiva un dron deslizándote en el suelo', icon: '🛩️' },
-      { id: 'ach_rich', title: 'Coleccionista de Créditos', desc: 'Acumula 100 monedas en una sola carrera', icon: '🪙' },
-      { id: 'ach_combo5', title: 'Racha Épica', desc: 'Alcanza el Combo x5 esquivando sin fallar', icon: '🔥' },
-      { id: 'ach_canyon', title: 'Explorador del Cañón', desc: 'Llega al Cañón de Silicio a 750 metros', icon: '🏜️' },
-      { id: 'ach_terminal', title: 'Velocidad Terminal', desc: 'Alcanza 650 px/s de velocidad supersónica', icon: '⚡' },
-      { id: 'ach_vip', title: 'Cliente VIP', desc: 'Desbloquea tu primera mejora en la tienda', icon: '🛒' }
+      { id: 'ach_takeoff', title: 'Primer Despegue', desc: 'Corre tus primeros 250 m en la pista', icon: 'runner' },
+      { id: 'ach_acrobat', title: 'Acróbata Urbano', desc: 'Ejecuta 10 dobles saltos con voltereta', icon: 'speed' },
+      { id: 'ach_drone', title: 'Bajo el Radar', desc: 'Esquiva un dron deslizándote en el suelo', icon: 'radar' },
+      { id: 'ach_rich', title: 'Coleccionista de Créditos', desc: 'Acumula 100 monedas en una sola carrera', icon: 'coin' },
+      { id: 'ach_combo5', title: 'Racha de Pista', desc: 'Alcanza el Combo x5 esquivando sin fallar', icon: 'fire' },
+      { id: 'ach_canyon', title: 'Explorador del Cañón', desc: 'Llega al Cañón de Silicio a 750 metros', icon: 'map' },
+      { id: 'ach_terminal', title: 'Velocidad Terminal', desc: 'Alcanza 650 px/s de velocidad supersónica', icon: 'zap' },
+      { id: 'ach_vip', title: 'Cliente VIP', desc: 'Desbloquea tu primera mejora en la tienda', icon: 'cart' }
     ];
 
     dom.achList.innerHTML = '';
     achievements.forEach(ach => {
       const unlocked = window.ArcadeJuice?.hasAchievement('corredor', ach.id);
+      const achIconSvg = unlocked
+        ? (window.ArcadeIcons ? window.ArcadeIcons.get(ach.icon, { size: 20 }) : '')
+        : (window.ArcadeIcons ? window.ArcadeIcons.get('lock', { size: 20 }) : '');
+
       const row = document.createElement('div');
       row.className = `ach-item ${unlocked ? 'unlocked' : ''}`;
       row.innerHTML = `
-        <span class="ach-icon">${unlocked ? ach.icon : '🔒'}</span>
+        <span class="ach-icon">${achIconSvg}</span>
         <div>
           <div class="ach-title">${ach.title}</div>
           <div class="ach-desc">${ach.desc}</div>
@@ -2331,30 +2342,34 @@
   }
 
   function renderDailyMissionsModal() {
+    const targetSvg = window.ArcadeIcons ? window.ArcadeIcons.get('target', { size: 20 }) : '';
+    const speedSvg = window.ArcadeIcons ? window.ArcadeIcons.get('speed', { size: 20 }) : '';
+    const zapSvg = window.ArcadeIcons ? window.ArcadeIcons.get('zap', { size: 20 }) : '';
+
     dom.missionsList.innerHTML = `
       <div class="mission-item">
-        <span class="ach-icon">🎯</span>
+        <span class="ach-icon">${targetSvg}</span>
         <div>
           <div class="ach-title">Paseo de Calentamiento</div>
           <div class="ach-desc">Recorre un total acumulado de 1,500 metros</div>
         </div>
-        <span class="ach-status">${State.saveData.stats.totalDistance >= 1500 ? '¡LISTO! (+100🪙)' : `${State.saveData.stats.totalDistance}/1500 m`}</span>
+        <span class="ach-status">${State.saveData.stats.totalDistance >= 1500 ? 'COMPLETADO (+100)' : `${State.saveData.stats.totalDistance}/1500 m`}</span>
       </div>
       <div class="mission-item">
-        <span class="ach-icon">🌀</span>
+        <span class="ach-icon">${speedSvg}</span>
         <div>
           <div class="ach-title">Giro Acrobático</div>
           <div class="ach-desc">Realiza 15 volteretas en el aire</div>
         </div>
-        <span class="ach-status">${State.saveData.stats.totalFlips >= 15 ? '¡LISTO! (+75🪙)' : `${State.saveData.stats.totalFlips}/15`}</span>
+        <span class="ach-status">${State.saveData.stats.totalFlips >= 15 ? 'COMPLETADO (+75)' : `${State.saveData.stats.totalFlips}/15`}</span>
       </div>
       <div class="mission-item">
-        <span class="ach-icon">⚡</span>
+        <span class="ach-icon">${zapSvg}</span>
         <div>
-          <div class="ach-title">Reflejos de Relámpago</div>
+          <div class="ach-title">Reflejos Rápidos</div>
           <div class="ach-desc">Realiza 20 esquivas ajustadas (near-miss)</div>
         </div>
-        <span class="ach-status">${State.saveData.stats.totalNearMisses >= 20 ? '¡LISTO! (+120🪙)' : `${State.saveData.stats.totalNearMisses}/20`}</span>
+        <span class="ach-status">${State.saveData.stats.totalNearMisses >= 20 ? 'COMPLETADO (+120)' : `${State.saveData.stats.totalNearMisses}/20`}</span>
       </div>
     `;
   }

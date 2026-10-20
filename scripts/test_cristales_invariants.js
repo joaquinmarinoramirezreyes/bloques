@@ -335,16 +335,16 @@ function runFullSuite(numGames = 5000) {
     }
   }
 
-  console.log(`✅ INVARIANTE A CUMPLIDA: Ninguna celda queda vacía tras resolver cada jugada.`);
-  console.log(`✅ INVARIANTE B CUMPLIDA: Las piezas supervivientes conservan su tipo y conteo estricto.`);
-  console.log(`✅ INVARIANTE C CUMPLIDA: El relleno escribe exclusivamente en celdas vacías.`);
-  console.log(`✅ INVARIANTE D CUMPLIDA: El orden relativo de las piezas en cada columna se preserva.`);
+  console.log(`[OK] INVARIANTE A CUMPLIDA: Ninguna celda queda vacía tras resolver cada jugada.`);
+  console.log(`[OK] INVARIANTE B CUMPLIDA: Las piezas supervivientes conservan su tipo y conteo estricto.`);
+  console.log(`[OK] INVARIANTE C CUMPLIDA: El relleno escribe exclusivamente en celdas vacías.`);
+  console.log(`[OK] INVARIANTE D CUMPLIDA: El orden relativo de las piezas en cada columna se preserva.`);
   console.log(`\nEstadísticas:`);
   console.log(`- Partidas simuladas: ${numGames}`);
   console.log(`- Movimientos ejecutados: ${totalMoves}`);
   console.log(`- Falsas/Fusión de Especiales probadas: ${totalSpecials}`);
   console.log(`- Martillazos probados: ${totalHammers}`);
-  console.log(`\n🎉 TODAS LAS PRUEBAS PASARON EXITOSAMENTE SIN NINGUNA VIOLACIÓN DE INVARIANTES.`);
+  console.log(`\n[PASS] TODAS LAS PRUEBAS PASARON EXITOSAMENTE SIN NINGUNA VIOLACIÓN DE INVARIANTES.`);
 }
 
 runFullSuite(5000);

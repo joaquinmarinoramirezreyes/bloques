@@ -2,14 +2,25 @@
    ROMPE MUROS - ESTILOS ARCADE & RESPONSIVE
    ========================================================================== */
 
+:root {
+  --bg-space: #f3d9b1;
+  --bg-panel: #e8c697;
+  --bg-card: #faead3;
+  --accent-primary: #e07a1f;
+  --accent-hover: #c46614;
+  --text-main: #4a2412;
+  --text-dim: #7a4628;
+  --border-subtle: #d4aa76;
+}
+
 html, body {
   width: 100%;
   height: 100%;
   height: 100dvh;
-  background-color: var(--bg-space, #070913);
-  color: var(--text-main, #f8fafc);
+  background-color: var(--bg-space) !important;
+  color: var(--text-main);
   font-family: var(--font-family);
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 #app-root {
@@ -33,12 +44,12 @@ html, body {
    1. ENCABEZADO
    -------------------------------------------------------------------------- */
 .hud-header {
-  height: var(--header-height, 44px);
+  min-height: 48px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid var(--border-subtle);
   flex-shrink: 0;
 }
 
@@ -50,30 +61,28 @@ html, body {
 
 .back-button {
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid var(--border-subtle);
   color: var(--text-main);
   text-decoration: none;
 }
 
 .back-button:hover, .back-button:active {
-  border-color: var(--neon-coral, #ff3366);
-  color: var(--neon-coral, #ff3366);
+  border-color: var(--accent-terracotta);
+  color: var(--accent-terracotta);
 }
 
 .badge-coral {
-  background: linear-gradient(135deg, #ff3366, #ff9100);
-  color: #05060c;
+  background: var(--accent-primary);
+  color: #ffffff;
   font-size: 0.65rem;
   font-weight: 800;
   letter-spacing: 0.12em;
-  padding: 2px 7px;
+  padding: 3px 7px;
   border-radius: 4px;
 }
 
 .brand-coral {
-  background: linear-gradient(90deg, #ffffff 30%, #ff3366 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text-main);
   font-size: 1.15rem;
   font-weight: 900;
   letter-spacing: 0.08em;
@@ -88,10 +97,12 @@ html, body {
 
 .icon-button {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-subtle);
   color: var(--text-main);
-  width: 38px;
-  height: 38px;
+  width: 44px;
+  height: 44px;
+  min-width: 44px;
+  min-height: 44px;
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -103,7 +114,7 @@ html, body {
 .icon-button:active {
   transform: scale(0.92);
   background: rgba(255, 255, 255, 0.18);
-  border-color: #ff3366;
+  border-color: var(--accent-terracotta);
 }
 
 /* --------------------------------------------------------------------------
@@ -253,11 +264,11 @@ html, body {
   font-weight: 900;
 }
 
-.val-coral { color: #ff3366; }
-.val-gold { color: #ffd000; }
-.val-cyan { color: #00f0ff; }
+.val-coral { color: var(--accent-primary); }
+.val-gold { color: #b45309; }
+.val-cyan { color: var(--text-main); }
 .val-lives {
-  color: #ff3366;
+  color: var(--accent-primary);
   letter-spacing: 2px;
   font-size: 1rem;
 }
@@ -298,9 +309,7 @@ kbd {
 .game-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(5, 7, 15, 0.88);
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  background: rgba(28, 19, 17, 0.92);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -313,14 +322,14 @@ kbd {
 }
 
 .overlay-card {
-  background: rgba(18, 22, 42, 0.98);
-  border: 1.5px solid rgba(255, 51, 102, 0.4);
+  background: var(--bg-panel);
+  border: 1.5px solid var(--border-subtle);
   border-radius: 14px;
   padding: 20px 24px;
   text-align: center;
   max-width: 290px;
   width: 90%;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(255, 51, 102, 0.2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8);
 }
 
 .overlay-card h2 {
@@ -331,13 +340,11 @@ kbd {
 }
 
 .level-title {
-  color: #00f0ff;
-  text-shadow: 0 0 12px rgba(0, 240, 255, 0.5);
+  color: var(--accent-amber);
 }
 
 .danger-title {
-  color: #ff3366;
-  text-shadow: 0 0 12px rgba(255, 51, 102, 0.5);
+  color: var(--accent-terracotta);
 }
 
 .overlay-card p {
@@ -347,7 +354,7 @@ kbd {
 }
 
 .stats-summary {
-  background: rgba(8, 10, 20, 0.8);
+  background: rgba(20, 12, 10, 0.8);
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 14px;
@@ -369,19 +376,18 @@ kbd {
 }
 
 .stat-row.highlight strong {
-  color: #ffd000;
+  color: var(--accent-amber);
 }
 
 .badge-new-record {
-  background: linear-gradient(90deg, #ff9100, #ffd000);
-  color: #0b0d17;
+  background: var(--accent-amber);
+  color: #1c1311;
   font-size: 0.7rem;
   font-weight: 900;
   letter-spacing: 0.1em;
   padding: 4px 8px;
   border-radius: 4px;
   margin-bottom: 14px;
-  animation: pulseRecord 1s infinite alternate;
 }
 
 .badge-new-record.hidden {
@@ -396,6 +402,7 @@ kbd {
 
 .btn-primary, .btn-secondary {
   width: 100%;
+  min-height: 44px;
   padding: 11px 16px;
   border-radius: 8px;
   font-size: 0.9rem;
@@ -404,31 +411,33 @@ kbd {
   cursor: pointer;
   border: none;
   text-decoration: none;
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   text-align: center;
   transition: transform 0.08s ease, filter 0.15s ease;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #ff3366, #ff9100);
-  color: #050814;
-  box-shadow: 0 4px 14px rgba(255, 51, 102, 0.35);
+  background: var(--accent-primary);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(224, 122, 31, 0.35);
 }
 
 .btn-primary:active {
   transform: scale(0.96);
-  filter: brightness(1.2);
+  background: var(--accent-hover);
 }
 
 .btn-secondary {
-  background: rgba(255, 255, 255, 0.08);
+  background: var(--bg-card);
   color: var(--text-main);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid var(--border-subtle);
 }
 
 .btn-secondary:active {
   transform: scale(0.96);
-  background: rgba(255, 255, 255, 0.16);
+  background: var(--bg-panel);
 }
 
 /* --------------------------------------------------------------------------

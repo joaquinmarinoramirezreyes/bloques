@@ -81,3 +81,44 @@ Se detectaron y corrigieron 3 causas raíz concretas en `games/cristales/game.js
   - **Invariante D**: El orden relativo de las piezas por columna se preserva al caer.
 - Verificación end-to-end adicional en navegador real mediante `scripts/test_browser_cristales.js` (20 turnos con eventos pointerdown e inspección con Chrome Headless).
 
+## Fecha: 15 de Octubre de 2026 (Segunda Parte)
+## Sistema Completo de Animaciones y Desacoplamiento Lógico/Visual
+
+### 1. Arquitectura: Estado Lógico vs Estado Visual
+- **Separación Estricta**: Cada pieza visible es un `GemVisualSprite` independiente con coordenadas flotantes `x, y`, `scale`, `scaleX, scaleY`, `rotation`, `alpha`, `brightness` y `shinePhase`. El motor de renderizado dibuja sprites desde la estructura `CristalesVisual.visualGrid` y la lista de sprites transitorios `transientSprites`, nunca la matriz lógica `State.grid` directamente.
+- **Motor de Tweens Reutilizable (`shared/tween.js`)**:
+  - Interpolación con funciones de easing (`easeOutCubic`, `easeOutBack`, `easeOutElastic`, `easeOutBounce`, `easeInQuad`, `easeInOutQuad`).
+  - Object pooling pre-asignado de 300 slots de tweens con cero recolección de basura (GC) por frame.
+  - Corrección de re-cálculo de `activeCount` para tweens encadenados en callbacks `onComplete`.
+- **Generación y Reproducción de Eventos**:
+  - `CristalesLogic.stepCascade` resuelve atómicamente cada paso y emite descriptores de eventos estructurados (`eliminatedCells`, `createdSpecials`, `activatedSpecials`, `gravityMoves`, `spawnedGems`, `scoreEarned`).
+  - `CristalesVisual.animateCascadeStep` traduce esos eventos en tweens escalonados.
+  - Al completar la reproducción, `CristalesVisual.verifyMatches` comprueba que la matriz visual coincida exactamente al 100% con la lógica.
+
+### 2. Animaciones Implementadas
+- **Intercambio (Swap)**: Las dos piezas se deslizan suavemente con `easeInOutQuad` en 120 ms.
+- **Intercambio Rechazado**: Si el swap no forma una combinación válida, ambas gemas avanzan hasta el punto medio y retornan elásticamente a su celda de origen con `easeOutBack` y una leve sacudida de pantalla (`shake(2, 0.12)`).
+- **Selección**: La gema seleccionada pulsa y crece suavemente (`scale: 1.15` con onda sinusoidal), y las 4 celdas adyacentes se iluminan con un marco tenue.
+- **Eliminación con Onda Escalonada**: Destello lumínico (`brightness: 2.2`, `scale: 1.22`), giro angular y encogimiento con desvanecimiento (`scale: 0`, `rotation: +-0.45 rad`, `alpha: 0`), propagándose con retardos de 20 a 40 ms según distancia al centro del match.
+- **Caída por Gravedad**: Aceleración cuadrática (`FALL_ACCELERATION: 1800 px/s²`) escalonada por columna (`c * 0.02s`), aterrizaje elástico y deformación física ("squash and stretch": compresión a `scaleY: 0.84, scaleX: 1.16` y rebote a 1.0 con `easeOutBounce`).
+- **Entrada de Gemas Nuevas**: Entran cayendo desde arriba del tablero ($y < 0$) con la misma física de gravedad y rebote en lugar de aparecer colocadas.
+- **Piezas Especiales**: Creación condensada con implosión luminosa (`scale: 0 -> 1.0`, destello `brightness: 2.8`) y activación con rayos luminosos horizontales/verticales (pool de rayos) y ondas de choque expansivas de bombas.
+- **Puntuación y Combos**: Interpolación suave del contador de puntos (`State.displayedScore`), textos flotantes de combo con rebote elástico, sacudida de pantalla y zoom sutil de cámara en combos de 3 o más.
+- **Llenado en Ola al Inicio**: Al iniciar o reiniciar un nivel, los 64 cristales descienden en una ola diagonal (`delay: (r + c) * 0.035s`) con aterrizaje elástico.
+- **Entrada en Cola (Input Queue)**: El jugador puede marcar el siguiente movimiento válido mientras se reproduce una cascada; al terminar la animación en reposo, el movimiento en cola se ejecuta sin romper el estado.
+- **Opción "Animaciones Rápidas"**: Añadida a los ajustes del juego (`opt-fast-anim`), acelerando todas las animaciones al 180% de velocidad.
+
+### 3. Rendimiento y Optimización Gráfica
+- **Atlas de Sprites Offscreen**: Pre-renderizado de los 6 tipos de cristales facetados, prisma de color y runa bloqueada en lienzos offscreen con escalado de alta densidad DPI, dibujados mediante `drawImage` para un costo mínimo de CPU.
+- **Fondo Estático Cacheado**: El gradiente del mundo y las celdas alternas se dibujan una sola vez en un canvas offscreen (`cachedBgCanvas`) y se estampan en un solo comando por frame.
+- **Object Pooling Total**: Pool de 160 sprites `GemVisualSprite`, pool de 150 partículas, pool de 8 rayos y pool de 8 ondas de choque.
+- **Auto-Tuner de Rendimiento y Modo `?debug=1`**:
+  - Medición continua de FPS. Si cae por debajo de 55 FPS, activa automáticamente `lowQualityMode` (reducción de partículas y omisión de partículas ambientales).
+  - Overlay de depuración en pantalla (`?debug=1`) que exhibe FPS, tweens activos, sprites activos y verificación de sincronización.
+
+### 4. Pruebas de Verificación
+- Suite `scripts/test_cristales_animations.js`:
+  - 1000 cascadas completas (1298 pasos animados individuales) comprobando 0 discrepancias visuales.
+  - Verificación de pooling, swaps válidos, swaps rechazados, entrada desde $y < 0$ y tablero en ola.
+- Suite `scripts/test_cristales_invariants.js`: 5,000 partidas completas sin violaciones de invariantes.
+

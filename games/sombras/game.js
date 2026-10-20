@@ -490,7 +490,7 @@
         if (this.state !== 'CHASING') {
           this.state = 'CHASING';
           this.hasAlerted = false;
-          game.showAlert('¡PATRULLERO EN ALERTA!', 'danger');
+          game.showAlert('Patrullero en alerta', 'danger');
         }
 
         if (!this.hasAlerted) {
@@ -895,7 +895,7 @@
       if (canSeePlayer) {
         if (this.state !== 'CHASING') {
           this.state = 'CHASING';
-          game.showAlert('¡CAZADOR EN RASTREO!', 'danger');
+          game.showAlert('Cazador en rastreo', 'danger');
           if (window.ArcadeAudio && window.ArcadeAudio.playTone) {
             window.ArcadeAudio.playTone(740, 'sawtooth', 0.12, 0.18);
           }
@@ -1164,7 +1164,7 @@
         if (this.state !== 'ALERTING') {
           this.state = 'ALERTING';
           this.alertTimer = 1.8;
-          game.showAlert('¡CÁMARA DETECTÓ INTRUSO! ¡ALARMA GENERAL!', 'danger');
+          game.showAlert('Cámara detectó intruso. Alarma general', 'danger');
           if (window.ArcadeAudio && window.ArcadeAudio.playTone) {
             window.ArcadeAudio.playTone(880, 'sawtooth', 0.2, 0.25);
           }
@@ -1924,7 +1924,7 @@
         if (window.ArcadeCanvas) window.ArcadeCanvas.haptic(50);
 
         this.spawnParticles(this.player.x, this.player.y, '#38bdf8', 25);
-        this.showAlert('¡ESCUDO ABSORBIÓ EL IMPACTO! GUARDIÁN ATURDIDO', 'success');
+        this.showAlert('Escudo absorbió el impacto. Guardián aturdido', 'success');
         this.updateHUD();
         return;
       }
@@ -1941,7 +1941,7 @@
       this.updateHUD();
 
       if (this.lives > 0) {
-        this.showAlert(`¡DETECTADO! -1 VIDA (${this.lives} restantes)`, 'danger');
+        this.showAlert(`Detectado. -1 vida (${this.lives} restantes)`, 'danger');
         const S = CONFIG.CELL_SIZE;
         this.player.x = (this.maze.startX + 0.5) * S;
         this.player.y = (this.maze.startY + 0.5) * S;
@@ -2196,10 +2196,10 @@
             this.updateHUD();
 
             if (this.keysCollected < 3) {
-              this.showAlert(`¡Llave [${this.keysCollected}/3] obtenida!`, 'warning');
+              this.showAlert(`Llave [${this.keysCollected}/3] obtenida`, 'warning');
             } else {
               this.exit.isUnlocked = true;
-              this.showAlert('¡SALIDA DESBLOQUEADA! LLEGA AL PORTAL', 'success');
+              this.showAlert('Salida desbloqueada. Llega al portal', 'success');
               if (window.ArcadeAudio && window.ArcadeAudio.playTone) {
                 setTimeout(() => window.ArcadeAudio.playTone(523, 'sine', 0.2, 0.2), 200);
                 setTimeout(() => window.ArcadeAudio.playTone(659, 'sine', 0.2, 0.2), 350);
@@ -2228,7 +2228,7 @@
         if (window.ArcadeCanvas) window.ArcadeCanvas.haptic(25);
 
         this.spawnParticles(this.shieldItem.x, this.shieldItem.y, '#38bdf8', 25);
-        this.showAlert('¡ESCUDO DE ENERGÍA EQUIPADO!', 'success');
+        this.showAlert('Escudo de energía equipado', 'success');
         this.updateHUD();
       }
     }
@@ -2866,7 +2866,21 @@
         if (this.keysCollected === 3) this.keysDisplay.textContent = '3/3 (EXIT)';
       }
       if (this.stepsDisplay) this.stepsDisplay.textContent = this.steps;
-      if (this.livesDisplay) this.livesDisplay.textContent = '♥'.repeat(Math.max(0, this.lives));
+      if (this.livesDisplay) {
+        if (window.ArcadeIcons) {
+          let html = '';
+          const maxLives = 3;
+          for (let i = 0; i < maxLives; i++) {
+            html += window.ArcadeIcons.get('heart', {
+              size: 16,
+              color: i < this.lives ? '#f43f5e' : 'rgba(255, 255, 255, 0.2)'
+            });
+          }
+          this.livesDisplay.innerHTML = html;
+        } else {
+          this.livesDisplay.textContent = `${this.lives}/3`;
+        }
+      }
       if (this.highscoreDisplay) this.highscoreDisplay.textContent = this.highScore;
 
       if (this.staminaFill) {

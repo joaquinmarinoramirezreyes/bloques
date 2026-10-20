@@ -4,240 +4,288 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Bastión | Sala Arcade</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230c131f'/%3E%3Cpath d='M8 26h16v-4H8v4zm2-6h12v-8h2V8l-3-2-3 2v2h-4V8l-3-2-3 2v4h2v8z' fill='%2338bdf8'/%3E%3Ccircle cx='16' cy='15' r='2' fill='%23f59e0b'/%3E%3C/svg%3E">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%232f3a33'/%3E%3Cpath d='M8 26h16v-4H8v4zm2-6h12v-8h2V8l-3-2-3 2v2h-4V8l-3-2-3 2v4h2v8z' fill='%23b8860b'/%3E%3Ccircle cx='16' cy='15' r='2' fill='%23e6dcc3'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="../../shared/theme.css">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="arcade-lock">
   <div class="game-layout">
-    <!-- Barra superior arcade -->
-    <header class="game-header">
-      <a href="../../index.html" class="nav-btn" aria-label="Volver al menú principal">
-        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-          <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
-        </svg>
-        <span class="nav-text">ARCADE</span>
-      </a>
+    <!-- ZONA 1: ZONA SUPERIOR (Header compacto + HUD integrado) -->
+    <header class="game-top-zone">
+      <div class="game-header">
+        <a href="../../index.html" class="nav-btn" aria-label="Volver al menú principal">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+          </svg>
+          <span class="nav-text">ARCADE</span>
+        </a>
 
-      <div class="header-titles">
-        <h1 class="game-title">BASTIÓN</h1>
-        <span class="game-badge">DEFENSA</span>
+        <div class="header-titles">
+          <h1 class="game-title">BASTIÓN</h1>
+          <span class="game-badge">DEFENSA</span>
+        </div>
+
+        <div class="header-actions">
+          <button id="btn-open-meta" class="icon-btn" title="Templo de Mejoras (Metaprogreso)" aria-label="Templo de Mejoras">
+            <span class="icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M12 2l2.4 7.4L22 12l-7.6 2.6L12 22l-2.4-7.4L2 12l7.6-2.6L12 2z"/></svg>
+            </span>
+          </button>
+          <button id="btn-open-maps" class="icon-btn" title="Seleccionar Mapa" aria-label="Seleccionar Mapa">
+            <span class="icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 6v15l7-4 8 4 7-4V2l-7 4-8-4-7 4z"/><path d="M8 2v15"/><path d="M16 6v15"/></svg>
+            </span>
+          </button>
+          <button id="btn-sound" class="icon-btn" aria-label="Silenciar sonido">
+            <span class="icon" id="sound-icon-slot">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5L6 9H2v6h4l5 4V5z"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></svg>
+            </span>
+          </button>
+          <button id="btn-pause" class="icon-btn" aria-label="Pausar juego">
+            <span class="icon">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19.4 13a7.7 7.7 0 0 0 .1-1 7.7 7.7 0 0 0-.1-1l2.1-1.6a.5.5 0 0 0 .1-.6l-2-3.5a.5.5 0 0 0-.6-.2l-2.5 1a7.8 7.8 0 0 0-1.7-1l-.4-2.6a.5.5 0 0 0-.5-.4h-4a.5.5 0 0 0-.5.4l-.4 2.6a7.8 7.8 0 0 0-1.7 1l-2.5-1a.5.5 0 0 0-.6.2l-2 3.5a.5.5 0 0 0 .1.6l2.1 1.6a7.7 7.7 0 0 0-.1 1 7.7 7.7 0 0 0 .1 1l-2.1 1.6a.5.5 0 0 0-.1.6l2 3.5a.5.5 0 0 0 .6.2l2.5-1a7.8 7.8 0 0 0 1.7 1l.4 2.6a.5.5 0 0 0 .5.4h4a.5.5 0 0 0 .5-.4l.4-2.6a7.8 7.8 0 0 0 1.7-1l2.5 1a.5.5 0 0 0 .6-.2l2-3.5a.5.5 0 0 0-.1-.6z"/><path d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+            </span>
+          </button>
+        </div>
       </div>
 
-      <div class="header-actions">
-        <button id="btn-open-meta" class="icon-btn" title="Templo de Mejoras (Metaprogreso)" aria-label="Templo de Mejoras">
-          <span class="icon">🔮</span>
+      <!-- HUD Superior: Recursos, Vida, Oleada y Velocidad en una sola fila contenida -->
+      <div class="hud-top" id="hud-top">
+        <div class="stat-badge lives-badge" title="Vidas del Núcleo">
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+          </span>
+          <span class="stat-val" id="hud-lives">20</span>
+        </div>
+        <div class="stat-badge gold-badge" title="Oro de batalla disponible">
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6a6 6 0 1 0 6 6 6 6 0 0 0-6-6zm0 9a3 3 0 1 1 3-3 3 3 0 0 1-3 3z"/></svg>
+          </span>
+          <span class="stat-val" id="hud-gold">300</span>
+        </div>
+        <div class="stat-badge shards-badge" title="Esquirlas del Vacío (Persistentes)">
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L4 12l8 10 8-10L12 2zM12 2v20"/></svg>
+          </span>
+          <span class="stat-val" id="hud-shards">0</span>
+        </div>
+        <div class="stat-badge wave-badge" title="Oleada actual">
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1zm0 7v-7"/></svg>
+          </span>
+          <span class="stat-val" id="hud-wave">W 0/20</span>
+        </div>
+        <button type="button" class="stat-badge intel-badge" id="hud-wave-intel" title="Composición del próximo asalto">
+          <span class="stat-icon">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6a6 6 0 1 0 6 6 6 6 0 0 0-6-6z"/><path d="M12 2v10l7 7"/></svg>
+          </span>
+          <span class="stat-val" id="intel-summary">Intel</span>
         </button>
-        <button id="btn-open-maps" class="icon-btn" title="Seleccionar Mapa" aria-label="Seleccionar Mapa">
-          <span class="icon">🗺️</span>
+        <button type="button" id="btn-speed" class="speed-toggle-btn" aria-label="Velocidad de juego">
+          <span id="speed-label"><svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align:middle;margin-right:2px;"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg><span id="speed-val">1x</span></span>
         </button>
-        <button id="btn-sound" class="icon-btn" aria-label="Silenciar sonido">
-          <span class="icon">🔊</span>
-        </button>
-        <button id="btn-pause" class="icon-btn" aria-label="Pausar juego">
-          <span class="icon">⏸</span>
-        </button>
-      </div>
-    </header>
-
-    <!-- Contenedor del lienzo de juego y HUD -->
-    <main class="board-wrapper" id="board-wrapper">
-      <canvas id="game-canvas"></canvas>
-
-      <!-- Controles de Zoom Táctil y Centrado Móvil (Fase 5) -->
-      <div id="touch-zoom-controls" class="touch-zoom-controls">
-        <button type="button" class="zoom-btn" id="btn-zoom-in" title="Acercar mapa" aria-label="Acercar">+</button>
-        <button type="button" class="zoom-btn" id="btn-zoom-reset" title="Restablecer vista" aria-label="Restablecer">🔍</button>
-        <button type="button" class="zoom-btn" id="btn-zoom-out" title="Alejar mapa" aria-label="Alejar">-</button>
       </div>
 
       <!-- Cinta de Reliquias Activas -->
       <div class="hud-relics" id="hud-relics"></div>
+    </header>
 
-      <!-- HUD Superior: Recursos, Vida y Oleada -->
-      <div class="hud-top">
-        <div class="stat-badge lives-badge" title="Vidas del Núcleo">
-          <span class="stat-icon">💖</span>
-          <span class="stat-val" id="hud-lives">20</span>
-        </div>
-        <div class="stat-badge gold-badge" title="Oro de batalla disponible">
-          <span class="stat-icon">🪙</span>
-          <span class="stat-val" id="hud-gold">300</span>
-        </div>
-        <div class="stat-badge shards-badge" title="Esquirlas del Vacío (Persistentes)">
-          <span class="stat-icon">🟣</span>
-          <span class="stat-val" id="hud-shards">0</span>
-        </div>
-        <div class="stat-badge wave-badge" title="Oleada actual">
-          <span class="stat-icon">🚩</span>
-          <span class="stat-val" id="hud-wave">OLEADA 0/20</span>
-        </div>
-        <div class="stat-badge intel-badge" id="hud-wave-intel" title="Composición del próximo asalto">
-          <span class="stat-icon">📡</span>
-          <span class="stat-val" id="intel-summary">Próxima: ...</span>
-        </div>
-        <button id="btn-speed" class="speed-toggle-btn" aria-label="Velocidad de juego">
-          <span id="speed-label">⚡ 1x</span>
+    <!-- ZONA 2: ÁREA DE MAPA FLEXIBLE (Ocupa todo el alto disponible, sin solapamientos) -->
+    <main class="board-wrapper" id="board-wrapper">
+      <canvas id="game-canvas"></canvas>
+
+      <!-- Controles de Zoom Táctil Flotantes (En esquina superior derecha del mapa, autohide) -->
+      <div id="touch-zoom-controls" class="touch-zoom-controls">
+        <button type="button" class="zoom-btn" id="btn-zoom-in" title="Acercar mapa" aria-label="Acercar">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+        <button type="button" class="zoom-btn" id="btn-zoom-reset" title="Restablecer vista" aria-label="Restablecer">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 19a8 8 0 1 0 0-16 8 8 0 0 0 0 16z"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+        <button type="button" class="zoom-btn" id="btn-zoom-out" title="Alejar mapa" aria-label="Alejar">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M5 12h14"/></svg>
         </button>
       </div>
 
-      <!-- Barra Inferior de Acción y Selección de Torres -->
-      <footer class="action-dock">
-        <!-- Habilidades Activas del Comandante (Fase 4) -->
-        <div class="skills-dock" id="skills-dock">
-          <button type="button" class="skill-btn" id="btn-skill-orbital" data-skill="orbital_strike" title="Bombardeo Orbital [Q] - 450 daño de fuego en área">
-            <span class="skill-btn-icon">☄️</span>
-            <div class="skill-btn-meta">
-              <span class="skill-btn-name">Bombardeo</span>
-              <span class="skill-btn-key">Q</span>
-            </div>
-            <div class="cooldown-overlay" id="cd-overlay-orbital"></div>
-            <span class="cooldown-timer hidden" id="cd-timer-orbital">40s</span>
-          </button>
-          <button type="button" class="skill-btn" id="btn-skill-freeze" data-skill="time_freeze" title="Estasis Temporal [W] - Congela invasores por 4.5s">
-            <span class="skill-btn-icon">❄️</span>
-            <div class="skill-btn-meta">
-              <span class="skill-btn-name">Estasis</span>
-              <span class="skill-btn-key">W</span>
-            </div>
-            <div class="cooldown-overlay" id="cd-overlay-freeze"></div>
-            <span class="cooldown-timer hidden" id="cd-timer-freeze">55s</span>
-          </button>
-          <button type="button" class="skill-btn" id="btn-skill-surge" data-skill="gold_surge" title="Sobrecarga [E] - +120 oro y +35% velocidad de torres">
-            <span class="skill-btn-icon">⚡</span>
-            <div class="skill-btn-meta">
-              <span class="skill-btn-name">Sobrecarga</span>
-              <span class="skill-btn-key">E</span>
-            </div>
-            <div class="cooldown-overlay" id="cd-overlay-surge"></div>
-            <span class="cooldown-timer hidden" id="cd-timer-surge">45s</span>
-          </button>
-        </div>
+      <!-- Píldora de confirmación de colocación táctil en 2 pasos -->
+      <div class="placement-confirm-pill hidden" id="placement-confirm-pill">
+        <span class="placement-pill-title" id="placement-tower-name">Centinela</span>
+        <button type="button" class="confirm-cell-btn" id="btn-confirm-cell-build">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:2px;"><path d="M20 6L9 17l-5-5"/></svg>Construir
+        </button>
+        <button type="button" class="cancel-cell-btn" id="btn-cancel-cell-build" aria-label="Cancelar">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+    </main>
 
-        <!-- Banner de Apuntado Orbital -->
-        <div class="targeting-banner hidden" id="targeting-banner">
-          <span class="targeting-banner-text">☄️ APUNTANDO BOMBARDEO — Toca el mapa para detonar</span>
-          <button type="button" class="cancel-target-btn" id="btn-cancel-target">✕ Cancelar</button>
-        </div>
+    <!-- ZONA 3: BARRA INFERIOR DE ACCIÓN (Altura contenida, jerarquía clara) -->
+    <footer class="action-dock" id="action-dock">
+      <!-- Habilidades Activas del Comandante (Fila superior compacta) -->
+      <div class="skills-dock" id="skills-dock">
+        <button type="button" class="skill-btn" id="btn-skill-orbital" data-skill="orbital_strike" title="Bombardeo Orbital [Q] - 450 daño de fuego en área" aria-label="Bombardeo Orbital">
+          <span class="skill-btn-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 4l9 9"/><path d="M13 13a4 4 0 1 0 5.66-5.66L13 13z"/><path d="M2 9l5-5"/><path d="M9 2l-5 5"/></svg>
+          </span>
+          <div class="cooldown-overlay" id="cd-orbital"></div>
+          <span class="cooldown-timer hidden" id="cd-timer-orbital">40s</span>
+        </button>
+        <button type="button" class="skill-btn" id="btn-skill-freeze" data-skill="time_freeze" title="Estasis Temporal [W] - Congela invasores por 4.5s" aria-label="Estasis Temporal">
+          <span class="skill-btn-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+          </span>
+          <div class="cooldown-overlay" id="cd-freeze"></div>
+          <span class="cooldown-timer hidden" id="cd-timer-freeze">55s</span>
+        </button>
+        <button type="button" class="skill-btn" id="btn-skill-surge" data-skill="gold_surge" title="Sobrecarga [E] - +120 oro y +35% velocidad de torres" aria-label="Sobrecarga">
+          <span class="skill-btn-icon">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+          </span>
+          <div class="cooldown-overlay" id="cd-surge"></div>
+          <span class="cooldown-timer hidden" id="cd-timer-surge">45s</span>
+        </button>
+      </div>
 
-        <!-- Panel Scrollable de Construcción de las 6 Torres -->
-        <div class="towers-selector-scroll">
+      <!-- Banner de Apuntado Orbital -->
+      <div class="targeting-banner hidden" id="targeting-banner">
+        <span class="targeting-banner-text">Toca el mapa para detonar el ataque orbital</span>
+        <button type="button" class="cancel-target-btn" id="btn-cancel-target">Cancelar</button>
+      </div>
+
+      <!-- Panel Scrollable de Construcción de las 6 Torres con indicador visual de scroll -->
+      <div class="towers-selector-wrapper">
+        <div class="scroll-indicator-fade left" id="scroll-fade-left"></div>
+        <div class="towers-selector-scroll" id="towers-selector-scroll">
           <div class="towers-selector" id="towers-selector">
             <!-- 1. Balístico -->
-            <button type="button" class="tower-build-btn" id="btn-build-balistico" data-tower="balistico" title="Centinela Balístico [1]">
-              <span class="tower-btn-icon">🎯</span>
+            <button type="button" class="tower-build-btn" id="btn-build-balistico" data-tower="balistico" title="Torreta Centinela [1]">
+              <span class="tower-btn-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 16a6 6 0 1 1 6-6 6 6 0 0 1-6 6z"/><path d="M12 8a4 4 0 1 0 4 4 4 4 0 0 0-4-4z"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+              </span>
               <div class="tower-btn-info">
                 <span class="tower-btn-name">Centinela</span>
-                <span class="tower-btn-cost">100 🪙</span>
+                <span class="tower-btn-cost">100 Oro</span>
               </div>
             </button>
             <!-- 2. Mortero -->
-            <button type="button" class="tower-build-btn" id="btn-build-mortero" data-tower="mortero" title="Mortero de Fragmentación [2]">
-              <span class="tower-btn-icon">💣</span>
+            <button type="button" class="tower-build-btn" id="btn-build-mortero" data-tower="mortero" title="Mortero Pesado [2]">
+              <span class="tower-btn-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M11 13a7 7 0 1 0 7-7 7 7 0 0 0-7 7zM16 6l3-3M20 2l2 2M15 3h3v3"/></svg>
+              </span>
               <div class="tower-btn-info">
                 <span class="tower-btn-name">Mortero</span>
-                <span class="tower-btn-cost">140 🪙</span>
+                <span class="tower-btn-cost">140 Oro</span>
               </div>
             </button>
             <!-- 3. Rayo -->
-            <button type="button" class="tower-build-btn" id="btn-build-rayo" data-tower="rayo" title="Emisor Prismático [3]">
-              <span class="tower-btn-icon">⚡</span>
+            <button type="button" class="tower-build-btn" id="btn-build-rayo" data-tower="rayo" title="Proyector Láser [3]">
+              <span class="tower-btn-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+              </span>
               <div class="tower-btn-info">
-                <span class="tower-btn-name">Prisma</span>
-                <span class="tower-btn-cost">160 🪙</span>
+                <span class="tower-btn-name">Láser</span>
+                <span class="tower-btn-cost">160 Oro</span>
               </div>
             </button>
             <!-- 4. Criogénica -->
-            <button type="button" class="tower-build-btn" id="btn-build-crio" data-tower="crio" title="Torre Criogénica [4]">
-              <span class="tower-btn-icon">❄️</span>
+            <button type="button" class="tower-build-btn" id="btn-build-crio" data-tower="crio" title="Dispersor Criogénico [4]">
+              <span class="tower-btn-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M2 12h20M4.93 4.93l14.14 14.14M19.07 4.93L4.93 19.07"/></svg>
+              </span>
               <div class="tower-btn-info">
                 <span class="tower-btn-name">Criogénica</span>
-                <span class="tower-btn-cost">120 🪙</span>
+                <span class="tower-btn-cost">120 Oro</span>
               </div>
             </button>
             <!-- 5. Obelisco -->
-            <button type="button" class="tower-build-btn" id="btn-build-obelisco" data-tower="obelisco" title="Obelisco de Apoyo [5]">
-              <span class="tower-btn-icon">🏛️</span>
+            <button type="button" class="tower-build-btn" id="btn-build-obelisco" data-tower="obelisco" title="Obelisco de Señal [5]">
+              <span class="tower-btn-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M5 21h14v-2H5v2zM7 19l1.5-11h7L17 19H7zM6 4h3v3H6zM11 4h2v3h-2zM15 4h3v3h-3z"/></svg>
+              </span>
               <div class="tower-btn-info">
                 <span class="tower-btn-name">Obelisco</span>
-                <span class="tower-btn-cost">150 🪙</span>
+                <span class="tower-btn-cost">150 Oro</span>
               </div>
             </button>
             <!-- 6. Francotirador -->
-            <button type="button" class="tower-build-btn" id="btn-build-sniper" data-tower="francotirador" title="Cañón de Precisión [6]">
-              <span class="tower-btn-icon">🔭</span>
+            <button type="button" class="tower-build-btn" id="btn-build-sniper" data-tower="francotirador" title="Cañón Francotirador [6]">
+              <span class="tower-btn-icon">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8zM12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+              </span>
               <div class="tower-btn-info">
-                <span class="tower-btn-name">Precisión</span>
-                <span class="tower-btn-cost">180 🪙</span>
+                <span class="tower-btn-name">Francotirador</span>
+                <span class="tower-btn-cost">180 Oro</span>
               </div>
             </button>
             <!-- Cancelar colocación -->
             <button type="button" class="cancel-build-btn hidden" id="btn-cancel-build">
-              ✕ Cancelar
+              Cancelar
             </button>
           </div>
         </div>
+        <div class="scroll-indicator-fade right" id="scroll-fade-right"></div>
+      </div>
 
-        <!-- Botón de Iniciar Oleada -->
-        <div class="wave-action-container">
-          <button type="button" class="start-wave-btn" id="btn-start-wave">
-            ⚔️ INICIAR ASALTO
-          </button>
-        </div>
+      <!-- Botón Principal Prominente de Iniciar Oleada -->
+      <div class="wave-action-container">
+        <button type="button" class="start-wave-btn" id="btn-start-wave">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:6px;"><path d="M14.5 17.5L3 6V3h3l11.5 11.5M13 19l2 2 4-4-2-2M19 5l2 2-7.5 7.5-2-2L19 5zM5 19l2 2 2-2-2-2-2 2z"/></svg>INICIAR ASALTO
+        </button>
+      </div>
 
-        <!-- Inspector de Torre Seleccionada (Nivel, Mejoras y Ramas) -->
-        <div class="tower-inspector-dock hidden" id="tower-inspector">
+      <!-- Panel Inferior de Inspección de Torre (Bottom Sheet deslizable) -->
+      <div class="tower-inspector-sheet hidden" id="tower-inspector">
+        <div class="inspector-handle"></div>
+        <div class="inspector-header">
           <div class="inspector-info">
-            <span class="inspector-title" id="inspector-name">Centinela Balístico</span>
+            <span class="inspector-title" id="inspector-name">Torreta Centinela</span>
             <span class="inspector-details" id="inspector-stats">Daño: 25 | Cadencia: 1.2s | Alcance: 3.2c</span>
           </div>
-          <div class="inspector-actions">
-            <!-- Botón de Mejora Lvl 2 y 3 -->
-            <button type="button" class="upgrade-btn hidden" id="btn-upgrade-tower">
-              ⭐ Mejorar
-            </button>
-            <!-- Botones de Especialización Rama A y B (Lvl 4) -->
-            <button type="button" class="branch-btn hidden" id="btn-branch-a">
-              🔱 Rama A
-            </button>
-            <button type="button" class="branch-btn hidden" id="btn-branch-b">
-              💥 Rama B
-            </button>
-            <!-- Prioridad de Apuntado -->
-            <button type="button" class="priority-btn" id="btn-toggle-priority" title="Cambiar prioridad de apuntado">
-              🎯 <span id="priority-label">Primero</span>
-            </button>
-            <!-- Vender -->
-            <button type="button" class="sell-btn" id="btn-sell-tower">
-              🪙 Vender (+70)
-            </button>
-            <!-- Cerrar Inspector -->
-            <button type="button" class="close-inspector-btn" id="btn-close-inspector" aria-label="Cerrar panel">
-              ✕
-            </button>
-          </div>
+          <button type="button" class="close-inspector-btn" id="btn-close-inspector" aria-label="Cerrar panel">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
         </div>
-      </footer>
+        <div class="inspector-actions">
+          <button type="button" class="upgrade-btn hidden" id="btn-upgrade-tower">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" style="vertical-align:middle;margin-right:3px;"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>Mejorar
+          </button>
+          <button type="button" class="branch-btn hidden" id="btn-branch-a">Rama A</button>
+          <button type="button" class="branch-btn hidden" id="btn-branch-b">Rama B</button>
+          <button type="button" class="priority-btn" id="btn-toggle-priority" title="Cambiar prioridad de apuntado">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="vertical-align:middle;margin-right:3px;"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 16a6 6 0 1 1 6-6 6 6 0 0 1-6 6z"/><path d="M12 8a4 4 0 1 0 4 4 4 4 0 0 0-4-4z"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg><span id="priority-label">Primero</span>
+          </button>
+          <button type="button" class="sell-btn" id="btn-sell-tower">Vender</button>
+        </div>
+      </div>
+    </footer>
 
       <!-- Modal de Inicio -->
       <div class="overlay-modal" id="start-modal">
         <div class="modal-card">
-          <div class="bastion-crest-icon">🛡️</div>
+          <div class="bastion-crest-icon">
+            <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2L4 5v6.09c0 5.05 3.41 9.76 8 10.91 4.59-1.15 8-5.86 8-10.91V5l-8-3z"/></svg>
+          </div>
           <h2 class="modal-title">BASTIÓN</h2>
           <p class="modal-subtitle">Defensa Estratégica del Núcleo Arcano</p>
 
           <div class="instructions-box">
             <div class="instruction-row">
-              <span class="inst-icon">🎯</span>
-              <span class="inst-text"><strong>6 Torres Especializadas:</strong> Balístico (rápido), Mortero (área), Prisma (perforante), Crio (ralentiza), Obelisco (potencia vecinas) y Precisión (largo alcance).</span>
+              <span class="inst-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 16a6 6 0 1 1 6-6 6 6 0 0 1-6 6z"/><path d="M12 8a4 4 0 1 0 4 4 4 4 0 0 0-4-4z"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+              </span>
+              <span class="inst-text"><strong>6 Torres Especializadas:</strong> Torreta Centinela (rápido), Mortero Pesado (área), Proyector Láser (perforante), Dispersor Criogénico (ralentiza), Obelisco de Señal (potencia vecinas) y Cañón Francotirador (largo alcance).</span>
             </div>
             <div class="instruction-row">
-              <span class="inst-icon">⭐</span>
+              <span class="inst-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+              </span>
               <span class="inst-text"><strong>Mejoras y Ramas:</strong> Mejora cada torre hasta nivel 3 y elige entre 2 ramas únicas de especialización en nivel 4.</span>
             </div>
             <div class="instruction-row">
-              <span class="inst-icon">👾</span>
-              <span class="inst-text"><strong>6 Tipos de Enemigos + Jefes:</strong> Blindados, voladores etéreos, regeneradores y divisores. Enfréntate al Titán en las oleadas 10 y 20.</span>
+              <span class="inst-icon">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2C6.5 2 2 6.5 2 12c0 3.5 1.8 6.6 4.6 8.4l1.4-2.4C6.2 16.6 5 14.4 5 12c0-3.9 3.1-7 7-7s7 3.1 7 7c0 2.4-1.2 4.6-3 6l1.4 2.4C20.2 18.6 22 15.5 22 12c0-5.5-4.5-10-10-10z"/><circle cx="8" cy="11" r="1.5" fill="currentColor"/><circle cx="16" cy="11" r="1.5" fill="currentColor"/></svg>
+              </span>
+              <span class="inst-text"><strong>6 Tipos de Enemigos y Jefes:</strong> Blindados, voladores etéreos, regeneradores y divisores. Enfréntate al Coloso en las oleadas 10 y 20.</span>
             </div>
           </div>
 
@@ -257,20 +305,20 @@
 
           <!-- Pestañas de Modo (Campaña vs Sin Fin) (Fase 5) -->
           <div class="mode-tabs" id="mode-tabs">
-            <button type="button" class="mode-tab active" id="btn-mode-campaign" data-mode="campaign">🛡️ CAMPAÑA (20 W)</button>
-            <button type="button" class="mode-tab" id="btn-mode-endless" data-mode="endless">♾️ MODO SIN FIN</button>
+            <button type="button" class="mode-tab active" id="btn-mode-campaign" data-mode="campaign">CAMPAÑA (20 W)</button>
+            <button type="button" class="mode-tab" id="btn-mode-endless" data-mode="endless">MODO SIN FIN</button>
           </div>
 
           <!-- Banner Récord Modo Sin Fin -->
           <div class="endless-banner hidden" id="endless-record-banner">
-            <span>♾️ RÉCORD MODO SIN FIN: <strong>OLEADA <span id="endless-record-val">0</span></strong></span>
+            <span>RÉCORD MODO SIN FIN: <strong>OLEADA <span id="endless-record-val">0</span></strong></span>
           </div>
 
           <!-- Pestañas de Dificultad -->
           <div class="diff-tabs" id="diff-tabs">
-            <button type="button" class="diff-tab active" data-diff="normal">🛡️ NORMAL</button>
-            <button type="button" class="diff-tab" data-diff="heroico">⚔️ HEROICO (+50% 🟣)</button>
-            <button type="button" class="diff-tab" data-diff="pesadilla">💀 PESADILLA (+100% 🟣)</button>
+            <button type="button" class="diff-tab active" data-diff="normal">NORMAL</button>
+            <button type="button" class="diff-tab" data-diff="heroico">HEROICO (+50% Esquirlas)</button>
+            <button type="button" class="diff-tab" data-diff="pesadilla">PESADILLA (+100% Esquirlas)</button>
           </div>
 
           <!-- Mutadores Opcionales -->
@@ -330,7 +378,7 @@
 
           <div class="modal-actions" style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
             <button type="button" class="arcade-btn-danger-sm" id="btn-reset-campaign-data">
-              🗑️ Reiniciar Progreso
+              Reiniciar Progreso
             </button>
             <button type="button" class="arcade-btn-secondary" onclick="document.getElementById('maps-modal').classList.add('hidden')">
               CERRAR
@@ -342,12 +390,14 @@
       <!-- Modal de Metaprogreso (Templo del Nexo) -->
       <div class="overlay-modal hidden" id="modal-meta">
         <div class="modal-card meta-panel">
-          <div class="bastion-crest-icon">🔮</div>
+          <div class="bastion-crest-icon">
+            <svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor"><path d="M12 2l2.4 7.4L22 12l-7.6 2.6L12 22l-2.4-7.4L2 12l7.6-2.6L12 2z"/></svg>
+          </div>
           <h2 class="modal-title">TEMPLO DEL NEXO</h2>
           <p class="modal-subtitle">Canjea tus Esquirlas del Vacío en mejoras pasivas permanentes:</p>
 
           <div class="meta-shards-banner">
-            <span style="font-size: 24px;">🟣</span>
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"><path d="M12 2L4 12l8 10 8-10L12 2zM12 2v20"/></svg>
             <span class="meta-shards-val" id="meta-shards-count">0</span>
             <span style="color: #94a3b8; font-size: 0.82rem; font-weight: 700;">Esquirlas Disponibles</span>
           </div>
@@ -358,7 +408,7 @@
 
           <div class="modal-actions" style="margin-top: 14px; display: flex; justify-content: space-between; align-items: center;">
             <button type="button" class="arcade-btn-danger-sm" id="btn-reset-meta-data">
-              🗑️ Reiniciar Todo
+              Reiniciar Todo
             </button>
             <button type="button" class="arcade-btn-primary" id="btn-close-meta">
               VOLVER A LA DEFENSA
@@ -370,7 +420,9 @@
       <!-- Modal de Elección de Reliquias (Roguelike Artifact Card Pick) -->
       <div class="overlay-modal hidden" id="modal-relics">
         <div class="modal-card" style="max-width: 620px;">
-          <div class="bastion-crest-icon">✨</div>
+          <div class="bastion-crest-icon">
+            <svg viewBox="0 0 24 24" width="44" height="44" fill="currentColor"><path d="M12 2l2.4 7.4L22 12l-7.6 2.6L12 22l-2.4-7.4L2 12l7.6-2.6L12 2z"/></svg>
+          </div>
           <h2 class="modal-title">RELIQUIA ARCANA</h2>
           <p class="modal-subtitle">Has superado un hito defensivo. Elige un artefacto para tu bastión:</p>
 
@@ -380,11 +432,23 @@
         </div>
       </div>
 
-      <!-- Modal de Pausa -->
+      <!-- Modal de Pausa y Ajustes -->
       <div class="overlay-modal hidden" id="pause-modal">
         <div class="modal-card">
-          <h2 class="modal-title">PAUSA</h2>
+          <h2 class="modal-title">PAUSA Y AJUSTES</h2>
           <p class="modal-subtitle">El asedio está en pausa</p>
+
+          <div class="pause-settings-box">
+            <label class="setting-toggle-row">
+              <input type="checkbox" id="setting-screen-shake" checked>
+              <span>Temblor de pantalla (Screen Shake)</span>
+            </label>
+            <label class="setting-toggle-row">
+              <input type="checkbox" id="setting-onetap-build">
+              <span>Colocación rápida (Toque único)</span>
+            </label>
+          </div>
+
           <div class="modal-actions">
             <button id="btn-resume" class="arcade-btn-primary">REANUDAR</button>
             <button id="btn-restart" class="arcade-btn-secondary">REINICIAR SECTOR</button>
@@ -394,14 +458,33 @@
         </div>
       </div>
 
+      <!-- Modal de Radar Táctico (Intel de Oleada) -->
+      <div class="overlay-modal hidden" id="intel-modal">
+        <div class="modal-card" style="max-width: 440px;">
+          <div class="bastion-crest-icon">
+            <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/><path d="M12 6a6 6 0 1 0 6 6 6 6 0 0 0-6-6z"/><path d="M12 2v10l7 7"/></svg>
+          </div>
+          <h2 class="modal-title" id="intel-modal-title">RADAR TÁCTICO</h2>
+          <p class="modal-subtitle" id="intel-modal-subtitle">Composición del próximo asalto invasor:</p>
+          <div class="intel-enemies-list" id="intel-enemies-list">
+            <!-- Rellenado dinámicamente -->
+          </div>
+          <div class="modal-actions" style="margin-top: 14px;">
+            <button type="button" class="arcade-btn-primary" id="btn-close-intel">ENTENDIDO</button>
+          </div>
+        </div>
+      </div>
+
       <!-- Modal de Victoria Táctica -->
       <div class="overlay-modal hidden" id="victory-modal">
         <div class="modal-card" style="max-width: 480px;">
-          <div class="bastion-crest-icon" style="color: #10b981;">🏆</div>
-          <h2 class="modal-title" style="color: #10b981;">¡BASTIÓN DEFENDIDO!</h2>
-          <p class="modal-subtitle">Has resistido las 20 oleadas del cataclismo</p>
+          <div class="bastion-crest-icon" style="color: #10b981;">
+            <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V4h12v5a6 6 0 0 1-12 0zM6 6H3a2 2 0 0 0-2 2v1a4 4 0 0 0 4 4h1M18 6h3a2 2 0 0 1 2 2v1a4 4 0 0 1-4 4h-1M12 15v4M8 19h8v2H8z"/></svg>
+          </div>
+          <h2 class="modal-title" style="color: #10b981;">BASTIÓN DEFENDIDO</h2>
+          <p class="modal-subtitle">Has resistido las 20 oleadas del asalto</p>
 
-          <div class="stars-banner" id="vic-stars">★★★</div>
+          <div class="stars-banner" id="vic-stars"></div>
 
           <div class="stats-grid-detailed">
             <div class="stat-box">
@@ -417,24 +500,30 @@
               <span class="stat-box-val" id="vic-stat-gold">0</span>
             </div>
             <div class="stat-box">
-              <span class="stat-box-label">Esquirlas del Vacío Ganadas</span>
-              <span class="stat-box-val shards" id="vic-stat-shards">+0 🟣</span>
+              <span class="stat-box-label">Esquirlas Ganadas</span>
+              <span class="stat-box-val shards" id="vic-stat-shards">+0</span>
             </div>
             <div class="stat-box" style="grid-column: span 2;">
               <span class="stat-box-label">Torre Más Valiosa (MVP)</span>
-              <span class="stat-box-val" id="vic-stat-mvp" style="color: #f59e0b;">Centinela Balístico</span>
+              <span class="stat-box-val" id="vic-stat-mvp" style="color: #f59e0b;">Torreta Centinela</span>
             </div>
           </div>
 
-          <div class="modal-actions">
-            <button id="btn-victory-meta" class="arcade-btn-primary">
-              TEMPLO DEL NEXO (MEJORAS)
+          <div class="modal-actions victory-actions-grid">
+            <button id="btn-victory-endless" class="arcade-btn-primary">
+              CONTINUAR EN MODO SIN FIN
             </button>
-            <button id="btn-victory-restart" class="arcade-btn-secondary">
-              JUGAR SIGUIENTE SECTOR
+            <button id="btn-victory-next" class="arcade-btn-secondary">
+              SIGUIENTE MAPA
+            </button>
+            <button id="btn-victory-maps" class="arcade-btn-secondary">
+              MENÚ DE MAPAS
+            </button>
+            <button id="btn-victory-meta" class="arcade-btn-secondary">
+              TEMPLO DEL NEXO
             </button>
             <a href="../../index.html" class="arcade-btn-danger">
-              MENÚ PRINCIPAL
+              SALIR AL MENÚ
             </a>
           </div>
         </div>
@@ -443,7 +532,9 @@
       <!-- Modal de Fin de Partida (Derrota) -->
       <div class="overlay-modal hidden" id="gameover-modal">
         <div class="modal-card" style="max-width: 480px;">
-          <div class="bastion-crest-icon">💥</div>
+          <div class="bastion-crest-icon" style="color: #ef4444;">
+            <svg viewBox="0 0 24 24" width="44" height="44" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a8 8 0 0 0-8 8c0 3 2 5.5 4 6.5V19h8v-2.5c2-1 4-3.5 4-6.5a8 8 0 0 0-8-8zM9 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM15 10a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3zM10 19v3h4v-3"/></svg>
+          </div>
           <h2 class="modal-title danger-title">EL NÚCLEO HA CAÍDO</h2>
           <p class="modal-subtitle">Las defensas del bastión fueron sobrepasadas</p>
 
@@ -462,7 +553,7 @@
             </div>
             <div class="stat-box">
               <span class="stat-box-label">Esquirlas Rescatadas</span>
-              <span class="stat-box-val shards" id="res-shards">+0 🟣</span>
+              <span class="stat-box-val shards" id="res-shards">+0</span>
             </div>
           </div>
 
@@ -483,18 +574,18 @@
       <!-- Panel de Depuración (?debug=1) (Fase 5) -->
       <div id="debug-panel" class="debug-panel hidden">
         <div class="debug-header">
-          <span class="debug-title">🛠️ BASTIÓN DEBUG</span>
+          <span class="debug-title">BASTIÓN DEBUG</span>
           <span class="debug-fps" id="debug-fps">60 FPS</span>
         </div>
         <div class="debug-stats" id="debug-stats">
           Entidades: 0 | Oleada: 0 | Oro: 0
         </div>
         <div class="debug-actions">
-          <button type="button" class="dbg-btn" id="dbg-btn-gold">+1000 🪙</button>
-          <button type="button" class="dbg-btn" id="dbg-btn-lives">+50 ❤️</button>
-          <button type="button" class="dbg-btn" id="dbg-btn-skip">⚡ Saltar W</button>
-          <button type="button" class="dbg-btn" id="dbg-btn-kill">☠️ Nuke</button>
-          <button type="button" class="dbg-btn" id="dbg-btn-speed">⏩ 5x</button>
+          <button type="button" class="dbg-btn" id="dbg-btn-gold">+1000 Oro</button>
+          <button type="button" class="dbg-btn" id="dbg-btn-lives">+50 Vidas</button>
+          <button type="button" class="dbg-btn" id="dbg-btn-skip">Saltar Oleada</button>
+          <button type="button" class="dbg-btn" id="dbg-btn-kill">Eliminar Invasores</button>
+          <button type="button" class="dbg-btn" id="dbg-btn-speed">Velocidad 5x</button>
         </div>
       </div>
     </main>
@@ -508,6 +599,7 @@
 
   <!-- Dependencias compartidas y scripts del juego -->
   <script src="../../shared/storage.js"></script>
+  <script src="../../shared/icons.js"></script>
   <script src="../../shared/canvas.js"></script>
   <script src="../../shared/audio.js"></script>
   <script src="../../shared/juice.js"></script>

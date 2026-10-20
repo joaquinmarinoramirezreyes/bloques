@@ -9,7 +9,7 @@
     // 1. DISPARO RÁPIDO
     balistico: {
       id: 'balistico',
-      name: 'Centinela Balístico',
+      name: 'Torreta Centinela',
       desc: 'Torreta de percusión continua que dispara ráfagas de proyectiles cinéticos.',
       role: 'Disparo Rápido',
       cost: 100,
@@ -23,9 +23,9 @@
       color: '#0284c7',
       turretColor: '#38bdf8',
       levels: [
-        { level: 1, cost: 100, damage: 25, fireRate: 1.2, range: 3.2, name: 'Centinela Balístico I' },
-        { level: 2, upgradeCost: 85, damage: 45, fireRate: 1.5, range: 3.5, name: 'Centinela Balístico II' },
-        { level: 3, upgradeCost: 140, damage: 75, fireRate: 1.8, range: 3.8, name: 'Centinela Balístico III' }
+        { level: 1, cost: 100, damage: 25, fireRate: 1.2, range: 3.2, name: 'Torreta Centinela I' },
+        { level: 2, upgradeCost: 85, damage: 45, fireRate: 1.5, range: 3.5, name: 'Torreta Centinela II' },
+        { level: 3, upgradeCost: 140, damage: 75, fireRate: 1.8, range: 3.8, name: 'Torreta Centinela III' }
       ],
       branches: {
         a: {
@@ -57,7 +57,7 @@
     // 2. CAÑÓN DE ÁREA
     mortero: {
       id: 'mortero',
-      name: 'Mortero de Fragmentación',
+      name: 'Mortero Pesado',
       desc: 'Lanza proyectiles explosivos pesados con impacto en área de efecto.',
       role: 'Daño en Área',
       cost: 140,
@@ -72,9 +72,9 @@
       color: '#c2410c',
       turretColor: '#fb923c',
       levels: [
-        { level: 1, cost: 140, damage: 65, fireRate: 0.55, range: 4.2, splashRadius: 1.2, name: 'Mortero I' },
-        { level: 2, upgradeCost: 110, damage: 115, fireRate: 0.65, range: 4.5, splashRadius: 1.4, name: 'Mortero II' },
-        { level: 3, upgradeCost: 170, damage: 190, fireRate: 0.75, range: 4.8, splashRadius: 1.6, name: 'Mortero III' }
+        { level: 1, cost: 140, damage: 65, fireRate: 0.55, range: 4.2, splashRadius: 1.2, name: 'Mortero Pesado I' },
+        { level: 2, upgradeCost: 110, damage: 115, fireRate: 0.65, range: 4.5, splashRadius: 1.4, name: 'Mortero Pesado II' },
+        { level: 3, upgradeCost: 170, damage: 190, fireRate: 0.75, range: 4.8, splashRadius: 1.6, name: 'Mortero Pesado III' }
       ],
       branches: {
         a: {
@@ -111,7 +111,7 @@
     // 3. RAYO QUE ATRAVIESA
     rayo: {
       id: 'rayo',
-      name: 'Emisor Prismático',
+      name: 'Proyector Láser',
       desc: 'Haz de partículas concentradas que atraviesa a todos los enemigos en línea recta e ignora armadura.',
       role: 'Perforación de Línea',
       cost: 160,
@@ -127,9 +127,9 @@
       color: '#7e22ce',
       turretColor: '#c084fc',
       levels: [
-        { level: 1, cost: 160, damage: 42, fireRate: 0.9, range: 3.8, name: 'Emisor Prismático I' },
-        { level: 2, upgradeCost: 125, damage: 78, fireRate: 1.1, range: 4.1, name: 'Emisor Prismático II' },
-        { level: 3, upgradeCost: 190, damage: 135, fireRate: 1.3, range: 4.4, name: 'Emisor Prismático III' }
+        { level: 1, cost: 160, damage: 42, fireRate: 0.9, range: 3.8, name: 'Proyector Láser I' },
+        { level: 2, upgradeCost: 125, damage: 78, fireRate: 1.1, range: 4.1, name: 'Proyector Láser II' },
+        { level: 3, upgradeCost: 190, damage: 135, fireRate: 1.3, range: 4.4, name: 'Proyector Láser III' }
       ],
       branches: {
         a: {
@@ -142,8 +142,8 @@
           range: 4.6,
           piercing: true,
           ignoresArmor: true,
-          projectileColor: '#e879f9',
-          turretColor: '#d946ef'
+          projectileColor: '#e5c158',
+          turretColor: '#b8860b'
         },
         b: {
           id: 'bobina_tesla',
@@ -163,7 +163,7 @@
     // 4. RALENTIZADORA
     crio: {
       id: 'crio',
-      name: 'Torre Criogénica',
+      name: 'Dispersor Criogénico',
       desc: 'Dispersa pulsos de frío glacial que ralentizan el avance de las criaturas en su radio.',
       role: 'Control y Ralentización',
       cost: 120,
@@ -179,9 +179,9 @@
       color: '#0891b2',
       turretColor: '#67e8f9',
       levels: [
-        { level: 1, cost: 120, damage: 18, fireRate: 1.1, range: 3.2, slowFactor: 0.35, name: 'Torre Criogénica I' },
-        { level: 2, upgradeCost: 95, damage: 32, fireRate: 1.3, range: 3.5, slowFactor: 0.45, name: 'Torre Criogénica II' },
-        { level: 3, upgradeCost: 150, damage: 52, fireRate: 1.5, range: 3.8, slowFactor: 0.55, name: 'Torre Criogénica III' }
+        { level: 1, cost: 120, damage: 18, fireRate: 1.1, range: 3.2, slowFactor: 0.35, name: 'Dispersor Criogénico I' },
+        { level: 2, upgradeCost: 95, damage: 32, fireRate: 1.3, range: 3.5, slowFactor: 0.45, name: 'Dispersor Criogénico II' },
+        { level: 3, upgradeCost: 150, damage: 52, fireRate: 1.5, range: 3.8, slowFactor: 0.55, name: 'Dispersor Criogénico III' }
       ],
       branches: {
         a: {
@@ -217,7 +217,7 @@
     // 5. APOYO Y BUFF A VECINAS
     obelisco: {
       id: 'obelisco',
-      name: 'Obelisco de Resonancia',
+      name: 'Obelisco de Señal',
       desc: 'Estructura pasiva que emite ondas armónicas que incrementan el daño y alcance de las torres vecinas.',
       role: 'Apoyo Táctico',
       cost: 150,
@@ -229,9 +229,9 @@
       color: '#15803d',
       turretColor: '#4ade80',
       levels: [
-        { level: 1, cost: 150, range: 2.4, damageBuff: 0.20, rangeBuff: 0.10, name: 'Obelisco I' },
-        { level: 2, upgradeCost: 120, range: 2.7, damageBuff: 0.30, rangeBuff: 0.15, name: 'Obelisco II' },
-        { level: 3, upgradeCost: 180, range: 3.0, damageBuff: 0.40, rangeBuff: 0.20, fireRateBuff: 0.15, name: 'Obelisco III' }
+        { level: 1, cost: 150, range: 2.4, damageBuff: 0.20, rangeBuff: 0.10, name: 'Obelisco de Señal I' },
+        { level: 2, upgradeCost: 120, range: 2.7, damageBuff: 0.30, rangeBuff: 0.15, name: 'Obelisco de Señal II' },
+        { level: 3, upgradeCost: 180, range: 3.0, damageBuff: 0.40, rangeBuff: 0.20, fireRateBuff: 0.15, name: 'Obelisco de Señal III' }
       ],
       branches: {
         a: {
@@ -262,7 +262,7 @@
     // 6. FRANCOTIRADORA
     francotirador: {
       id: 'francotirador',
-      name: 'Cañón de Precisión',
+      name: 'Cañón Francotirador',
       desc: 'Disparo cinético de ultra-largo alcance que inflige enorme daño singular con proyectil hipersónico.',
       role: 'Largo Alcance',
       cost: 180,
@@ -276,9 +276,9 @@
       color: '#be123c',
       turretColor: '#f43f5e',
       levels: [
-        { level: 1, cost: 180, damage: 130, fireRate: 0.42, range: 6.2, name: 'Cañón de Precisión I' },
-        { level: 2, upgradeCost: 140, damage: 240, fireRate: 0.48, range: 6.8, name: 'Cañón de Precisión II' },
-        { level: 3, upgradeCost: 210, damage: 410, fireRate: 0.55, range: 7.4, name: 'Cañón de Precisión III' }
+        { level: 1, cost: 180, damage: 130, fireRate: 0.42, range: 6.2, name: 'Cañón Francotirador I' },
+        { level: 2, upgradeCost: 140, damage: 240, fireRate: 0.48, range: 6.8, name: 'Cañón Francotirador II' },
+        { level: 3, upgradeCost: 210, damage: 410, fireRate: 0.55, range: 7.4, name: 'Cañón Francotirador III' }
       ],
       branches: {
         a: {

@@ -65,19 +65,19 @@
             </div>
             <div id="diff-desc" class="diff-desc">3 Vidas • Velocidad estándar • Experiencia arcade</div>
           </div>
-          <button type="button" id="btn-start-game" class="btn-launch">▶ DESPEGAR MISIÓN</button>
+          <button type="button" id="btn-start-game" class="btn-launch">DESPEGAR MISIÓN</button>
           <div class="launch-subprompt">O pulsa Espacio / Toca la pantalla</div>
         </div>
 
         <!-- Notificación de Power-Up activo -->
         <div id="powerup-badge" class="powerup-badge hidden">
-          <span id="powerup-icon" class="powerup-icon">⚡</span>
+          <span id="powerup-icon" class="powerup-icon"></span>
           <span id="powerup-text">DISPARO TRIPLE</span>
           <span id="powerup-timer" class="powerup-timer">10s</span>
         </div>
 
         <!-- Banner de racha de bajas -->
-        <div id="streak-banner" class="streak-banner hidden">¡RACHA x2!</div>
+        <div id="streak-banner" class="streak-banner hidden">Racha x2</div>
 
         <!-- Pantalla de Pausa -->
         <div id="overlay-pause" class="game-overlay hidden">
@@ -110,7 +110,7 @@
                 <strong id="final-highscore">0</strong>
               </div>
             </div>
-            <div id="new-record-tag" class="badge-new-record hidden">¡NUEVO RÉCORD!</div>
+            <div id="new-record-tag" class="badge-new-record hidden">Nuevo récord</div>
             <div class="overlay-actions">
               <button id="btn-gameover-restart" class="btn-primary">Reintentar Misión</button>
               <a href="../../index.html" class="btn-secondary">Menú Principal</a>
@@ -132,7 +132,7 @@
           </div>
           <div class="stat-item">
             <span class="stat-title">VIDAS</span>
-            <span id="lives-display" class="stat-value val-lives">♥♥♥</span>
+            <span id="lives-display" class="stat-value val-lives"></span>
           </div>
           <div class="stat-item">
             <span class="stat-title">OLEADA</span>
@@ -160,6 +160,7 @@
   <script src="../../shared/storage.js"></script>
   <script src="../../shared/audio.js"></script>
   <script src="../../shared/canvas.js"></script>
+  <script src="../../shared/icons.js"></script>
   <script src="oleadas.js"></script>
   <script src="game.js"></script>
 </body>

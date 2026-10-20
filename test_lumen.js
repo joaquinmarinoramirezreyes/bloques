@@ -1,151 +1,136 @@
 /**
- * test_lumen.js - Pruebas unitarias en Node para Lumen (Arcade 80s)
+ * test_lumen.js - Pruebas unitarias en Node para Lumen (Pac-Man Style Edition)
  */
 const assert = require('assert');
 const { CONFIG, LumenLogic } = require('./games/lumen/game.js');
 
-console.log('--- INICIANDO TEST: LUMEN (LABERINTO DE LUZ 80s) ---');
+console.log('--- INICIANDO TEST: LUMEN (PAC-MAN STYLE ARCADE 80s) ---');
 
-// 1. Verificación de configuración: 30 niveles en 5 mundos con 5 jefes
-assert.strictEqual(CONFIG.LEVELS.length, 30, 'Deben existir exactamente 30 niveles definidos como datos');
+// 1. Verificación de configuración del juego
+assert.strictEqual(CONFIG.COLS, 15, 'Debe tener 15 columnas en la cuadrícula');
+assert.strictEqual(CONFIG.ROWS, 19, 'Debe tener 19 filas en la cuadrícula');
+assert.strictEqual(CONFIG.TILE_SIZE, 22, 'Tamaño de celda debe ser 22px');
 assert.strictEqual(CONFIG.WORLDS.length, 5, 'Deben existir 5 mundos temáticos');
-assert.strictEqual(CONFIG.CREATURE_TYPES.length >= 7, true, 'Deben existir al menos 7 tipos de criaturas con comportamientos únicos');
-assert.strictEqual(CONFIG.ACHIEVEMENTS.length >= 10, true, 'Deben existir al menos 10 logros');
-assert.strictEqual(CONFIG.UPGRADES.length >= 6, true, 'Deben existir al menos 6 mejoras de talentos');
+assert.strictEqual(CONFIG.SHADOW_TYPES.length, 4, 'Deben existir 4 sombras icónicas (Carmesí, Rosa, Turquesa, Ámbar)');
+assert.strictEqual(CONFIG.ACHIEVEMENTS.length, 10, 'Deben existir exactamente 10 logros');
+assert.strictEqual(CONFIG.LEVEL_TEMPLATES.length, 6, 'Deben existir 6 plantillas maestras de laberinto');
+assert.strictEqual(CONFIG.STARTING_LIVES, 3, 'El jugador debe iniciar con 3 vidas');
+assert.strictEqual(CONFIG.STORAGE_KEY, 'lumen:v2', 'Clave de persistencia debe ser lumen:v2');
 
+// Comprobar mundos y distribución de 30 niveles
 for (let w = 1; w <= 5; w++) {
-  const worldLvls = CONFIG.LEVELS.filter(l => l.world === w);
-  assert.strictEqual(worldLvls.length, 6, `El Mundo ${w} debe contener exactamente 6 niveles`);
-  const bossLvl = worldLvls[worldLvls.length - 1];
-  assert.strictEqual(bossLvl.isBoss, true, `El último nivel del Mundo ${w} (${bossLvl.name}) debe ser un Jefe`);
+  const world = CONFIG.WORLDS.find(item => item.id === w);
+  assert.ok(world, `Mundo ${w} debe estar definido`);
+  assert.ok(world.name, `Mundo ${w} debe tener nombre`);
+  assert.ok(world.color, `Mundo ${w} debe tener color representativo`);
 }
-console.log(`✓ Configuración validada: 30 niveles agrupados en 5 mundos temáticos con 5 jefes y 7 tipos de criaturas`);
+console.log('OK Configuración básica validada: 5 mundos, 4 sombras, 10 logros y 6 plantillas maestras');
 
-// 2. Conectividad de laberintos y alcanzabilidad de faroles en los 30 niveles
-CONFIG.LEVELS.forEach((lvl, idx) => {
-  const parsed = LumenLogic.parseMap(lvl.map);
-
-  // Cantidad de faroles por nivel (entre 6 y 10)
-  assert.strictEqual(
-    parsed.lanterns.length >= 6 && parsed.lanterns.length <= 10,
-    true,
-    `Nivel ${idx + 1} (${lvl.name}) debe tener entre 6 y 10 faroles (encontrados: ${parsed.lanterns.length})`
-  );
-
-  // Laberinto conexo
-  const isConnected = LumenLogic.isMazeConnected(parsed.grid, parsed.playerStart.r, parsed.playerStart.c);
-  assert.strictEqual(
-    isConnected,
-    true,
-    `El laberinto del Nivel ${idx + 1} (${lvl.name}) no es conexo: hay celdas aisladas`
-  );
-
-  // Faroles alcanzables por BFS
-  parsed.lanterns.forEach((lan, lIdx) => {
-    const path = LumenLogic.findPath(
-      parsed.grid,
-      parsed.playerStart.r,
-      parsed.playerStart.c,
-      lan.r,
-      lan.c
-    );
-    assert.notStrictEqual(
-      path,
-      null,
-      `Farol #${lIdx + 1} en [${lan.r}, ${lan.c}] es inalcanzable en el Nivel ${idx + 1}`
-    );
+// 2. Conectividad y alcanzabilidad BFS en las 6 plantillas de laberinto
+CONFIG.LEVEL_TEMPLATES.forEach((tmpl, idx) => {
+  assert.strictEqual(tmpl.length, 19, `Plantilla ${idx} debe tener 19 filas`);
+  tmpl.forEach((line, r) => {
+    assert.strictEqual(line.length, 15, `Plantilla ${idx}, fila ${r} debe tener 15 columnas`);
   });
-});
-console.log('✓ Los 30 niveles son 100% conexos y todos sus faroles (entre 6 y 10 por nivel) son alcanzables por BFS');
 
-// 3. Conectividad de túneles laterales wrap-around (fila 9)
-{
-  const parsed = LumenLogic.parseMap(CONFIG.LEVELS[0].map);
-  const leftTunnel = { r: 9, c: 0 };
-  const rightTunnel = { r: 9, c: parsed.cols - 1 };
+  const parsed = LumenLogic.parseLevel(tmpl);
+  assert.ok(parsed.playerPos, `Plantilla ${idx} debe tener posición inicial de jugador 'P'`);
+  assert.strictEqual(parsed.superDots.length, 4, `Plantilla ${idx} debe contener 4 Super Orbes 'L'`);
+  assert.ok(parsed.houseGhosts.length >= 2, `Plantilla ${idx} debe contener spawns de la casa de sombras 'E'`);
+  assert.ok(parsed.dotsCount >= 120, `Plantilla ${idx} debe contener al menos 120 orbes (encontrados: ${parsed.dotsCount})`);
 
-  const leftNeighbors = LumenLogic.getNeighbors(parsed.grid, leftTunnel.r, leftTunnel.c);
-  const hasWrapRight = leftNeighbors.some(n => n.r === 9 && n.c === parsed.cols - 1);
-  assert.strictEqual(hasWrapRight, true, 'El túnel izquierdo debe conectar con el extremo derecho del laberinto');
+  // BFS para verificar que el 100% de los orbes sean alcanzables desde el spawn del jugador
+  const visited = Array.from({ length: CONFIG.ROWS }, () => Array(CONFIG.COLS).fill(false));
+  const queue = [{ r: parsed.playerPos.r, c: parsed.playerPos.c }];
+  visited[parsed.playerPos.r][parsed.playerPos.c] = true;
 
-  const rightNeighbors = LumenLogic.getNeighbors(parsed.grid, rightTunnel.r, rightTunnel.c);
-  const hasWrapLeft = rightNeighbors.some(n => n.r === 9 && n.c === 0);
-  assert.strictEqual(hasWrapLeft, true, 'El túnel derecho debe conectar con el extremo izquierdo del laberinto');
-
-  console.log('✓ Conectividad de túneles laterales de envoltura (wrap-around) verificada');
-}
-
-// 4. Generador del modo sin fin (Noche Perpetua): 20 semillas probadas
-{
-  for (let s = 1; s <= 20; s++) {
-    const endlessMap = LumenLogic.generateEndlessMaze(s * 104729);
-    const parsed = LumenLogic.parseMap(endlessMap);
-
-    assert.strictEqual(
-      parsed.lanterns.length >= 6 && parsed.lanterns.length <= 10,
-      true,
-      `Modo sin fin (semilla ${s}): debe contener entre 6 y 10 faroles`
-    );
-
-    const isConn = LumenLogic.isMazeConnected(parsed.grid, parsed.playerStart.r, parsed.playerStart.c);
-    assert.strictEqual(isConn, true, `Modo sin fin (semilla ${s}): el laberinto debe ser 100% conexo`);
-
-    for (const lan of parsed.lanterns) {
-      const path = LumenLogic.findPath(parsed.grid, parsed.playerStart.r, parsed.playerStart.c, lan.r, lan.c);
-      assert.notStrictEqual(path, null, `Modo sin fin (semilla ${s}): farol inalcanzable`);
+  while (queue.length > 0) {
+    const curr = queue.shift();
+    const dirs = [[-1, 0], [1, 0], [0, -1], [0, 1]];
+    for (const [dr, dc] of dirs) {
+      let nr = curr.r + dr;
+      let nc = curr.c + dc;
+      // Túnel lateral en fila 9 con wrap-around
+      if (nr === 9 && (nc < 0 || nc >= CONFIG.COLS)) {
+        nc = (nc + CONFIG.COLS) % CONFIG.COLS;
+      }
+      if (nr >= 0 && nr < CONFIG.ROWS && nc >= 0 && nc < CONFIG.COLS) {
+        if (!visited[nr][nc] && tmpl[nr][nc] !== '#') {
+          visited[nr][nc] = true;
+          queue.push({ r: nr, c: nc });
+        }
+      }
     }
   }
-  console.log('✓ Generador procedural del modo sin fin verificado: 20/20 laberintos conexos y 100% resolubles');
-}
 
-// 5. Estado Huida (Flee) de las criaturas: escape hacia la oscuridad
+  // Verificar que todas las celdas con orbes o super orbes fueron visitadas
+  let unreachableDots = 0;
+  for (let r = 0; r < CONFIG.ROWS; r++) {
+    for (let c = 0; c < CONFIG.COLS; c++) {
+      const ch = tmpl[r][c];
+      if ((ch === '.' || ch === 'L') && !visited[r][c]) {
+        unreachableDots++;
+      }
+    }
+  }
+  assert.strictEqual(unreachableDots, 0, `Plantilla ${idx} tiene ${unreachableDots} orbes inalcanzables`);
+
+  // Comprobar que la salida de la casa central de sombras en col 7 no esté bloqueada por un muro
+  for (let r = 7; r <= 9; r++) {
+    assert.notStrictEqual(tmpl[r][7], '#', `Plantilla ${idx}: salida de casa central bloqueada en (${r}, 7)`);
+  }
+});
+console.log('OK Las 6 plantillas de laberinto son 100% conexas y todos sus orbes son alcanzables por BFS');
+
+// 3. Conectividad de túneles laterales de envoltura (wrap-around en fila 9)
 {
-  const parsed = LumenLogic.parseMap(CONFIG.LEVELS[0].map);
-  const lightSources = [{ r: 11, c: 7, radius: 3.0 }];
-
-  const escapeTarget = LumenLogic.findEscapeTarget(parsed.grid, 11, 6, lightSources);
-  assert.notStrictEqual(escapeTarget, null, 'Debe encontrarse un objetivo de huida');
-
-  const distToLight = Math.hypot(escapeTarget.r - 11, escapeTarget.c - 7);
-  assert.strictEqual(distToLight > 3.0, true, 'El objetivo de huida debe situarse en zona de sombra fuera de la luz');
-
-  const path = LumenLogic.findPath(parsed.grid, 11, 6, escapeTarget.r, escapeTarget.c);
-  assert.notStrictEqual(path, null, 'Debe existir una ruta accesible hacia la zona de huida');
-
-  console.log('✓ Algoritmo de evasión de luz y huida hacia zonas de sombra verificado');
+  const tmpl = CONFIG.LEVEL_TEMPLATES[0];
+  const parsed = LumenLogic.parseLevel(tmpl);
+  assert.strictEqual(LumenLogic.isTilePassable(parsed.grid, 9, -1), true, 'Túnel lateral izquierdo debe ser transitable');
+  assert.strictEqual(LumenLogic.isTilePassable(parsed.grid, 9, CONFIG.COLS), true, 'Túnel lateral derecho debe ser transitable');
+  assert.strictEqual(LumenLogic.isTilePassable(parsed.grid, -1, 5), false, 'Fuera de límites vertical no debe ser transitable');
+  assert.strictEqual(LumenLogic.isTilePassable(parsed.grid, CONFIG.ROWS, 5), false, 'Fuera de límites vertical no debe ser transitable');
+  console.log('OK Túneles laterales de transporte cuántico y límites de cuadrícula verificados');
 }
 
-// 6. Estado Caza (Hunt): persecución con BFS
+// 4. Métodos auxiliares de lógica (LumenLogic)
 {
-  const parsed = LumenLogic.parseMap(CONFIG.LEVELS[0].map);
-  const path = LumenLogic.findPath(parsed.grid, 9, 7, 1, 1);
-  assert.notStrictEqual(path, null, 'El BFS de caza debe encontrar camino hacia el jugador');
-  assert.strictEqual(path.length > 0, true);
-  assert.strictEqual(path[path.length - 1].r, 1);
-  assert.strictEqual(path[path.length - 1].c, 1);
+  // Direcciones opuestas
+  const up = { r: -1, c: 0 };
+  const down = { r: 1, c: 0 };
+  const left = { r: 0, c: -1 };
+  const right = { r: 0, c: 1 };
+  assert.strictEqual(LumenLogic.isOpposite(up, down), true, 'Arriba y abajo son opuestos');
+  assert.strictEqual(LumenLogic.isOpposite(left, right), true, 'Izquierda y derecha son opuestos');
+  assert.strictEqual(LumenLogic.isOpposite(up, left), false, 'Arriba e izquierda no son opuestos');
 
-  console.log('✓ Persecución por BFS en estado Caza validada');
+  // Distancias Manhattan y Euclidiana al cuadrado
+  assert.strictEqual(LumenLogic.distManhattan(0, 0, 3, 4), 7, 'Distancia Manhattan de (0,0) a (3,4) debe ser 7');
+  assert.strictEqual(LumenLogic.distSq(0, 0, 3, 4), 25, 'Distancia Euclidiana al cuadrado de (0,0) a (3,4) debe ser 25');
+
+  // Comportamiento de puertas (allowDoor)
+  const tmpl = CONFIG.LEVEL_TEMPLATES[0];
+  const parsed = LumenLogic.parseLevel(tmpl);
+  // En fila 8, col 7 se encuentra la puerta de la casa de sombras ('-')
+  assert.strictEqual(parsed.grid[8][7], 5, 'Celda (8, 7) debe ser tipo puerta (valor 5)');
+  assert.strictEqual(LumenLogic.isTilePassable(parsed.grid, 8, 7, false), false, 'Puerta cerrada para sombras normales');
+  assert.strictEqual(LumenLogic.isTilePassable(parsed.grid, 8, 7, true), true, 'Puerta transitable para sombras en salida o comida');
+  console.log('OK Métodos auxiliares de geometría, distancias y transitabilidad de puertas validados');
 }
 
-// 7. Migración de almacenamiento desde lumen:v1 a lumen:v2
+// 5. Verificación de roles y esquinas de sombras
 {
-  const mockStorage = new Map();
-  const storageInterface = {
-    getItem: (k) => mockStorage.get(k) || null,
-    setItem: (k, v) => mockStorage.set(k, v)
-  };
-
-  mockStorage.set('lumen:v1:best_score', '8500');
-  mockStorage.set('lumen:v1:unlocked', '4');
-  mockStorage.set('lumen:v1:level_0', JSON.stringify({ score: 1200, stars: 3 }));
-
-  const migrated = LumenLogic.migrateV1toV2(storageInterface);
-  assert.strictEqual(migrated, true, 'La migración debe ejecutarse exitosamente');
-  assert.strictEqual(mockStorage.get('lumen:v2:best_score'), '8500', 'El récord debe migrarse');
-  assert.strictEqual(mockStorage.get('lumen:v2:unlocked'), '4', 'Los niveles desbloqueados deben migrarse');
-  assert.strictEqual(mockStorage.has('lumen:v2:lvl_0'), true, 'El nivel 0 debe migrarse');
-
-  console.log('✓ Migración de almacenamiento de lumen:v1 a lumen:v2 verificada con éxito');
+  const expectedCorners = [
+    { r: 1, c: 13 },
+    { r: 1, c: 1 },
+    { r: 17, c: 13 },
+    { r: 17, c: 1 }
+  ];
+  CONFIG.SHADOW_TYPES.forEach((shadow, idx) => {
+    assert.strictEqual(shadow.corner.r, expectedCorners[idx].r);
+    assert.strictEqual(shadow.corner.c, expectedCorners[idx].c);
+  });
+  console.log('OK Las 4 sombras tienen sus 4 esquinas de dispersión correctamente distribuidas');
 }
 
-console.log('--- TODOS LOS TESTS DE LUMEN PASARON EXITOSAMENTE (7/7) ---');
+console.log('--- TODOS LOS TESTS DE LUMEN PASARON EXITOSAMENTE ---');

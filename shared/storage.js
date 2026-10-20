@@ -85,6 +85,20 @@
     },
 
     /**
+     * Alias de get para compatibilidad con la API estándar de Storage
+     */
+    getItem(key, defaultValue = null) {
+      return this.get(key, defaultValue);
+    },
+
+    /**
+     * Alias de set para compatibilidad con la API estándar de Storage
+     */
+    setItem(key, val) {
+      return this.set(key, val);
+    },
+
+    /**
      * Obtiene y parsea un objeto JSON
      */
     getJSON(key, defaultValue = null) {
@@ -109,5 +123,10 @@
     }
   };
 
-  window.ArcadeStorage = ArcadeStorage;
+  if (typeof module !== 'undefined' && module.exports) {
+    module.exports = ArcadeStorage;
+  }
+  if (typeof window !== 'undefined') {
+    window.ArcadeStorage = ArcadeStorage;
+  }
 })();

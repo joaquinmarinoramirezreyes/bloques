@@ -908,8 +908,8 @@
         this.shieldActive = false;
         this.player.invulnerableTimer = 0.9;
         this.shakeTimer = 0.15;
-        this.spawnShockwave(this.player.x, this.player.y, '#00f0ff', 60);
-        this.spawnFloatingText(this.player.x, this.player.y - 18, '¡ESCUDO DEFLECTOR ROTO!', '#00f0ff');
+        this.spawnShockwave(this.player.x, this.player.y, '#ff6b4a', 60);
+        this.spawnFloatingText(this.player.x, this.player.y - 18, 'Escudo deflector agotado', '#ff6b4a');
         this.playDroneLostSound();
         if (window.ArcadeCanvas) window.ArcadeCanvas.haptic(35);
         return;
@@ -984,11 +984,18 @@
 
       const d = CONFIG.DIFFICULTIES[this.difficulty] || CONFIG.DIFFICULTIES.PILOTO;
       const totalHearts = Math.max(d.lives, this.lives);
-      let hearts = '';
-      for (let i = 0; i < totalHearts; i++) {
-        hearts += i < this.lives ? '♥' : '♡';
+      if (window.ArcadeIcons) {
+        let html = '';
+        for (let i = 0; i < totalHearts; i++) {
+          html += window.ArcadeIcons.get('heart', {
+            size: 16,
+            color: i < this.lives ? '#f97316' : 'rgba(255, 255, 255, 0.2)'
+          });
+        }
+        this.livesDisplay.innerHTML = html;
+      } else {
+        this.livesDisplay.textContent = `${this.lives}/${totalHearts}`;
       }
-      this.livesDisplay.textContent = hearts;
     }
 
     resizeCanvas() {
@@ -1063,7 +1070,7 @@
         this.spawnEngineSpark(this.player.x - 6, this.player.y + 14, '#38bdf8');
         this.spawnEngineSpark(this.player.x + 6, this.player.y + 14, '#38bdf8');
         if (this.drone.docked) {
-          this.spawnEngineSpark(this.drone.x, this.drone.y + 8, '#00f0ff');
+          this.spawnEngineSpark(this.drone.x, this.drone.y + 8, '#ff6b4a');
         }
       }
 
@@ -1330,7 +1337,7 @@
               this.playHitSound();
               if (this.boss.leftWingHp <= 0) {
                 this.spawnShockwave(this.boss.x - 42, this.boss.y + 4, '#f59e0b', 50);
-                this.spawnFloatingText(this.boss.x - 42, this.boss.y - 12, '+300 ¡ALA IZQ!', '#f59e0b');
+                this.spawnFloatingText(this.boss.x - 42, this.boss.y - 12, '+300 Ala izquierda', '#f59e0b');
                 this.score += 300 * this.streak;
                 this.playExplosionSound();
               }
@@ -1349,7 +1356,7 @@
               this.playHitSound();
               if (this.boss.rightWingHp <= 0) {
                 this.spawnShockwave(this.boss.x + 42, this.boss.y + 4, '#f59e0b', 50);
-                this.spawnFloatingText(this.boss.x + 42, this.boss.y - 12, '+300 ¡ALA DER!', '#f59e0b');
+                this.spawnFloatingText(this.boss.x + 42, this.boss.y - 12, '+300 Ala derecha', '#f59e0b');
                 this.score += 300 * this.streak;
                 this.playExplosionSound();
               }
@@ -1376,7 +1383,7 @@
               const d = CONFIG.DIFFICULTIES[this.difficulty] || CONFIG.DIFFICULTIES.PILOTO;
               const killPts = Math.round(this.boss.scoreKill * d.scoreMult * this.streak);
               this.score += killPts;
-              this.spawnFloatingText(this.boss.x, this.boss.y - 20, `+${killPts} ¡JEFE DESTRUIDO!`, '#ec4899');
+              this.spawnFloatingText(this.boss.x, this.boss.y - 20, `+${killPts} Jefe destruido`, '#ec4899');
               this.playExplosionSound();
               this.playBonusFanfare(true);
             }
@@ -1405,7 +1412,7 @@
             this.drone.y = this.player.y + 2;
             this.drone.rotorAngle = 0;
             this.spawnShockwave(this.drone.x, this.drone.y, '#38bdf8', 45);
-            this.spawnFloatingText(this.drone.x, this.drone.y - 18, '¡DRON DE ESCOLTA!', '#38bdf8');
+            this.spawnFloatingText(this.drone.x, this.drone.y - 18, 'Dron de escolta', '#38bdf8');
             this.playDroneDockSound();
             if (window.ArcadeCanvas) window.ArcadeCanvas.haptic(35);
             this.spawnExplosionParticles(this.drone.x, this.drone.y, '#38bdf8', 16);
@@ -1432,7 +1439,7 @@
 
         if (dx * dx + dy * dy <= grabDist * grabDist) {
           pu.active = false;
-          this.spawnShockwave(pu.x, pu.y, '#00f0ff', 45);
+          this.spawnShockwave(pu.x, pu.y, '#ff6b4a', 45);
 
           if (pu.type === 'PEM') {
             for (let eb of this.enemyBullets) {
@@ -1442,15 +1449,15 @@
               }
             }
             this.spawnShockwave(this.player.x, this.player.y, '#38bdf8', 120);
-            this.spawnFloatingText(this.player.x, this.player.y - 20, '¡PULSO PEM DETONADO!', '#38bdf8');
+            this.spawnFloatingText(this.player.x, this.player.y - 20, 'Pulso PEM', '#38bdf8');
             this.playExplosionSound();
           } else if (pu.type === 'HYPER') {
             this.hyperTimer = 7.0;
-            this.spawnFloatingText(this.player.x, this.player.y - 20, '¡HIPER LÁSER!', '#facc15');
+            this.spawnFloatingText(this.player.x, this.player.y - 20, 'Hiper láser', '#facc15');
             this.playDroneDockSound();
           } else if (pu.type === 'SHIELD') {
             this.shieldActive = true;
-            this.spawnFloatingText(this.player.x, this.player.y - 20, '¡ESCUDO DEFLECTOR!', '#00f0ff');
+            this.spawnFloatingText(this.player.x, this.player.y - 20, 'Escudo deflector', '#ff6b4a');
             this.playDroneDockSound();
           }
           if (window.ArcadeCanvas) window.ArcadeCanvas.haptic(30);
@@ -1486,7 +1493,7 @@
             this.drone.docked = false;
             this.drone.hp = 0;
             this.spawnShockwave(this.drone.x, this.drone.y, '#38bdf8', 45);
-            this.spawnFloatingText(this.drone.x, this.drone.y - 15, '¡DRON PERDIDO!', '#38bdf8');
+            this.spawnFloatingText(this.drone.x, this.drone.y - 15, 'Dron perdido', '#38bdf8');
             this.spawnExplosionParticles(this.drone.x, this.drone.y, '#38bdf8', 18);
             this.playDroneLostSound();
             if (window.ArcadeCanvas) window.ArcadeCanvas.haptic(40);
@@ -1544,7 +1551,7 @@
 
               if (wasDiving) {
                 this.spawnShockwave(e.x, e.y, sparkColor, 45);
-                this.spawnFloatingText(e.x, e.y - 12, `+${earned} ¡PICADA!`, '#fbbf24');
+                this.spawnFloatingText(e.x, e.y - 12, `+${earned} Picada`, '#fbbf24');
               } else {
                 this.spawnFloatingText(e.x, e.y - 10, `+${earned}`, sparkColor);
               }
@@ -1560,14 +1567,14 @@
                 this.capsule.vy = 85;
                 this.capsule.pulsePhase = 0;
                 this.spawnShockwave(e.x, e.y, '#f59e0b', 60);
-                this.spawnFloatingText(e.x, e.y - 18, '¡NÚCLEO DRON!', '#facc15');
+                this.spawnFloatingText(e.x, e.y - 18, 'Núcleo dron', '#facc15');
               } else if (!e.isCarrier && (!this.currentWaveConfig || !this.currentWaveConfig.isBonus) && Math.random() < 0.12) {
                 this.spawnPowerup(e.x, e.y);
               }
 
               if (this.killsWithoutDamage % 5 === 0 && this.streak < 5) {
                 this.streak++;
-                this.spawnFloatingText(this.player.x, this.player.y - 30, `¡RACHA x${this.streak}!`, '#c084fc');
+                this.spawnFloatingText(this.player.x, this.player.y - 30, `Racha x${this.streak}`, '#c084fc');
               }
 
               this.spawnExplosionParticles(e.x, e.y, sparkColor, 16);
@@ -1595,7 +1602,7 @@
             e.active = false;
             e.state = 'INACTIVE';
             this.spawnShockwave(this.drone.x, this.drone.y, '#38bdf8', 50);
-            this.spawnFloatingText(this.drone.x, this.drone.y - 15, '¡DRON PERDIDO!', '#38bdf8');
+            this.spawnFloatingText(this.drone.x, this.drone.y - 15, 'Dron perdido', '#38bdf8');
             this.spawnExplosionParticles(this.drone.x, this.drone.y, '#38bdf8', 20);
             this.spawnExplosionParticles(e.x, e.y, e.typeData ? e.typeData.primaryColor : '#f59e0b', 16);
             this.playDroneLostSound();
@@ -1782,9 +1789,9 @@
 
         // Halo esférico de contención anti-grav
         ctx.fillStyle = 'rgba(56, 189, 248, 0.22)';
-        ctx.strokeStyle = '#00f0ff';
+        ctx.strokeStyle = '#ff6b4a';
         ctx.lineWidth = 1.6;
-        ctx.shadowColor = '#00f0ff';
+        ctx.shadowColor = '#ff6b4a';
         ctx.shadowBlur = 14;
         ctx.beginPath();
         ctx.arc(0, 0, this.capsule.radius, 0, Math.PI * 2);
@@ -1910,7 +1917,7 @@
         // Estela/plasma del micro-propulsor
         const dflame = 7 + Math.random() * 5;
         ctx.fillStyle = '#38bdf8';
-        ctx.shadowColor = '#00f0ff';
+        ctx.shadowColor = '#ff6b4a';
         ctx.shadowBlur = 8;
         ctx.beginPath();
         ctx.moveTo(-3, 8);
@@ -1939,7 +1946,7 @@
         // Rotor/núcleo rotatorio
         ctx.save();
         ctx.rotate(this.drone.rotorAngle);
-        ctx.strokeStyle = '#00f0ff';
+        ctx.strokeStyle = '#ff6b4a';
         ctx.lineWidth = 1.4;
         ctx.beginPath();
         ctx.arc(0, 0, 4, 0, Math.PI * 2);
@@ -1967,7 +1974,7 @@
         // Llama del propulsor
         const flameLength = 12 + Math.random() * 8;
         ctx.fillStyle = '#38bdf8';
-        ctx.shadowColor = '#00f0ff';
+        ctx.shadowColor = '#ff6b4a';
         ctx.shadowBlur = 12;
         ctx.beginPath();
         ctx.moveTo(-6, 14);
@@ -1995,7 +2002,7 @@
         ctx.stroke();
 
         // Cabina bioluminiscente
-        ctx.fillStyle = '#00f0ff';
+        ctx.fillStyle = '#ff6b4a';
         ctx.beginPath();
         ctx.ellipse(0, -3, 3.5, 7, 0, 0, Math.PI * 2);
         ctx.fill();
@@ -2007,11 +2014,11 @@
       if (this.shieldActive && showShip) {
         ctx.save();
         const pulse = 1.0 + Math.sin(Date.now() / 120) * 0.08;
-        ctx.strokeStyle = '#00f0ff';
-        ctx.shadowColor = '#00f0ff';
+        ctx.strokeStyle = '#ff6b4a';
+        ctx.shadowColor = '#ff6b4a';
         ctx.shadowBlur = 16;
         ctx.lineWidth = 2.0;
-        ctx.fillStyle = 'rgba(0, 240, 255, 0.16)';
+        ctx.fillStyle = 'rgba(255, 107, 74, 0.16)';
         ctx.beginPath();
         ctx.arc(this.player.x, this.player.y, (this.player.radius + 10) * pulse, 0, Math.PI * 2);
         ctx.fill();
@@ -2021,7 +2028,7 @@
           const ang = (Date.now() / 500) + k * (Math.PI / 3);
           const hx = this.player.x + Math.cos(ang) * (this.player.radius + 10) * pulse;
           const hy = this.player.y + Math.sin(ang) * (this.player.radius + 10) * pulse;
-          ctx.fillStyle = '#00f0ff';
+          ctx.fillStyle = '#ff6b4a';
           ctx.beginPath();
           ctx.arc(hx, hy, 2.2, 0, Math.PI * 2);
           ctx.fill();
@@ -2063,8 +2070,8 @@
         const alpha = Math.min(1, this.waveIntroTimer * 1.6);
         ctx.globalAlpha = alpha;
         ctx.textAlign = 'center';
-        ctx.fillStyle = '#00f0ff';
-        ctx.shadowColor = '#00f0ff';
+        ctx.fillStyle = '#ff6b4a';
+        ctx.shadowColor = '#ff6b4a';
         ctx.shadowBlur = 12;
         ctx.font = 'bold 18px sans-serif';
         ctx.fillText(this.waveIntroTitle, CONFIG.WORLD_WIDTH / 2, CONFIG.WORLD_HEIGHT / 2 - 24);
@@ -2074,8 +2081,8 @@
         ctx.shadowBlur = 0;
         ctx.fillText(
           this.currentWaveConfig && this.currentWaveConfig.isBonus
-            ? '¡DESTRUYE TODAS LAS NAVES SIN DISPAROS HOSTILES!'
-            : 'ENLACE DE FORMACIÓN ORBITAL DETECTADO',
+            ? 'Destruye todas las naves enemigas'
+            : 'Enlace de formación orbital detectado',
           CONFIG.WORLD_WIDTH / 2,
           CONFIG.WORLD_HEIGHT / 2 - 4
         );
@@ -2095,7 +2102,7 @@
         ctx.fillStyle = 'rgba(15, 23, 42, 0.94)';
         ctx.strokeStyle = this.stageReport.isBonus ? '#facc15' : '#38bdf8';
         ctx.lineWidth = 2;
-        ctx.shadowColor = this.stageReport.isBonus ? '#eab308' : '#00f0ff';
+        ctx.shadowColor = this.stageReport.isBonus ? '#eab308' : '#ff6b4a';
         ctx.shadowBlur = 18;
 
         ctx.beginPath();
@@ -2112,7 +2119,7 @@
           ctx.fillStyle = this.stageReport.isPerfect ? '#4ade80' : '#facc15';
           ctx.shadowBlur = 10;
           ctx.fillText(
-            this.stageReport.isPerfect ? '¡BONIFICACIÓN PERFECTA!' : 'ETAPA DE BONIFICACIÓN CONCLUIDA',
+            this.stageReport.isPerfect ? 'Bonificación perfecta' : 'Etapa de bonificación concluida',
             bx, by - 22
           );
 
@@ -2129,7 +2136,7 @@
           ctx.font = 'bold 15px sans-serif';
           ctx.fillStyle = '#38bdf8';
           ctx.shadowBlur = 10;
-          ctx.fillText(`¡OLEADA ${this.stageReport.wave} COMPLETADA!`, bx, by - 22);
+          ctx.fillText(`Oleada ${this.stageReport.wave} completada`, bx, by - 22);
 
           ctx.font = '13px sans-serif';
           ctx.fillStyle = '#e2e8f0';
@@ -2319,7 +2326,7 @@
         color = '#facc15';
         label = 'HIPER';
       } else if (pu.type === 'SHIELD') {
-        color = '#00f0ff';
+        color = '#ff6b4a';
         label = 'ESCUDO';
       }
 
@@ -2353,7 +2360,7 @@
         ctx.moveTo(0, -5); ctx.lineTo(4, -1); ctx.lineTo(0, 3);
         ctx.stroke();
       } else if (pu.type === 'SHIELD') {
-        ctx.strokeStyle = '#00f0ff';
+        ctx.strokeStyle = '#ff6b4a';
         ctx.lineWidth = 1.6;
         ctx.beginPath();
         for (let i = 0; i < 6; i++) {

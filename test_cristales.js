@@ -11,7 +11,7 @@ assert.strictEqual(CONFIG.COLS, 8);
 assert.strictEqual(CONFIG.ROWS, 8);
 assert.strictEqual(CONFIG.NUM_GEM_TYPES, 6);
 assert.strictEqual(CONFIG.LEVELS.length >= 15, true, 'Deben existir al menos 15 niveles configurados');
-console.log(`✓ Configuración base validada: ${CONFIG.LEVELS.length} niveles definidos como datos`);
+console.log(`OK Configuración base validada: ${CONFIG.LEVELS.length} niveles definidos como datos`);
 
 // 2. Tablero inicial: NUNCA tiene combinaciones ya hechas y SIEMPRE tiene al menos un movimiento válido (100 tableros)
 for (let i = 0; i < 100; i++) {
@@ -33,7 +33,7 @@ for (let i = 0; i < 100; i++) {
     `El tablero inicial #${i} debe tener al menos un movimiento válido garantizado`
   );
 }
-console.log('✓ 100 tableros iniciales verificados: Cero combinaciones prehechas y siempre con movimiento válido');
+console.log('OK 100 tableros iniciales verificados: Cero combinaciones prehechas y siempre con movimiento válido');
 
 // 3. Mezcla (Shuffle): Siempre garantiza un tablero sin combinaciones y con al menos un movimiento válido (100 intentos)
 {
@@ -48,7 +48,7 @@ console.log('✓ 100 tableros iniciales verificados: Cero combinaciones prehecha
     const validMove = CristalesLogic.findAnyValidMove(board);
     assert.notStrictEqual(validMove, null, `Tablero mezclado #${s} debe tener al menos un movimiento válido`);
   }
-  console.log('✓ 100 mezclas automáticas verificadas: Tableros resultantes válidos y jugables sin trabarse');
+  console.log('OK 100 mezclas automáticas verificadas: Tableros resultantes válidos y jugables sin trabarse');
 }
 
 // 4. Intercambio de gemas (isValidSwap): horizontal, vertical y reversión
@@ -68,7 +68,7 @@ console.log('✓ 100 tableros iniciales verificados: Cero combinaciones prehecha
   const isInvalid = CristalesLogic.isValidSwap(grid, 0, 0, 1, 0);
   assert.strictEqual(isInvalid, false, 'Intercambio sin combinación no debe ser válido');
 
-  console.log('✓ Detección de intercambios válidos e inválidos verificada');
+  console.log('OK Detección de intercambios válidos e inválidos verificada');
 }
 
 // 5. Las cascadas terminan (Estabilización finita garantizada)
@@ -89,7 +89,7 @@ console.log('✓ 100 tableros iniciales verificados: Cero combinaciones prehecha
     const remainingMatches = CristalesLogic.findMatches(grid);
     assert.strictEqual(remainingMatches.length, 0, 'El tablero final tras cascadas debe estar completamente estabilizado');
   }
-  console.log('✓ 50 simulaciones de cascadas masivas verificadas: Todas se estabilizan y terminan');
+  console.log('OK 50 simulaciones de cascadas masivas verificadas: Todas se estabilizan y terminan');
 }
 
 // 6. Verificación de solvencia de los 40 niveles de campaña
@@ -100,7 +100,7 @@ console.log('✓ 100 tableros iniciales verificados: Cero combinaciones prehecha
     const solvable = CristalesLogic.isLevelSolvable(lvl);
     assert.strictEqual(solvable, true, `El nivel ${lvl.id} (${lvl.name}) debe ser resoluble matemáticamente`);
   }
-  console.log('✓ Los 40 niveles de campaña verificados: 100% resolubles matemáticamente con ratios de movimientos balanceados');
+  console.log('OK Los 40 niveles de campaña verificados: 100% resolubles matemáticamente con ratios de movimientos balanceados');
 }
 
 console.log('--- TODOS LOS TESTS DE CRISTALES PASARON EXITOSAMENTE (6/6) ---');
