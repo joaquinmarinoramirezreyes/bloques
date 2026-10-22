@@ -27,8 +27,9 @@ async function main() {
     process.exit(1);
   }
 
-  const token = await acceso.qrToken(secret, process.env);
-  const url = `${base}/q?t=${token}`;
+  const token = await acceso.tazaToken(secret, process.env);
+  // Todo en MAYUSCULAS: el QR usa modo alfanumerico y queda con menos cuadros.
+  const url = `${base}/Q/${token}`.toUpperCase();
 
   const outDir = path.resolve(__dirname, '..', 'qr-eras');
   fs.mkdirSync(outDir, { recursive: true });

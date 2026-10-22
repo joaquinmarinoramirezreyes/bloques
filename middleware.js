@@ -15,7 +15,9 @@ export const config = {
     '/games/:path*',
     '/games.json',
     '/acceso',
-    '/q'
+    '/q',
+    '/q/:path*',
+    '/Q/:path*'
   ]
 };
 
