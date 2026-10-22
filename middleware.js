@@ -14,7 +14,8 @@ export const config = {
     '/00', '/00/:path*',
     '/games/:path*',
     '/games.json',
-    '/acceso'
+    '/acceso',
+    '/q'
   ]
 };
 

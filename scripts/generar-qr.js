@@ -28,14 +28,14 @@ async function main() {
   }
 
   const token = await acceso.qrToken(secret, process.env);
-  const url = `${base}/acceso?t=${token}`;
+  const url = `${base}/q?t=${token}`;
 
   const outDir = path.resolve(__dirname, '..', 'qr-eras');
   fs.mkdirSync(outDir, { recursive: true });
 
   const targetPath = path.join(outDir, 'qr-taza.png');
   await QRCode.toFile(targetPath, url, {
-    errorCorrectionLevel: 'H', // Alta corrección de error para impresión física en tazas cerámicas
+    errorCorrectionLevel: 'M', // 15%: menos modulos, cuadros mas grandes para imprimir en taza
     margin: 2,
     width: 800,
     color: {
