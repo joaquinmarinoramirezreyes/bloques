@@ -122,13 +122,13 @@
       "b": 46
     },
     "bodyLuminance": 0.03636301843447334,
-    "panelBg": "#0f172a",
+    "panelBg": "#164f3c",
     "panelRgb": {
-      "r": 15,
-      "g": 23,
-      "b": 42
+      "r": 22,
+      "g": 79,
+      "b": 60
     },
-    "panelLuminance": 0.008815176790098227,
+    "panelLuminance": 0.06088781886040788,
     "textColor": "#f4f1e8",
     "textRgb": {
       "r": 244,
@@ -160,13 +160,13 @@
       "b": 58
     },
     "bodyLuminance": 0.011088071644636472,
-    "panelBg": "#12162a",
+    "panelBg": "#11254e",
     "panelRgb": {
-      "r": 18,
-      "g": 22,
-      "b": 42
+      "r": 17,
+      "g": 37,
+      "b": 78
     },
-    "panelLuminance": 0.008695842561866328,
+    "panelLuminance": 0.019923648238073084,
     "textColor": "#e8eefc",
     "textRgb": {
       "r": 232,

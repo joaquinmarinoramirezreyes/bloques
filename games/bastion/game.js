@@ -783,17 +783,17 @@
             ctx.lineWidth = 1;
             ctx.strokeRect(px + 2.5, py + 2.5, cs - 5, cs - 5);
           } else if (type === 6) {
-            // Geoda Elemental: Pedestal rocoso oscuro con racimo de cristales violetas (+20% daño)
-            ctx.fillStyle = '#130d24';
+            // Geoda Elemental: Pedestal rocoso oscuro con racimo de cristales dorados (+20% daño)
+            ctx.fillStyle = '#1f2822';
             ctx.fillRect(px, py, cs, cs);
 
-            // Bisel exterior amatista
-            ctx.strokeStyle = '#a855f7';
+            // Bisel exterior oro viejo
+            ctx.strokeStyle = '#b8860b';
             ctx.lineWidth = 1.5;
             ctx.strokeRect(px + 1.5, py + 1.5, cs - 3, cs - 3);
 
             // Cristales facetados centrales
-            ctx.fillStyle = '#c084fc';
+            ctx.fillStyle = '#d4af37';
             ctx.beginPath();
             ctx.moveTo(px + cs * 0.5, py + cs * 0.2);
             ctx.lineTo(px + cs * 0.72, py + cs * 0.5);
@@ -1543,7 +1543,7 @@
           y1: corePos.y,
           x2: closest.x,
           y2: closest.y,
-          color: '#a855f7',
+          color: '#b8860b',
           life: 0.25,
           maxLife: 0.25
         });

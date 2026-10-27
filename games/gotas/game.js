@@ -2137,7 +2137,7 @@
     for (let i = 0; i < MAX_SHOCKWAVES; i++) {
       const sw = shockwavePool[i];
       if (!sw.active) continue;
-      ctx.strokeStyle = `rgba(0, 240, 255, ${sw.alpha})`;
+      ctx.strokeStyle = `rgba(15, 163, 163, ${sw.alpha})`;
       ctx.lineWidth = 3;
       ctx.beginPath();
       ctx.arc(sw.x, sw.y, sw.r, 0, Math.PI * 2);

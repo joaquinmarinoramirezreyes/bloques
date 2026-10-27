@@ -376,28 +376,28 @@ html, body {
 }
 
 .main-rotate-btn {
-  border-color: rgba(0, 240, 255, 0.5);
-  background: rgba(14, 40, 70, 0.9);
+  border-color: rgba(192, 57, 43, 0.5);
+  background: rgba(40, 20, 20, 0.9);
 }
 
 .main-rotate-btn .btn-subtext {
-  color: var(--neon-cyan);
+  color: var(--accent-primary);
 }
 
 .hard-drop-btn {
-  border-color: rgba(255, 208, 0, 0.5);
-  background: rgba(50, 40, 15, 0.9);
+  border-color: rgba(192, 57, 43, 0.5);
+  background: rgba(50, 25, 20, 0.9);
 }
 
 .hard-drop-btn .btn-subtext {
-  color: var(--neon-gold);
+  color: var(--accent-primary);
 }
 
 .touch-btn:active, .touch-btn.is-pressed {
   transform: scale(0.90);
-  background: rgba(45, 55, 95, 0.95);
-  border-color: var(--neon-cyan);
-  box-shadow: 0 0 12px rgba(0, 240, 255, 0.4);
+  background: rgba(192, 57, 43, 0.15);
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 12px rgba(192, 57, 43, 0.4);
 }
 
 .hard-drop-btn:active, .hard-drop-btn.is-pressed {

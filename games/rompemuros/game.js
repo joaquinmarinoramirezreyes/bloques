@@ -882,7 +882,7 @@
           for (let t = ball.trail.length - 1; t >= 0; t--) {
             const alpha = (1 - t / ball.trail.length) * 0.35;
             const r = ball.radius * (1 - t / (ball.trail.length * 1.5));
-            ctx.fillStyle = `rgba(0, 240, 255, ${alpha})`;
+            ctx.fillStyle = `rgba(224, 122, 31, ${alpha})`;
             ctx.beginPath();
             ctx.arc(ball.trail[t].x, ball.trail[t].y, r, 0, Math.PI * 2);
             ctx.fill();

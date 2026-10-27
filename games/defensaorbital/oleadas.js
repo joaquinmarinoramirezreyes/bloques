@@ -154,7 +154,7 @@
       scoreDiving: 160,
       radius: 14,
       primaryColor: '#10b981',    // Esmeralda cuántica
-      secondaryColor: '#06b6d4',  // Cian cianuro
+      secondaryColor: '#34d399',  // Menta estelar
       glowColor: 'rgba(16, 185, 129, 0.7)',
       speedRatio: 0.92,
       wingSpan: 19
@@ -166,9 +166,9 @@
       scoreFormation: 150,
       scoreDiving: 320,
       radius: 17,
-      primaryColor: '#a855f7',    // Violeta estelar
-      secondaryColor: '#ec4899',  // Magenta
-      glowColor: 'rgba(168, 85, 247, 0.8)',
+      primaryColor: '#ff6b4a',    // Coral orbital
+      secondaryColor: '#ff947d',  // Coral claro
+      glowColor: 'rgba(255, 107, 74, 0.7)',
       speedRatio: 0.85,
       wingSpan: 22
     }

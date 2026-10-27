@@ -52,4 +52,14 @@
    - **Contraste de Texto**: El 100% de los juegos supera la relación mínima WCAG AA $\ge 4.5:1$ (desde 8.02:1 en Campo Minado hasta 15.14:1 en Sombras).
    - **Análisis CIEDE2000**: Ningún par de juegos comparte el mismo fondo ni el mismo acento.
    - **Capturas Reales y Comparativa**: Se capturaron 20 pantallas *before* reales extrayendo los archivos limpios mediante `git show HEAD` a través de un servidor HTTP virtual en memoria, 20 pantallas *after* desde el filesystem actual, y se generó la cuadrícula `comparativa.png`.
-   - **Verificación Total**: Se validaron 48/48 suites en `scripts/run-all.js` (incluyendo `sin-emojis.js`, `smoke.js`, `audit_touch_targets.js` y todas las pruebas unitarias y de layout).
+   - **Verificación Total**: Se validaron 49/49 suites en `scripts/run-all.js` (incluyendo `sin-emojis.js`, `smoke.js`, `audit_touch_targets.js` y todas las pruebas unitarias y de layout: 100% éxito).
+
+8. **Directiva Específica sobre Lumen**:
+   - Por instrucción directa del usuario ("no cambies Lumen, esa tarea se me fue pero esa no era"), la propuesta de rediseño de Lumen (Tarea A) queda formalmente cancelada y omitida.
+   - Lumen se preserva en su estado actual probado y verificado, manteniendo intacto su código en `games/lumen/game.js`, su estilo, controles y su suite unitaria `test_lumen.js`.
+
+9. **Pulido Final de Textos, Funciones y Sincronización de Catálogo**:
+   - **Sincronización `menu.js` & `games.json`**: Se actualizaron las propiedades `color` en el arreglo `FALLBACK_GAMES` de `menu.js` para que coincidan al 100% con los acentos de la paleta oficial definidos en `games.json` (Serpiente `#ffd866`, Rompe Muros `#e07a1f`, Defensa Orbital `#ff6b4a`, Sombras `#d33a2c`, Derrape `#ffd400`, Abismo `#b3122a`, Campo Minado `#9fd3ff`, Corredor `#e4572e`, Gotas `#0fa3a3`, Cristales `#d6249f`, Lanzaburbujas `#ff6f59`, Lumen `#ffd27a`, Cargas `#ff5a1f`, Bastión `#b8860b`).
+   - **Auditoría Ortográfica y Gramatical**: Se verificó la correcta acentuación en español (`Puntuación`, `Récord`, `Configuración`, `Estadísticas`, `Créditos`, `Menú`, etc.) a lo largo de todos los archivos HTML y literales de cadenas en scripts de juegos.
+   - **Cero Emojis y Cero Errores Funcionales**: El escáner estricto `scripts/sin-emojis.js` confirma 0 emojis en todo el código y assets de producción. El smoke test en navegador headless (`scripts/smoke.js`) y las 49 suites de prueba (`scripts/run-all.js`) pasan con 100% de éxito.
+

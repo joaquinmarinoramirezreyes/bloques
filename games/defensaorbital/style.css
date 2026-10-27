@@ -461,14 +461,14 @@ kbd {
 }
 
 .overlay-card {
-  background: rgba(18, 22, 42, 0.98);
-  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  background: var(--panel-space, #11254e);
+  border: 1.5px solid var(--border-subtle, #244685);
   border-radius: 14px;
   padding: 20px 24px;
   text-align: center;
   max-width: 290px;
   width: 90%;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.2);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.8), 0 0 24px rgba(255, 107, 74, 0.2);
 }
 
 .overlay-card h2 {

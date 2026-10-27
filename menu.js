@@ -22,7 +22,7 @@
       name: "Serpiente",
       folder: "games/snake",
       description: "Dirige la víbora neón en la cuadrícula, devora orbes de energía y esquiva las paredes y tu propia cola.",
-      color: "#00e676",
+      color: "#ffd866",
       badge: "CLÁSICO",
       icon: "snake",
       eras: ["80"]
@@ -32,7 +32,7 @@
       name: "Rompe Muros",
       folder: "games/rompemuros",
       description: "El clásico demoledor de ladrillos. Rebota la pelota, recoge power-ups y destruye los muros neón.",
-      color: "#ff3366",
+      color: "#e07a1f",
       badge: "ARCADE",
       icon: "rompemuros",
       eras: ["80"]
@@ -42,7 +42,7 @@
       name: "Defensa Orbital",
       folder: "games/defensaorbital",
       description: "Shooter vertical arcade. Defiende la órbita de invasiones alienígenas con fuego automático y reflejos rápidos.",
-      color: "#38bdf8",
+      color: "#ff6b4a",
       badge: "SHOOTER",
       icon: "defensaorbital",
       eras: ["80"]
@@ -52,7 +52,7 @@
       name: "Sombras",
       folder: "games/sombras",
       description: "Sigilo y escape en laberintos procedurales. Explora en la oscuridad con tu linterna y evita a los guardianes.",
-      color: "#a855f7",
+      color: "#d33a2c",
       badge: "SIGILO",
       icon: "sombras",
       eras: ["90"]
@@ -62,7 +62,7 @@
       name: "Derrape",
       folder: "games/derrape",
       description: "Carreras cenitales arcade con físicas de derrape, rivales inteligentes y circuitos de alta velocidad.",
-      color: "#f97316",
+      color: "#ffd400",
       badge: "CARRERAS",
       icon: "derrape",
       eras: ["90"]
@@ -72,7 +72,7 @@
       name: "Abismo",
       folder: "games/abismo",
       description: "Roguelike cenital de acción en criptas infinitas con auto-ataque, sinergias y progresión permanente.",
-      color: "#e11d48",
+      color: "#b3122a",
       badge: "ROGUELIKE",
       icon: "abismo",
       eras: ["00"]
@@ -92,7 +92,7 @@
       name: "Campo Minado",
       folder: "games/campominado",
       description: "Despeje táctico de casillas con relieve 3D, primer toque 100% seguro y algoritmo de flood-fill iterativo sin recursión.",
-      color: "#ffcc00",
+      color: "#9fd3ff",
       badge: "LÓGICA",
       icon: "campominado",
       eras: ["90"]
@@ -102,7 +102,7 @@
       name: "Corredor",
       folder: "games/corredor",
       description: "Runner infinito de un botón con física de salto variable, obstáculos procedurales matemáticamente garantizados y power-ups.",
-      color: "#b388ff",
+      color: "#e4572e",
       badge: "RUNNER",
       icon: "corredor",
       eras: ["00"]
@@ -112,7 +112,7 @@
       name: "Gotas",
       folder: "games/gotas",
       description: "Puzzle de parejas de gotas de gel 3D que caen. Conecta 4 o más, desata cascadas con multiplicador y usa la gota arcoíris.",
-      color: "#00e676",
+      color: "#0fa3a3",
       badge: "PUZZLE",
       icon: "gotas",
       eras: ["90"]
@@ -122,7 +122,7 @@
       name: "Cristales",
       folder: "games/cristales",
       description: "Combina 3 o más gemas prismáticas vectoriales 3D. Piezas de línea, bombas de color, 15 niveles con hielo y modo infinito.",
-      color: "#00d2ff",
+      color: "#d6249f",
       badge: "MATCH-3",
       icon: "cristales",
       eras: ["00"]
@@ -132,7 +132,7 @@
       name: "Lanzaburbujas",
       folder: "games/lanzaburbujas",
       description: "Shooter de burbujas en rejilla hexagonal con línea guía de rebote, caída de burbujas flotantes, techo dinámico y 15 niveles.",
-      color: "#00e5ff",
+      color: "#ff6f59",
       badge: "SHOOTER",
       icon: "lanzaburbujas",
       eras: ["00"]
@@ -142,7 +142,7 @@
       name: "Lumen",
       folder: "games/lumen",
       description: "Laberinto de luz y persecución en la oscuridad. Enciende faroles, evade criaturas geométricas y usa chispas temporales.",
-      color: "#ffd700",
+      color: "#ffd27a",
       badge: "LABERINTO",
       icon: "lumen",
       eras: ["80"]
@@ -152,7 +152,7 @@
       name: "Cargas",
       folder: "games/cargas",
       description: "Laberinto táctico con cargas de resonancia en rombo. Empuja núcleos, desata combos en cadena y derrota jefes con ataques telegrafiados.",
-      color: "#f59e0b",
+      color: "#ff5a1f",
       badge: "ACCIÓN",
       icon: "cargas",
       eras: ["90"]
@@ -162,7 +162,7 @@
       name: "Bastión",
       folder: "games/bastion",
       description: "Tower defense estratégico. Construye centinelas balísticos, gestiona el oro de batalla y defiende el núcleo arcano.",
-      color: "#38bdf8",
+      color: "#b8860b",
       badge: "DEFENSA",
       icon: "bastion",
       eras: ["00"]

@@ -329,8 +329,8 @@
 
     createNebulae() {
       return [
-        { x: 120, y: 140, r: 190, color: '126, 34, 206', alpha: 0.12, vy: 8 },  // Violeta estelar profundo
-        { x: 380, y: 460, r: 220, color: '14, 116, 144', alpha: 0.10, vy: 14 }, // Cian abisal
+        { x: 120, y: 140, r: 190, color: '255, 107, 74', alpha: 0.10, vy: 8 },  // Coral orbital
+        { x: 380, y: 460, r: 220, color: '14, 116, 144', alpha: 0.10, vy: 14 }, // Azul profundo
         { x: 230, y: -60, r: 170, color: '30, 58, 138', alpha: 0.14, vy: 10 }   // Añil galáctico
       ];
     }
@@ -2275,14 +2275,14 @@
     }
 
     drawEnemyVertice(ctx, e) {
-      // Vértice Alfa: comandante hexagonal violeta/magenta con reactor coronal
+      // Vértice Alfa: comandante hexagonal coral orbital con reactor coronal
       const pulse = Math.sin(e.flutterPhase * 1.5) * 1.6;
-      ctx.shadowColor = e.typeData ? e.typeData.glowColor : 'rgba(168, 85, 247, 0.8)';
+      ctx.shadowColor = e.typeData ? e.typeData.glowColor : 'rgba(255, 107, 74, 0.8)';
       ctx.shadowBlur = 12;
 
       // Corona exterior hexagonal
-      ctx.fillStyle = '#2e1065';
-      ctx.strokeStyle = '#c084fc';
+      ctx.fillStyle = '#3a1a12';
+      ctx.strokeStyle = '#ff6b4a';
       ctx.lineWidth = 2.2;
 
       ctx.beginPath();
@@ -2296,8 +2296,8 @@
       ctx.fill();
       ctx.stroke();
 
-      // Placas angulares magenta
-      ctx.fillStyle = '#ec4899';
+      // Placas angulares coral
+      ctx.fillStyle = '#ff947d';
       ctx.beginPath();
       ctx.moveTo(0, 11);
       ctx.lineTo(8, 2);

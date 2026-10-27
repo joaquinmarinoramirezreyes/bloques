@@ -1613,7 +1613,7 @@
     }
 
     // Riel del Maglev
-    ctx.strokeStyle = 'rgba(0, 240, 255, 0.28)';
+    ctx.strokeStyle = 'rgba(228, 87, 46, 0.28)';
     ctx.lineWidth = 3;
     ctx.beginPath();
     ctx.moveTo(0, CONFIG.GROUND_Y - 120);
@@ -1631,7 +1631,7 @@
       ctx.fillStyle = biome.accent;
       ctx.fillRect(train.x + 8, CONFIG.GROUND_Y - 125, 200, 6);
 
-      ctx.fillStyle = 'rgba(0, 240, 255, 0.35)';
+      ctx.fillStyle = 'rgba(228, 87, 46, 0.35)';
       ctx.fillRect(train.x + 220, CONFIG.GROUND_Y - 126, 120, 10);
     }
 
@@ -1760,7 +1760,7 @@
 
       const haloColor = pw.type === 'TURBO' ? 'rgba(255, 0, 127, 0.28)' :
                         pw.type === 'SLOWMO' ? 'rgba(0, 230, 118, 0.28)' :
-                        pw.type === 'SHIELD' ? 'rgba(0, 240, 255, 0.28)' :
+                        pw.type === 'SHIELD' ? 'rgba(228, 87, 46, 0.28)' :
                         'rgba(255, 204, 0, 0.28)';
 
       ctx.fillStyle = haloColor;
@@ -1868,7 +1868,7 @@
         ctx.fillStyle = biome.accent;
         ctx.fillRect(obs.x + 2, obs.y, obs.w - 4, 2);
 
-        ctx.fillStyle = 'rgba(0, 240, 255, 0.4)';
+        ctx.fillStyle = 'rgba(228, 87, 46, 0.4)';
         ctx.font = '9px sans-serif';
         ctx.fillText('>>> PLATAFORMA >>>', obs.x + 10, obs.y + 11);
       }
@@ -1898,7 +1898,7 @@
     // Escudo Cuántico
     if (p.hasShield) {
       ctx.save();
-      ctx.strokeStyle = 'rgba(0, 240, 255, 0.8)';
+      ctx.strokeStyle = 'rgba(228, 87, 46, 0.8)';
       ctx.lineWidth = 2.5;
       ctx.beginPath();
       ctx.ellipse(px + pw / 2, py + ph / 2, pw * 0.95, ph * 0.75, 0, 0, Math.PI * 2);
@@ -2037,7 +2037,7 @@
     if (State.speed < 420 && !State.activeEvent) return;
     ctx.save();
     const count = State.speed > 580 ? 12 : 6;
-    ctx.strokeStyle = State.activeEvent === 'HYPER_SPEED' ? 'rgba(255, 204, 0, 0.45)' : 'rgba(0, 240, 255, 0.35)';
+    ctx.strokeStyle = State.activeEvent === 'HYPER_SPEED' ? 'rgba(255, 204, 0, 0.45)' : 'rgba(228, 87, 46, 0.35)';
     ctx.lineWidth = 1.5;
     for (let i = 0; i < count; i++) {
       const ly = Math.random() * (H - 100);

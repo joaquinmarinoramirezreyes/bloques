@@ -1080,7 +1080,7 @@
     const pulseAlpha = 0.25 + 0.15 * Math.sin(time);
 
     // Líneas laterales de luz de la arena
-    ctx.strokeStyle = `rgba(0, 240, 255, ${pulseAlpha})`;
+    ctx.strokeStyle = `rgba(242, 201, 76, ${pulseAlpha})`;
     ctx.lineWidth = 3;
     ctx.strokeRect(10, 10, CONFIG.VIRTUAL_W - 20, CONFIG.VIRTUAL_H - 20);
 
@@ -1095,14 +1095,14 @@
     ctx.setLineDash([]);
 
     // Círculo central cuántico
-    ctx.strokeStyle = `rgba(0, 240, 255, ${pulseAlpha * 0.8})`;
+    ctx.strokeStyle = `rgba(242, 201, 76, ${pulseAlpha * 0.8})`;
     ctx.beginPath();
     ctx.arc(CONFIG.VIRTUAL_W / 2, CONFIG.VIRTUAL_H / 2, 45, 0, Math.PI * 2);
     ctx.stroke();
 
     // Red de portería protectora activa de P1
     if (State.p1.hasGoalNet) {
-      ctx.strokeStyle = 'rgba(236, 72, 153, 0.8)';
+      ctx.strokeStyle = 'rgba(242, 201, 76, 0.8)';
       ctx.lineWidth = 4;
       ctx.beginPath();
       ctx.moveTo(12, CONFIG.VIRTUAL_H - 12);

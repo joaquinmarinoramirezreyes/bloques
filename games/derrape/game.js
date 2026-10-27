@@ -591,12 +591,12 @@
           ctx.ellipse(0, 0, 22, 16, Math.PI / 6, 0, Math.PI * 2);
           ctx.fill();
 
-          // Reflejo iridiscente violeta/verde neón
+          // Reflejo ámbar deportivo
           if (isActive) {
             const grad = ctx.createLinearGradient(-15, -10, 15, 10);
-            grad.addColorStop(0, 'rgba(168, 85, 247, 0.6)');
-            grad.addColorStop(0.5, 'rgba(56, 189, 248, 0.45)');
-            grad.addColorStop(1, 'rgba(132, 204, 22, 0.5)');
+            grad.addColorStop(0, 'rgba(255, 212, 0, 0.6)');
+            grad.addColorStop(0.5, 'rgba(255, 255, 255, 0.45)');
+            grad.addColorStop(1, 'rgba(230, 190, 0, 0.5)');
             ctx.fillStyle = grad;
             ctx.beginPath();
             ctx.ellipse(-3, -2, 14, 8, -Math.PI / 8, 0, Math.PI * 2);
